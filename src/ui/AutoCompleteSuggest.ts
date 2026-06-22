@@ -34,6 +34,7 @@ import {
   SelectionHistoryStorage,
   type SelectionHistoryTree,
 } from "../storage/SelectionHistoryStorage";
+import { LinkFrequencyStorage } from "../storage/LinkFrequencyStorage";
 import { createTokenizer, type Tokenizer } from "../tokenizer/tokenizer";
 import { TokenizeStrategy } from "../tokenizer/TokenizeStrategy";
 import { setEquals, uniqWith } from "../util/collection-helper";
@@ -87,6 +88,7 @@ export class AutoCompleteSuggest
   internalLinkWordProvider: InternalLinkWordProvider;
   frontMatterWordProvider: FrontMatterWordProvider;
   selectionHistoryStorage: SelectionHistoryStorage | undefined;
+  linkFrequencyStorage: LinkFrequencyStorage | undefined;
 
   tokenizer: Tokenizer;
   debounceGetSuggestions: Debouncer<
@@ -196,6 +198,13 @@ export class AutoCompleteSuggest
       ins.app,
       ins.appHelper,
     );
+
+    // Initialize link frequency storage for folder priority
+    ins.linkFrequencyStorage = new LinkFrequencyStorage(app);
+    if (settings.folderPriority.enabled && settings.folderPriority.limitingFolder) {
+      ins.linkFrequencyStorage.setLimitingFolder(settings.folderPriority.limitingFolder);
+    }
+    ins.internalLinkWordProvider.setLinkFrequencyStorage(ins.linkFrequencyStorage);
 
     await ins.updateSettings(settings);
     await ins.refreshIntelligentSuggestionPrioritization();
@@ -550,6 +559,16 @@ export class AutoCompleteSuggest
                 globalMinChar:
                   this.settings.minNumberOfCharactersTriggered ||
                   this.tokenizerStrategy.triggerThreshold,
+                folderPriority:
+                  this.settings.folderPriority.enabled &&
+                  this.settings.folderPriority.limitingFolder
+                    ? {
+                        enabled: true,
+                        currentFilePath:
+                          this.appHelper.getActiveFile()?.path ?? null,
+                        limitingFolder: this.settings.folderPriority.limitingFolder,
+                      }
+                    : undefined,
               },
             ).map((word) => ({ ...word, offset: q.offset }));
           })
@@ -853,6 +872,22 @@ export class AutoCompleteSuggest
       tagsForExclusion: this.settings.tagsForExclusionInternalLink,
       excludeUnresolvedLinks: this.settings.excludeUnresolvedInternalLinks,
     });
+
+    // Index folder frequency for folder priority
+    if (
+      this.settings.folderPriority.enabled &&
+      this.settings.folderPriority.limitingFolder &&
+      this.linkFrequencyStorage
+    ) {
+      this.linkFrequencyStorage.setLimitingFolder(
+        this.settings.folderPriority.limitingFolder,
+      );
+      const activeFile = this.appHelper.getActiveFile();
+      if (activeFile) {
+        // Index current file's folder hierarchy in background
+        this.linkFrequencyStorage.indexFolderHierarchy(activeFile.path);
+      }
+    }
 
     this.statusBar.setInternalLinkIndexed(
       this.internalLinkWordProvider.wordCount,

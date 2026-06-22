@@ -13,6 +13,7 @@ import {
   lowerStartsWith,
   wrapFuzzy,
 } from "../util/strings";
+import { calculateFolderProximity } from "../model/FolderProximity";
 
 export type WordsByFirstLetter = { [firstLetter: string]: Word[] };
 
@@ -167,6 +168,11 @@ export function suggestWords(
       internalLink: number;
     };
     globalMinChar?: number;
+    folderPriority?: {
+      enabled: boolean;
+      currentFilePath: string | null;
+      limitingFolder: string;
+    };
   } = {},
 ): Word[] {
   const {
@@ -174,6 +180,7 @@ export function suggestWords(
     selectionHistoryStorage,
     providerMinChars,
     globalMinChar,
+    folderPriority,
   } = option;
   const queryStartWithUpper = capitalizeFirstLetter(query) === query;
 
@@ -283,6 +290,44 @@ export function suggestWords(
       const notSameWordType = aWord.type !== bWord.type;
       if (frontMatter && notSameWordType) {
         return bWord.type === "frontMatter" ? 1 : -1;
+      }
+
+      // Folder priority for internal links
+      if (
+        folderPriority?.enabled &&
+        folderPriority.currentFilePath &&
+        folderPriority.limitingFolder &&
+        aWord.type === "internalLink" &&
+        bWord.type === "internalLink"
+      ) {
+        const aFolders = aWord.folderFrequency;
+        const bFolders = bWord.folderFrequency;
+
+        if (aFolders && bFolders) {
+          const aProximity = calculateFolderProximity(
+            aFolders,
+            folderPriority.currentFilePath,
+            folderPriority.limitingFolder,
+          );
+          const bProximity = calculateFolderProximity(
+            bFolders,
+            folderPriority.currentFilePath,
+            folderPriority.limitingFolder,
+          );
+
+          // Higher score = higher priority (sort earlier)
+          // Lower level = higher priority
+          if (aProximity.score !== bProximity.score) {
+            return bProximity.score - aProximity.score;
+          }
+          if (aProximity.level !== bProximity.level) {
+            return aProximity.level - bProximity.level;
+          }
+        } else if (aFolders && !bFolders) {
+          return -1; // a has folder frequency, prioritize
+        } else if (!aFolders && bFolders) {
+          return 1; // b has folder frequency, prioritize
+        }
       }
 
       if (selectionHistoryStorage) {
@@ -472,6 +517,11 @@ export function suggestWordsByPartialMatch(
       internalLink: number;
     };
     globalMinChar?: number;
+    folderPriority?: {
+      enabled: boolean;
+      currentFilePath: string | null;
+      limitingFolder: string;
+    };
   } = {},
 ): Word[] {
   const {
@@ -479,6 +529,7 @@ export function suggestWordsByPartialMatch(
     selectionHistoryStorage,
     providerMinChars,
     globalMinChar,
+    folderPriority,
   } = option;
   const queryStartWithUpper = capitalizeFirstLetter(query) === query;
 
@@ -569,6 +620,45 @@ export function suggestWordsByPartialMatch(
       if (a.value!.length !== b.value!.length) {
         return a.value!.length > b.value!.length ? 1 : -1;
       }
+
+      // Folder priority for internal links
+      if (
+        folderPriority?.enabled &&
+        folderPriority.currentFilePath &&
+        folderPriority.limitingFolder &&
+        aWord.type === "internalLink" &&
+        bWord.type === "internalLink"
+      ) {
+        const aFolders = aWord.folderFrequency;
+        const bFolders = bWord.folderFrequency;
+
+        if (aFolders && bFolders) {
+          const aProximity = calculateFolderProximity(
+            aFolders,
+            folderPriority.currentFilePath,
+            folderPriority.limitingFolder,
+          );
+          const bProximity = calculateFolderProximity(
+            bFolders,
+            folderPriority.currentFilePath,
+            folderPriority.limitingFolder,
+          );
+
+          // Higher score = higher priority (sort earlier)
+          // Lower level = higher priority
+          if (aProximity.score !== bProximity.score) {
+            return bProximity.score - aProximity.score;
+          }
+          if (aProximity.level !== bProximity.level) {
+            return aProximity.level - bProximity.level;
+          }
+        } else if (aFolders && !bFolders) {
+          return -1; // a has folder frequency, prioritize
+        } else if (!aFolders && bFolders) {
+          return 1; // b has folder frequency, prioritize
+        }
+      }
+
       if (notSameWordType) {
         return WordTypeMeta.of(bWord.type).priority >
           WordTypeMeta.of(aWord.type).priority

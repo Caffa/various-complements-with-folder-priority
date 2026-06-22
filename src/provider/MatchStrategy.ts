@@ -22,6 +22,11 @@ type Handler = (
       internalLink: number;
     };
     globalMinChar?: number;
+    folderPriority?: {
+      enabled: boolean;
+      currentFilePath: string | null;
+      limitingFolder: string;
+    };
   },
 ) => Word[];
 

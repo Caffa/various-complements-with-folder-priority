@@ -134,6 +134,12 @@ export interface Settings {
     maxNumberOfHistoryToKeep: number;
   };
 
+  // folder priority for internal links
+  folderPriority: {
+    enabled: boolean;
+    limitingFolder: string;
+  };
+
   // mobile
   disableOnMobile: boolean;
 
@@ -256,6 +262,12 @@ export const DEFAULT_SETTINGS: Settings = {
     prettyPrintHistoryFile: false,
     maxDaysToKeepHistory: 30,
     maxNumberOfHistoryToKeep: 0,
+  },
+
+  // folder priority for internal links
+  folderPriority: {
+    enabled: false,
+    limitingFolder: "",
   },
 
   // mobile
@@ -1518,6 +1530,47 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
           );
         },
       );
+
+      // Folder priority settings
+      containerEl.createEl("h4", {
+        text: "Folder-based prioritization",
+        cls: "various-complements__settings__subheader",
+      });
+      containerEl.createEl("div", {
+        text: "Prioritize internal links based on folder proximity. Links from files in the same story folder rank higher than links from other folders.",
+        cls: "various-complements__settings__description",
+      });
+
+      addFilterableSetting(
+        "Enable folder priority",
+        "When enabled, internal links from nearby folders in the limiting folder hierarchy are prioritized.",
+        (setting) => {
+          setting.addToggle((tc) => {
+            tc.setValue(this.plugin.settings.folderPriority.enabled).onChange(
+              async (value) => {
+                this.plugin.settings.folderPriority.enabled = value;
+                await this.plugin.saveSettings({ internalLink: true });
+                this.display();
+              },
+            );
+          });
+        },
+      );
+
+      if (this.plugin.settings.folderPriority.enabled) {
+        addFilterableSetting(
+          "Limiting folder",
+          'The root folder for folder priority. Links inside this folder are prioritized by proximity. For example, if set to "Novel", links from "Novel/Ancient China/Story/Chapter.md" will prioritize other links from the same story, then genre folder, then world folder. Links outside this folder have lowest priority.',
+          (setting) => {
+            setting.addText((cb) => {
+              TextComponentEvent.onChange(cb, async (value) => {
+                this.plugin.settings.folderPriority.limitingFolder = value;
+                await this.plugin.saveSettings({ internalLink: true });
+              }).setValue(this.plugin.settings.folderPriority.limitingFolder);
+            });
+          },
+        );
+      }
     }
   }
 
