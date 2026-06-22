@@ -1,6 +1,6 @@
 # Intellij
 *.iml
-.idea
+*.idea
 
 # npm
 node_modules
@@ -11,3 +11,10 @@ main.js
 
 # test
 /coverage
+
+# tool logs/sessions
+.pi/
+INSTRUCTION_HISTORY.md
+
+# copied plugin folders
+various-complements-with-folder-priority/

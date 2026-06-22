@@ -4,7 +4,7 @@
   "version": "11.3.0",
   "minAppVersion": "1.11.4",
   "description": "This plugin enables you to complete words like the auto-completion of IDE",
-  "author": "tadashi-aikawa",
+  "author": "Pamela (tadashi-aikawa)",
   "authorUrl": "https://github.com/tadashi-aikawa",
   "isDesktopOnly": false
 }
