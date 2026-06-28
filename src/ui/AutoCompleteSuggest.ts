@@ -121,6 +121,9 @@ export class AutoCompleteSuggest
 
   spareEditorSuggestContext: EditorSuggestContext | null = null;
 
+  /** Set to true when the plugin is unloading; async handlers should bail out early. */
+  private unloaded = false;
+
   // Pre-compiled regex patterns (rebuilt on settings change)
   private compiledSuppressPatterns: RegExp[] = [];
   private compiledFirstCharPattern: RegExp | null = null;
@@ -218,7 +221,9 @@ export class AutoCompleteSuggest
 
     ins.debouncedRefreshCurrentFileTokens = debounce(
       async () => {
+        if (ins.unloaded) return;
         await ins.refreshCurrentFileTokens();
+        if (ins.unloaded) return;
         if (ins.selectionHistoryStorage?.shouldPersist) {
           ins.selectionHistoryStorage.syncPersistVersion();
           onPersistSelectionHistory();
@@ -228,25 +233,30 @@ export class AutoCompleteSuggest
     );
 
     ins.modifyEventRef = app.vault.on("modify", (_) => {
+      if (ins.unloaded) return;
       ins.debouncedRefreshCurrentFileTokens();
     });
     ins.activeLeafChangeRef = app.workspace.on(
       "active-leaf-change",
       async (_) => {
+        if (ins.unloaded) return;
         ins.predictableCycleState = null;
         await ins.refreshCurrentFileTokens();
+        if (ins.unloaded) return;
         ins.refreshInternalLinkTokens();
         ins.updateFrontMatterToken();
       },
     );
 
     ins.metadataCacheChangeRef = app.metadataCache.on("changed", async (f) => {
+      if (ins.unloaded) return;
       ins.updateFrontMatterTokenIndex(f);
       if (!ins.appHelper.isActiveFile(f)) {
         ins.updateFrontMatterToken();
       }
       if (settings.updateInternalLinksOnSave) {
         await sleep(50); // Wait for cache updated
+        if (ins.unloaded) return;
         const currentCache = ins.appHelper.getUnresolvedLinks(f);
         if (!setEquals(ins.previousLinksCacheInActiveFile, currentCache)) {
           ins.refreshInternalLinkTokens();
@@ -257,6 +267,7 @@ export class AutoCompleteSuggest
 
     // Avoid referring to incorrect cache
     const cacheResolvedRef = app.metadataCache.on("resolved", async () => {
+      if (ins.unloaded) return;
       ins.refreshInternalLinkTokens();
       ins.refreshFrontMatterTokens();
       // noinspection ES6MissingAwait
@@ -383,6 +394,7 @@ export class AutoCompleteSuggest
   }
 
   unregister() {
+    this.unloaded = true;
     this.app.vault.offref(this.modifyEventRef);
     this.app.workspace.offref(this.activeLeafChangeRef);
     this.app.metadataCache.offref(this.metadataCacheChangeRef);
