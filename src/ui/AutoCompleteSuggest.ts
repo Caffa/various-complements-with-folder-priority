@@ -1192,12 +1192,11 @@ export class AutoCompleteSuggest
     showDebugLog(buildLogMessage("onTrigger", performance.now() - start));
     this.runManually = false;
 
-    const patterns = this.settings.phrasePatternsToSuppressTrigger;
     const suppressedTokens =
-      patterns.length === 0 || currentFrontMatter
+      this.compiledPhraseSuppressPatterns.length === 0 || currentFrontMatter
         ? currentTokens
         : currentTokens.filter((t) =>
-            patterns.every((p) => !new RegExp(`^${p}$`).test(t.word)),
+            this.compiledPhraseSuppressPatterns.every((re) => !re.test(t.word)),
           );
     if (suppressedTokens.length === 0) {
       onReturnNull(
@@ -1306,7 +1305,7 @@ export class AutoCompleteSuggest
     );
     const applyQueryFirstLetterCaseIfNeeded = (value: string): string =>
       preserveFirstLetterCase
-        ? applyQueryFirstLetterCase(value, query!)
+        ? applyQueryFirstLetterCase(value, query ?? "")
         : value;
 
     // With aliases
@@ -1314,9 +1313,16 @@ export class AutoCompleteSuggest
       (this.settings.suggestInternalLinkWithAlias || forceWithAlias) &&
       word.aliasMeta
     ) {
-      const { link } = this.appHelper.optimizeMarkdownLinkText(
+      const optimized = this.appHelper.optimizeMarkdownLinkText(
         word.aliasMeta.origin,
-      )!;
+      );
+      if (!optimized) {
+        const displayed = applyQueryFirstLetterCaseIfNeeded(word.value);
+        return this.appHelper.useWikiLinks
+          ? `[[${word.aliasMeta.origin}|${displayed}]]`
+          : `[${displayed}](${encodeSpace(word.aliasMeta.origin)}.md)`;
+      }
+      const { link } = optimized;
       const displayed = applyQueryFirstLetterCaseIfNeeded(word.value);
       return this.appHelper.useWikiLinks
         ? `[[${link}|${displayed}]]`
@@ -1427,7 +1433,7 @@ export class AutoCompleteSuggest
       insertedText,
       {
         ...context.start,
-        ch: this.contextStartCh + word.offset!,
+        ch: this.contextStartCh + (word.offset ?? 0),
       },
       context.end,
     );
