@@ -7,6 +7,8 @@ import { dirname } from "../util/path";
 import { startsSmallLetterOnlyFirst, synonymAliases } from "../util/strings";
 import { pushWord, type WordsByFirstLetter } from "./suggester";
 
+const MAX_FILE_SIZE = 1024 * 1024; // 1MB limit
+
 export class CurrentVaultWordProvider {
   wordsByFirstLetter: WordsByFirstLetter = {};
   private words: Word[] = [];
@@ -46,6 +48,11 @@ export class CurrentVaultWordProvider {
     );
     let wordByValue: { [value: string]: Word } = {};
     for (const path of markdownFilePaths) {
+      const stat = await this.app.vault.adapter.stat(path);
+      if (stat && stat.size > MAX_FILE_SIZE) {
+        console.warn(`Skipping large file: ${path} (${stat.size} bytes)`);
+        continue;
+      }
       const content = await this.app.vault.adapter.read(path);
 
       const tokens = this.tokenizer
