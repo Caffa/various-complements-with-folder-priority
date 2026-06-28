@@ -13,30 +13,7 @@ import { mirrorMap } from "../util/collection-helper";
 import { DEFAULT_HISTORIES_PATH } from "../util/path";
 import { smartLineBreakSplit } from "../util/strings";
 import { TextComponentEvent } from "./settings-helper";
-
-/**
- * Validates an array of regex pattern strings, separating valid patterns from invalid ones.
- * Returns the valid patterns and error messages for any invalid patterns.
- */
-function validateRegexPatterns(patterns: string[]): {
-  valid: string[];
-  errors: string[];
-} {
-  const valid: string[] = [];
-  const errors: string[] = [];
-
-  for (const pattern of patterns) {
-    try {
-      new RegExp(pattern);
-      valid.push(pattern);
-    } catch (e) {
-      const message = e instanceof Error ? e.message : String(e);
-      errors.push(`Invalid regex "${pattern}": ${message}`);
-    }
-  }
-
-  return { valid, errors };
-}
+import { validateRegexPatterns } from "./regex-validation";
 
 export interface Settings {
   // general
