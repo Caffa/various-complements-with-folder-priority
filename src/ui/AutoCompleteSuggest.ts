@@ -97,6 +97,8 @@ export class AutoCompleteSuggest
   >;
   debounceClose: Debouncer<[], void>;
 
+  private debouncedRefreshCurrentFileTokens: Debouncer<[], Promise<void>>;
+
   runManually: boolean;
   completionMode: "prefix" | "partial" | "new";
   selectionLock = false;
@@ -118,6 +120,11 @@ export class AutoCompleteSuggest
   metadataCacheChangeRef: EventRef;
 
   spareEditorSuggestContext: EditorSuggestContext | null = null;
+
+  // Pre-compiled regex patterns (rebuilt on settings change)
+  private compiledSuppressPatterns: RegExp[] = [];
+  private compiledFirstCharPattern: RegExp | null = null;
+  private compiledPhraseSuppressPatterns: RegExp[] = [];
 
   private predictableCycleState: {
     originalToken: string;
@@ -209,12 +216,19 @@ export class AutoCompleteSuggest
     await ins.updateSettings(settings);
     await ins.refreshIntelligentSuggestionPrioritization();
 
-    ins.modifyEventRef = app.vault.on("modify", async (_) => {
-      await ins.refreshCurrentFileTokens();
-      if (ins.selectionHistoryStorage?.shouldPersist) {
-        ins.selectionHistoryStorage.syncPersistVersion();
-        onPersistSelectionHistory();
-      }
+    ins.debouncedRefreshCurrentFileTokens = debounce(
+      async () => {
+        await ins.refreshCurrentFileTokens();
+        if (ins.selectionHistoryStorage?.shouldPersist) {
+          ins.selectionHistoryStorage.syncPersistVersion();
+          onPersistSelectionHistory();
+        }
+      },
+      300,
+    );
+
+    ins.modifyEventRef = app.vault.on("modify", (_) => {
+      ins.debouncedRefreshCurrentFileTokens();
     });
     ins.activeLeafChangeRef = app.workspace.on(
       "active-leaf-change",
@@ -448,6 +462,40 @@ export class AutoCompleteSuggest
 
   async updateSettings(settings: Settings) {
     this.settings = settings;
+
+    // Pre-compile regex patterns on settings change to avoid creating RegExp on every keystroke
+    this.compiledSuppressPatterns = settings.patternsToSuppressTrigger
+      .map((p) => {
+        try {
+          return new RegExp(p);
+        } catch {
+          console.warn(`Various Complements: Invalid suppress trigger pattern skipped: ${p}`);
+          return null;
+        }
+      })
+      .filter((r): r is RegExp => r !== null);
+
+    try {
+      this.compiledFirstCharPattern = new RegExp(
+        `^[${settings.firstCharactersDisableSuggestions}]`,
+      );
+    } catch {
+      console.warn(
+        `Various Complements: Invalid firstCharactersDisableSuggestions pattern skipped: ${settings.firstCharactersDisableSuggestions}`,
+      );
+      this.compiledFirstCharPattern = null;
+    }
+
+    this.compiledPhraseSuppressPatterns = settings.phrasePatternsToSuppressTrigger
+      .map((p) => {
+        try {
+          return new RegExp(`^${p}$`);
+        } catch {
+          console.warn(`Various Complements: Invalid phrase suppress trigger pattern skipped: ${p}`);
+          return null;
+        }
+      })
+      .filter((r): r is RegExp => r !== null);
 
     this.statusBar.setMatchStrategy(this.matchStrategy);
     this.statusBar.setComplementAutomatically(
@@ -1042,8 +1090,8 @@ export class AutoCompleteSuggest
       );
       return null;
     }
-    const suppressedPattern = this.settings.patternsToSuppressTrigger.find(
-      (p) => new RegExp(p).test(currentLineUntilCursor),
+    const suppressedPattern = this.compiledSuppressPatterns.find(
+      (re) => re.test(currentLineUntilCursor),
     );
     if (suppressedPattern) {
       onReturnNull(
@@ -1105,9 +1153,8 @@ export class AutoCompleteSuggest
     }
     this.pastCurrentTokenSeparatedWhiteSpace = currentTokenSeparatedWhiteSpace;
     if (
-      new RegExp(`^[${this.settings.firstCharactersDisableSuggestions}]`).test(
-        currentTokenSeparatedWhiteSpace,
-      )
+      this.compiledFirstCharPattern &&
+      this.compiledFirstCharPattern.test(currentTokenSeparatedWhiteSpace)
     ) {
       onReturnNull(
         `Don't show suggestions for avoiding to conflict with the other commands.`,
