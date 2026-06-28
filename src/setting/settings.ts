@@ -14,6 +14,30 @@ import { DEFAULT_HISTORIES_PATH } from "../util/path";
 import { smartLineBreakSplit } from "../util/strings";
 import { TextComponentEvent } from "./settings-helper";
 
+/**
+ * Validates an array of regex pattern strings, separating valid patterns from invalid ones.
+ * Returns the valid patterns and error messages for any invalid patterns.
+ */
+function validateRegexPatterns(patterns: string[]): {
+  valid: string[];
+  errors: string[];
+} {
+  const valid: string[] = [];
+  const errors: string[] = [];
+
+  for (const pattern of patterns) {
+    try {
+      new RegExp(pattern);
+      valid.push(pattern);
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      errors.push(`Invalid regex "${pattern}": ${message}`);
+    }
+  }
+
+  return { valid, errors };
+}
+
 export interface Settings {
   // general
   strategy: string;
@@ -130,7 +154,7 @@ export interface Settings {
     prettyPrintHistoryFile: boolean;
     // If set 0, it will never remove
     maxDaysToKeepHistory: number;
-    // If set 0, it will never remove
+    // If set 0, it will never remove; defaults to 1000
     maxNumberOfHistoryToKeep: number;
   };
 
@@ -261,7 +285,7 @@ export const DEFAULT_SETTINGS: Settings = {
     historyFilePath: "",
     prettyPrintHistoryFile: false,
     maxDaysToKeepHistory: 30,
-    maxNumberOfHistoryToKeep: 0,
+    maxNumberOfHistoryToKeep: 1000,
   },
 
   // folder priority for internal links
@@ -639,8 +663,15 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
           const el = tc
             .setValue(this.plugin.settings.patternsToSuppressTrigger.join("\n"))
             .onChange(async (value) => {
-              this.plugin.settings.patternsToSuppressTrigger =
-                smartLineBreakSplit(value);
+              const { valid, errors } = validateRegexPatterns(
+                smartLineBreakSplit(value),
+              );
+              if (errors.length > 0) {
+                new Notice(
+                  `Invalid regex pattern(s) removed:\n${errors.join("\n")}`,
+                );
+              }
+              this.plugin.settings.patternsToSuppressTrigger = valid;
               await this.plugin.saveSettings();
             });
           el.inputEl.className =
@@ -660,8 +691,15 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
               this.plugin.settings.phrasePatternsToSuppressTrigger.join("\n"),
             )
             .onChange(async (value) => {
-              this.plugin.settings.phrasePatternsToSuppressTrigger =
-                smartLineBreakSplit(value);
+              const { valid, errors } = validateRegexPatterns(
+                smartLineBreakSplit(value),
+              );
+              if (errors.length > 0) {
+                new Notice(
+                  `Invalid regex pattern(s) removed:\n${errors.join("\n")}`,
+                );
+              }
+              this.plugin.settings.phrasePatternsToSuppressTrigger = valid;
               await this.plugin.saveSettings();
             });
           el.inputEl.className =
