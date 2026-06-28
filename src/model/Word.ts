@@ -94,7 +94,12 @@ export class WordTypeMeta {
   }
 
   static of(type: WordType): WordTypeMeta {
-    return WordTypeMeta._dict[type];
+    const meta = WordTypeMeta._dict[type];
+    if (!meta) {
+      // Fallback: should not happen if all WordType values are registered
+      return WordTypeMeta.CURRENT_VAULT;
+    }
+    return meta;
   }
 
   static values(): WordTypeMeta[] {

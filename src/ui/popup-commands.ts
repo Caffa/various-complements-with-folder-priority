@@ -146,7 +146,7 @@ export function selectWithQueryAlias(
     origin: item.aliasMeta?.origin ?? item.value,
   };
   item.valueForHistory = item.value;
-  item.value = item.query!;
+  item.value = item.query ?? item.value;
 
   return item;
 }
@@ -170,7 +170,7 @@ export function insertAsText(
     item.value,
     {
       ...popup.context.start,
-      ch: popup.contextStartCh + item.offset!,
+      ch: popup.contextStartCh + (item.offset ?? 0),
     },
     popup.context.end,
   );
@@ -250,13 +250,14 @@ export function completion(popup: AutoCompleteSuggest): CommandReturnType {
 
   if (
     !commonPrefixWithToken ||
+    !commonPrefixWithToken.commonPrefix ||
     currentPhrase === commonPrefixWithToken.commonPrefix
   ) {
     return false;
   }
 
   editor.replaceRange(
-    commonPrefixWithToken.commonPrefix!,
+    commonPrefixWithToken.commonPrefix,
     {
       ...popup.context.start,
       ch: popup.contextStartCh + commonPrefixWithToken.token.offset,

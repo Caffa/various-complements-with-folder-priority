@@ -110,11 +110,13 @@ export class AppHelper {
   }
 
   getMarkdownViewInActiveLeaf(): MarkdownView | null {
-    if (!this.unsafeApp.workspace.getActiveViewOfType(MarkdownView)) {
+    const view =
+      this.unsafeApp.workspace.getActiveViewOfType(MarkdownView);
+    if (!view) {
       return null;
     }
 
-    return this.unsafeApp.workspace.activeLeaf!.view as MarkdownView;
+    return view;
   }
 
   getActiveFile(): TFile | null {
@@ -186,13 +188,28 @@ export class AppHelper {
     );
 
     if (markdownLink.startsWith("[[")) {
-      const text = markdownLink.matchAll(/^\[\[(?<text>.+)]]$/g).next().value!
-        .groups?.text!; // dirty error handling
+      const match = markdownLink.matchAll(/^\[\[(?<text>.+)]]$/g).next().value;
+      if (!match?.groups?.text) {
+        console.warn(
+          `Failed to parse wiki link from markdown link: ${markdownLink}`,
+        );
+        return { displayed: linkText, link: linkText };
+      }
+      const text = match.groups.text;
       return { displayed: text, link: text };
     } else {
-      const { displayed, link } = markdownLink
-        .matchAll(/^\[(?<displayed>.+)]\(\<?(?<link>.+)\.md\>?\)$/g)
-        .next().value!.groups!; // dirty error handling
+      const match = markdownLink
+        .matchAll(
+          /^\[(?<displayed>.+)]\(\<?(?<link>.+)\.md\>?\)$/g,
+        )
+        .next().value;
+      if (!match?.groups) {
+        console.warn(
+          `Failed to parse markdown link: ${markdownLink}`,
+        );
+        return { displayed: linkText, link: linkText };
+      }
+      const { displayed, link } = match.groups;
       return { displayed, link };
     }
   }
@@ -303,7 +320,7 @@ export class AppHelper {
     }
 
     const currentKeyLocation = keyLocations
-      .filter((x) => x.index! < currentOffset)
+      .filter((x) => x.index != null && x.index < currentOffset)
       .last();
     if (!currentKeyLocation) {
       return null;
@@ -316,12 +333,12 @@ export class AppHelper {
    * Unsafe method
    */
   isIMEOn(): boolean {
-    if (!this.unsafeApp.workspace.getActiveViewOfType(MarkdownView)) {
+    const markdownView =
+      this.unsafeApp.workspace.getActiveViewOfType(MarkdownView);
+    if (!markdownView) {
       return false;
     }
 
-    const markdownView = this.unsafeApp.workspace.activeLeaf!
-      .view as MarkdownView;
     const cm5or6: any = (markdownView.editor as any).cm;
 
     // cm6

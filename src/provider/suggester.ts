@@ -86,7 +86,7 @@ export function judge(
   if (
     matched.type === "concrete_match" ||
     (matched.type === "fuzzy_match" &&
-      matched.score > options?.fuzzy?.minMatchScore!)
+      matched.score > (options?.fuzzy?.minMatchScore ?? 0))
   ) {
     if (
       queryStartWithUpper &&
@@ -131,7 +131,7 @@ export function judge(
     matchedAlias &&
     (matchedAlias.matched.type === "concrete_match" ||
       (matchedAlias.matched.type === "fuzzy_match" &&
-        matchedAlias.matched.score > options?.fuzzy?.minMatchScore!))
+        matchedAlias.matched.score > (options?.fuzzy?.minMatchScore ?? 0)))
   ) {
     return {
       word: {
@@ -341,8 +341,8 @@ export function suggestWords(
         }
       }
 
-      if (a.value!.length !== b.value!.length) {
-        return a.value!.length > b.value!.length ? 1 : -1;
+      if ((a.value ?? "").length !== (b.value ?? "").length) {
+        return (a.value ?? "").length > (b.value ?? "").length ? 1 : -1;
       }
       if (notSameWordType) {
         return WordTypeMeta.of(bWord.type).priority >
@@ -393,7 +393,7 @@ export function judgeByPartialMatch(
   if (
     startsWithMatched.type === "concrete_match" ||
     (startsWithMatched.type === "fuzzy_match" &&
-      startsWithMatched.score > options?.fuzzy?.minMatchScore!)
+      startsWithMatched.score > (options?.fuzzy?.minMatchScore ?? 0))
   ) {
     if (
       queryStartWithUpper &&
@@ -438,7 +438,7 @@ export function judgeByPartialMatch(
     startsWithAliasMatched &&
     (startsWithAliasMatched.matched.type === "concrete_match" ||
       (startsWithAliasMatched.matched.type === "fuzzy_match" &&
-        startsWithAliasMatched.matched.score > options?.fuzzy?.minMatchScore!))
+        startsWithAliasMatched.matched.score > (options?.fuzzy?.minMatchScore ?? 0)))
   ) {
     return {
       word: {
@@ -457,7 +457,7 @@ export function judgeByPartialMatch(
     includesMatched &&
     (includesMatched.type === "concrete_match" ||
       (includesMatched.type === "fuzzy_match" &&
-        includesMatched.score > options?.fuzzy?.minMatchScore!))
+        includesMatched.score > (options?.fuzzy?.minMatchScore ?? 0)))
   ) {
     return {
       word: {
@@ -483,7 +483,7 @@ export function judgeByPartialMatch(
     matchedAliasIncluded &&
     (matchedAliasIncluded.matched.type === "concrete_match" ||
       (matchedAliasIncluded.matched.type === "fuzzy_match" &&
-        matchedAliasIncluded.matched.score > options?.fuzzy?.minMatchScore!))
+        matchedAliasIncluded.matched.score > (options?.fuzzy?.minMatchScore ?? 0)))
   ) {
     return {
       word: {
@@ -611,14 +611,14 @@ export function suggestWordsByPartialMatch(
         }
       }
 
-      const as = lowerStartsWith(a.value!, query);
-      const bs = lowerStartsWith(b.value!, query);
+      const as = lowerStartsWith(a.value ?? "", query);
+      const bs = lowerStartsWith(b.value ?? "", query);
       if (as !== bs) {
         return bs ? 1 : -1;
       }
 
-      if (a.value!.length !== b.value!.length) {
-        return a.value!.length > b.value!.length ? 1 : -1;
+      if ((a.value ?? "").length !== (b.value ?? "").length) {
+        return (a.value ?? "").length > (b.value ?? "").length ? 1 : -1;
       }
 
       // Folder priority for internal links

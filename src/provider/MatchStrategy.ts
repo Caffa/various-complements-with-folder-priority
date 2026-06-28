@@ -47,7 +47,12 @@ export class MatchStrategy {
   }
 
   static fromName(name: string): MatchStrategy {
-    return MatchStrategy._values.find((x) => x.name === name)!;
+    const strategy = MatchStrategy._values.find((x) => x.name === name);
+    if (!strategy) {
+      console.warn(`Unknown match strategy: ${name}, defaulting to prefix`);
+      return MatchStrategy.PREFIX;
+    }
+    return strategy;
   }
 
   static values(): MatchStrategy[] {

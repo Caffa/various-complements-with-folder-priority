@@ -172,11 +172,12 @@ export function* splitRaw(
 ): IterableIterator<string> {
   let previousIndex = 0;
   for (let r of text.matchAll(regexp)) {
-    if (previousIndex !== r.index!) {
-      yield text.slice(previousIndex, r.index!);
+    const idx = r.index ?? 0;
+    if (previousIndex !== idx) {
+      yield text.slice(previousIndex, idx);
     }
-    yield text[r.index!];
-    previousIndex = r.index! + 1;
+    yield text[idx];
+    previousIndex = idx + 1;
   }
 
   if (previousIndex !== text.length) {
