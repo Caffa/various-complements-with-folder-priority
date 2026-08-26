@@ -29,12 +29,12 @@ import { SpecificMatchStrategy } from "../provider/SpecificMatchStrategy";
 import type { WordsByFirstLetter } from "../provider/suggester";
 import { suggestionUniqPredicate } from "../provider/suggester";
 import type { Settings } from "../setting/settings";
+import { LinkFrequencyStorage } from "../storage/LinkFrequencyStorage";
 import {
   type HitWord,
   SelectionHistoryStorage,
   type SelectionHistoryTree,
 } from "../storage/SelectionHistoryStorage";
-import { LinkFrequencyStorage } from "../storage/LinkFrequencyStorage";
 import { createTokenizer, type Tokenizer } from "../tokenizer/tokenizer";
 import { TokenizeStrategy } from "../tokenizer/TokenizeStrategy";
 import { setEquals, uniqWith } from "../util/collection-helper";
@@ -158,7 +158,10 @@ export class AutoCompleteSuggest
     }
 
     // XXX: Unsafe
-    (this as any).trigger(editor, activeFile, true);
+    const trigger = (this as any).trigger;
+    if (typeof trigger === "function") {
+      trigger(editor, activeFile, true);
+    }
   }
 
   hideCompletion() {
@@ -211,26 +214,30 @@ export class AutoCompleteSuggest
 
     // Initialize link frequency storage for folder priority
     ins.linkFrequencyStorage = new LinkFrequencyStorage(app);
-    if (settings.folderPriority.enabled && settings.folderPriority.limitingFolder) {
-      ins.linkFrequencyStorage.setLimitingFolder(settings.folderPriority.limitingFolder);
+    if (
+      settings.folderPriority.enabled &&
+      settings.folderPriority.limitingFolder
+    ) {
+      ins.linkFrequencyStorage.setLimitingFolder(
+        settings.folderPriority.limitingFolder,
+      );
     }
-    ins.internalLinkWordProvider.setLinkFrequencyStorage(ins.linkFrequencyStorage);
+    ins.internalLinkWordProvider.setLinkFrequencyStorage(
+      ins.linkFrequencyStorage,
+    );
 
     await ins.updateSettings(settings);
     await ins.refreshIntelligentSuggestionPrioritization();
 
-    ins.debouncedRefreshCurrentFileTokens = debounce(
-      async () => {
-        if (ins.unloaded) return;
-        await ins.refreshCurrentFileTokens();
-        if (ins.unloaded) return;
-        if (ins.selectionHistoryStorage?.shouldPersist) {
-          ins.selectionHistoryStorage.syncPersistVersion();
-          onPersistSelectionHistory();
-        }
-      },
-      300,
-    );
+    ins.debouncedRefreshCurrentFileTokens = debounce(async () => {
+      if (ins.unloaded) return;
+      await ins.refreshCurrentFileTokens();
+      if (ins.unloaded) return;
+      if (ins.selectionHistoryStorage?.shouldPersist) {
+        ins.selectionHistoryStorage.syncPersistVersion();
+        onPersistSelectionHistory();
+      }
+    }, 300);
 
     ins.modifyEventRef = app.vault.on("modify", (_) => {
       if (ins.unloaded) return;
@@ -481,7 +488,9 @@ export class AutoCompleteSuggest
         try {
           return new RegExp(p);
         } catch {
-          console.warn(`Various Complements: Invalid suppress trigger pattern skipped: ${p}`);
+          console.warn(
+            `Various Complements: Invalid suppress trigger pattern skipped: ${p}`,
+          );
           return null;
         }
       })
@@ -498,16 +507,19 @@ export class AutoCompleteSuggest
       this.compiledFirstCharPattern = null;
     }
 
-    this.compiledPhraseSuppressPatterns = settings.phrasePatternsToSuppressTrigger
-      .map((p) => {
-        try {
-          return new RegExp(`^${p}$`);
-        } catch {
-          console.warn(`Various Complements: Invalid phrase suppress trigger pattern skipped: ${p}`);
-          return null;
-        }
-      })
-      .filter((r): r is RegExp => r !== null);
+    this.compiledPhraseSuppressPatterns =
+      settings.phrasePatternsToSuppressTrigger
+        .map((p) => {
+          try {
+            return new RegExp(`^${p}$`);
+          } catch {
+            console.warn(
+              `Various Complements: Invalid phrase suppress trigger pattern skipped: ${p}`,
+            );
+            return null;
+          }
+        })
+        .filter((r): r is RegExp => r !== null);
 
     this.statusBar.setMatchStrategy(this.matchStrategy);
     this.statusBar.setComplementAutomatically(
@@ -626,7 +638,8 @@ export class AutoCompleteSuggest
                         enabled: true,
                         currentFilePath:
                           this.appHelper.getActiveFile()?.path ?? null,
-                        limitingFolder: this.settings.folderPriority.limitingFolder,
+                        limitingFolder:
+                          this.settings.folderPriority.limitingFolder,
                       }
                     : undefined,
               },
@@ -729,11 +742,13 @@ export class AutoCompleteSuggest
       )
       .forEach((x) => this.scope.unregister(x));
     // propagateESC
-    this.scope.keys.find((x) => x.key?.toLowerCase() === "escape")!.func =
-      () => {
+    const esc = this.scope.keys.find((x) => x.key?.toLowerCase() === "escape");
+    if (esc) {
+      esc.func = () => {
         this.close();
         return this.settings.propagateEsc;
       };
+    }
 
     // Set hotkeys
     this.setHotKeys(
@@ -1102,8 +1117,8 @@ export class AutoCompleteSuggest
       );
       return null;
     }
-    const suppressedPattern = this.compiledSuppressPatterns.find(
-      (re) => re.test(currentLineUntilCursor),
+    const suppressedPattern = this.compiledSuppressPatterns.find((re) =>
+      re.test(currentLineUntilCursor),
     );
     if (suppressedPattern) {
       onReturnNull(

@@ -6,6 +6,19 @@ import { InputDialog } from "./component/InputDialog";
 
 export type CommandReturnType = boolean | undefined;
 
+function getSelectedSuggestion(popup: AutoCompleteSuggest): Word | null {
+  const suggestions = popup.suggestions;
+  if (
+    !suggestions ||
+    !Array.isArray(suggestions.values) ||
+    suggestions.selectedItem < 0 ||
+    suggestions.selectedItem >= suggestions.values.length
+  ) {
+    return null;
+  }
+  return suggestions.values[suggestions.selectedItem] ?? null;
+}
+
 type CustomAliasSelection = {
   item: InternalLinkWord;
   input: string;
@@ -25,8 +38,8 @@ async function selectWithCustomAliasImpl(
     return null;
   }
 
-  const item = popup.suggestions.values[popup.suggestions.selectedItem];
-  if (item.type !== "internalLink") {
+  const item = getSelectedSuggestion(popup);
+  if (!item || item.type !== "internalLink") {
     return null;
   }
 
@@ -136,8 +149,8 @@ export function selectWithQueryAlias(
     return null;
   }
 
-  const item = popup.suggestions.values[popup.suggestions.selectedItem];
-  if (item.type !== "internalLink") {
+  const item = getSelectedSuggestion(popup);
+  if (!item || item.type !== "internalLink") {
     select(popup, evt);
     return null;
   }
@@ -164,7 +177,11 @@ export function insertAsText(
     return true;
   }
 
-  const item = popup.suggestions.values[popup.suggestions.selectedItem];
+  const item = getSelectedSuggestion(popup);
+  if (!item) {
+    return false;
+  }
+
   const editor = popup.context.editor;
   editor.replaceRange(
     item.value,
@@ -203,11 +220,12 @@ export function selectPrevious(
 }
 
 export function open(popup: AutoCompleteSuggest): CommandReturnType {
-  const item = popup.suggestions.values[popup.suggestions.selectedItem];
+  const item = getSelectedSuggestion(popup);
   if (
-    item.type !== "currentVault" &&
-    item.type !== "internalLink" &&
-    item.type !== "frontMatter"
+    !item ||
+    (item.type !== "currentVault" &&
+      item.type !== "internalLink" &&
+      item.type !== "frontMatter")
   ) {
     return false;
   }

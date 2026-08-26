@@ -12,6 +12,10 @@ import {
 } from "obsidian";
 import { isEOTinCodeBlock } from "./util/strings";
 
+function getCmView(editor: Editor): any | null {
+  return (editor as any).cm ?? null;
+}
+
 interface UnsafeAppInterface {
   isMobile: boolean;
   vault: Vault & {
@@ -110,8 +114,7 @@ export class AppHelper {
   }
 
   getMarkdownViewInActiveLeaf(): MarkdownView | null {
-    const view =
-      this.unsafeApp.workspace.getActiveViewOfType(MarkdownView);
+    const view = this.unsafeApp.workspace.getActiveViewOfType(MarkdownView);
     if (!view) {
       return null;
     }
@@ -199,14 +202,10 @@ export class AppHelper {
       return { displayed: text, link: text };
     } else {
       const match = markdownLink
-        .matchAll(
-          /^\[(?<displayed>.+)]\(\<?(?<link>.+)\.md\>?\)$/g,
-        )
+        .matchAll(/^\[(?<displayed>.+)]\(\<?(?<link>.+)\.md\>?\)$/g)
         .next().value;
       if (!match?.groups) {
-        console.warn(
-          `Failed to parse markdown link: ${markdownLink}`,
-        );
+        console.warn(`Failed to parse markdown link: ${markdownLink}`);
         return { displayed: linkText, link: linkText };
       }
       const { displayed, link } = match.groups;
@@ -339,7 +338,7 @@ export class AppHelper {
       return false;
     }
 
-    const cm5or6: any = (markdownView.editor as any).cm;
+    const cm5or6 = getCmView(markdownView.editor);
 
     // cm6
     if (cm5or6?.inputState?.composing > 0) {
@@ -360,7 +359,11 @@ export class AppHelper {
       return null;
     }
 
-    const cm: any = (markdownView.editor as any).cm;
+    const cm = getCmView(markdownView.editor);
+    if (cm === null) {
+      // The CM view is unavailable.
+      return null;
+    }
     if (!cm?.visibleRanges || !cm?.state?.doc) {
       return null;
     }
