@@ -1,4 +1,4 @@
-# Various Complements Plugin - Agent Documentation
+# Various Complements w/ Folder Priority Plugin - Agent Documentation
 
 ## Project Overview
 

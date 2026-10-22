@@ -17,4 +17,4 @@ export function isURL(path: string): boolean {
 }
 
 export const DEFAULT_HISTORIES_PATH =
-  ".obsidian/plugins/various-complements/histories.json";
+  ".obsidian/plugins/various-complements-with-folder-priority/histories.json";

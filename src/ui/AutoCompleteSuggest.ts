@@ -45,6 +45,7 @@ import {
   equalsAsLiterals,
   isInternalLink,
 } from "../util/strings";
+import { insertWithIsolatedUndoStep } from "./editor-insertion";
 import type { CommandReturnType } from "./popup-commands";
 import * as commands from "./popup-commands";
 import type { ProviderStatusBar } from "./ProviderStatusBar";
@@ -307,7 +308,8 @@ export class AutoCompleteSuggest
         // Advance to next candidate
         state.currentIndex = (state.currentIndex + 1) % state.candidates.length;
         const nextCandidate = state.candidates[state.currentIndex];
-        editor.replaceRange(
+        insertWithIsolatedUndoStep(
+          editor,
           nextCandidate,
           { line: state.line, ch: state.replacementStartCh },
           cursor,
@@ -348,7 +350,8 @@ export class AutoCompleteSuggest
     };
 
     const suggestion = candidates[0];
-    editor.replaceRange(
+    insertWithIsolatedUndoStep(
+      editor,
       suggestion,
       { line: cursor.line, ch: replacementStartCh },
       cursor,
@@ -489,7 +492,7 @@ export class AutoCompleteSuggest
           return new RegExp(p);
         } catch {
           console.warn(
-            `Various Complements: Invalid suppress trigger pattern skipped: ${p}`,
+            `Various Complements w/ Folder Priority: Invalid suppress trigger pattern skipped: ${p}`,
           );
           return null;
         }
@@ -502,7 +505,7 @@ export class AutoCompleteSuggest
       );
     } catch {
       console.warn(
-        `Various Complements: Invalid firstCharactersDisableSuggestions pattern skipped: ${settings.firstCharactersDisableSuggestions}`,
+        `Various Complements w/ Folder Priority: Invalid firstCharactersDisableSuggestions pattern skipped: ${settings.firstCharactersDisableSuggestions}`,
       );
       this.compiledFirstCharPattern = null;
     }
@@ -514,7 +517,7 @@ export class AutoCompleteSuggest
             return new RegExp(`^${p}$`);
           } catch {
             console.warn(
-              `Various Complements: Invalid phrase suppress trigger pattern skipped: ${p}`,
+              `Various Complements w/ Folder Priority: Invalid phrase suppress trigger pattern skipped: ${p}`,
             );
             return null;
           }
@@ -1456,7 +1459,8 @@ export class AutoCompleteSuggest
     }
 
     const editor = context.editor;
-    editor.replaceRange(
+    insertWithIsolatedUndoStep(
+      editor,
       insertedText,
       {
         ...context.start,

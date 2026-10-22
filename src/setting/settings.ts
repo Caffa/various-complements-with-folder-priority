@@ -12,8 +12,8 @@ import { isPresent } from "../types";
 import { mirrorMap } from "../util/collection-helper";
 import { DEFAULT_HISTORIES_PATH } from "../util/path";
 import { smartLineBreakSplit } from "../util/strings";
-import { TextComponentEvent } from "./settings-helper";
 import { validateRegexPatterns } from "./regex-validation";
+import { TextComponentEvent } from "./settings-helper";
 
 export interface Settings {
   // general
@@ -292,7 +292,9 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
 
     containerEl.empty();
 
-    containerEl.createEl("h2", { text: "Various Complements - Settings" });
+    containerEl.createEl("h2", {
+      text: "Various Complements w/ Folder Priority - Settings",
+    });
     await this.addMainSettings(containerEl);
     this.addAppearanceSettings(containerEl);
     this.addKeyCustomizationSettings(containerEl);

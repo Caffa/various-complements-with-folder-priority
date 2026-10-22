@@ -1,10 +1,10 @@
 {
-  "id": "various-complements",
-  "name": "Various Complements",
+  "id": "various-complements-with-folder-priority",
+  "name": "Various Complements w/ Folder Priority",
   "version": "11.3.0",
   "minAppVersion": "0.16.0",
-  "description": "This plugin enables you to complete words like the auto-completion of IDE",
-  "author": "tadashi-aikawa",
+  "description": "A fork of Various Complements with folder-aware priority for auto-completion",
+  "author": "Pamela (tadashi-aikawa)",
   "authorUrl": "https://github.com/tadashi-aikawa",
   "isDesktopOnly": false
 }

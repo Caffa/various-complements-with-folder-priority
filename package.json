@@ -1,7 +1,7 @@
 {
-  "name": "various-complements",
+  "name": "various-complements-with-folder-priority",
   "version": "11.3.0",
-  "description": "This plugin for Obsidian enables you to complete words like the auto-completion of IDE",
+  "description": "A fork of Various Complements with folder-aware priority for auto-completion",
   "main": "main.js",
   "scripts": {
     "dev": "node esbuild.config.mjs",
@@ -17,7 +17,14 @@
   "keywords": [],
   "author": "tadashi-aikawa",
   "license": "MIT",
+  "pnpm": {
+    "overrides": {
+      "@codemirror/state": "6.5.0"
+    }
+  },
   "devDependencies": {
+    "@codemirror/commands": "6.11.1",
+    "@codemirror/state": "6.5.0",
     "@jest/globals": "30.2.0",
     "@tsconfig/svelte": "5.0.6",
     "@typescript/native-preview": "7.0.0-dev.20260117.1",

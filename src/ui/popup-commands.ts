@@ -3,6 +3,7 @@ import type { InternalLinkWord, Word } from "../../src/model/Word";
 import { excludeEmoji, findCommonPrefix } from "../util/strings";
 import type { AutoCompleteSuggest } from "./AutoCompleteSuggest";
 import { InputDialog } from "./component/InputDialog";
+import { insertWithIsolatedUndoStep } from "./editor-insertion";
 
 export type CommandReturnType = boolean | undefined;
 
@@ -183,7 +184,8 @@ export function insertAsText(
   }
 
   const editor = popup.context.editor;
-  editor.replaceRange(
+  insertWithIsolatedUndoStep(
+    editor,
     item.value,
     {
       ...popup.context.start,
@@ -274,7 +276,8 @@ export function completion(popup: AutoCompleteSuggest): CommandReturnType {
     return false;
   }
 
-  editor.replaceRange(
+  insertWithIsolatedUndoStep(
+    editor,
     commonPrefixWithToken.commonPrefix,
     {
       ...popup.context.start,

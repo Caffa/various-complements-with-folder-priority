@@ -64,7 +64,7 @@ if (prod) {
 
   const pluginDir = path.join(
     VAULT_DIR,
-    ".obsidian/plugins/various-complements",
+    ".obsidian/plugins/various-complements-with-folder-priority",
   );
 
   console.log(`📁 Creating ${pluginDir} (if not existed)`);

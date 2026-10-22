@@ -186,7 +186,7 @@ export class CustomDictionaryWordProvider {
       } catch (e) {
         // noinspection ObjectAllocationIgnored
         new Notice(
-          `⚠ Fail to load ${path} -- Various Complements Plugin -- \n ${e}`,
+          `⚠ Fail to load ${path} -- Various Complements w/ Folder Priority Plugin -- \n ${e}`,
           0,
         );
       }

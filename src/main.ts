@@ -168,7 +168,7 @@ export default class VariousComponents extends Plugin {
           this.settingTab.getPluginSettingsAsJsonString(),
         );
         // noinspection ObjectAllocationIgnored
-        new Notice("Copy settings of Various Complements");
+        new Notice("Copy settings of Various Complements w/ Folder Priority");
       },
     });
   }
