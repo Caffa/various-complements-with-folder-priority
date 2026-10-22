@@ -1605,7 +1605,8 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
             await this.plugin.saveSettings({ internalLink: true });
           }).setValue(
             this.plugin.settings.frontMatterKeyForExclusionInternalLink,
-          );        });
+          );
+        });
       },
       { visible: isEnabled },
     );
