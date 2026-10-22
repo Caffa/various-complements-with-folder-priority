@@ -173,6 +173,7 @@ export function suggestWords(
       currentFilePath: string | null;
       limitingFolder: string;
     };
+    excludeInternalLink?: boolean;
   } = {},
 ): Word[] {
   const {
@@ -181,6 +182,7 @@ export function suggestWords(
     providerMinChars,
     globalMinChar,
     folderPriority,
+    excludeInternalLink,
   } = option;
   const queryStartWithUpper = capitalizeFirstLetter(query) === query;
 
@@ -188,6 +190,9 @@ export function suggestWords(
   const shouldIncludeProvider = (
     providerType: keyof NonNullable<typeof providerMinChars>,
   ): boolean => {
+    if (excludeInternalLink && providerType === "internalLink") {
+      return false;
+    }
     if (!providerMinChars) {
       return true;
     }
@@ -522,6 +527,7 @@ export function suggestWordsByPartialMatch(
       currentFilePath: string | null;
       limitingFolder: string;
     };
+    excludeInternalLink?: boolean;
   } = {},
 ): Word[] {
   const {
@@ -530,6 +536,7 @@ export function suggestWordsByPartialMatch(
     providerMinChars,
     globalMinChar,
     folderPriority,
+    excludeInternalLink,
   } = option;
   const queryStartWithUpper = capitalizeFirstLetter(query) === query;
 
@@ -537,6 +544,9 @@ export function suggestWordsByPartialMatch(
   const shouldIncludeProvider = (
     providerType: keyof NonNullable<typeof providerMinChars>,
   ): boolean => {
+    if (excludeInternalLink && providerType === "internalLink") {
+      return false;
+    }
     if (!providerMinChars) {
       return true;
     }

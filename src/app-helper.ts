@@ -10,7 +10,7 @@ import {
   TFile,
   Vault,
 } from "obsidian";
-import { isEOTinCodeBlock } from "./util/strings";
+import { isEOTinCodeBlock, isInsideInlineCode } from "./util/strings";
 
 function getCmView(editor: Editor): any | null {
   return (editor as any).cm ?? null;
@@ -238,6 +238,10 @@ export class AppHelper {
    */
   inCodeBlock(editor: Editor): boolean {
     return isEOTinCodeBlock(this.getContentUntilCursor(editor));
+  }
+
+  inInlineCode(editor: Editor): boolean {
+    return isInsideInlineCode(this.getCurrentLineUntilCursor(editor));
   }
 
   searchPhantomLinks(): { path: string; link: string }[] {

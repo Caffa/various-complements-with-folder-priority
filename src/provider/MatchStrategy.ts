@@ -27,6 +27,7 @@ type Handler = (
       currentFilePath: string | null;
       limitingFolder: string;
     };
+    excludeInternalLink?: boolean;
   },
 ) => Word[];
 
