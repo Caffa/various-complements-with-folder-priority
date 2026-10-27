@@ -8,6 +8,10 @@ export type LinkRankData = {
   currentFileTargets: Map<string, number>;
   currentFileUnresolvedNames: Map<string, number>;
   targetToSourceFolders: Map<string, Map<string, number>>;
+  unresolvedNameToSourceFolders: Map<
+    string /*lowercased link name*/,
+    Map<string /*source folder*/, number>
+  >;
 };
 
 export type LinkRank = {
@@ -39,7 +43,26 @@ export function computeLinkRank(
     const fileTier = rankData.currentFileUnresolvedNames.has(
       word.value.toLowerCase(),
     );
-    return { fileTier };
+
+    let folderProximity: FolderProximityScore | undefined;
+    if (
+      option.enabled &&
+      option.limitingFolder !== "" &&
+      option.currentFilePath !== null
+    ) {
+      const sourceFolders = rankData.unresolvedNameToSourceFolders.get(
+        word.value.toLowerCase(),
+      );
+      if (sourceFolders) {
+        folderProximity = calculateFolderProximity(
+          sourceFolders,
+          option.currentFilePath,
+          option.limitingFolder,
+        );
+      }
+    }
+
+    return { fileTier, folderProximity };
   }
 
   const target = resolveTarget(word);

@@ -24,6 +24,7 @@ type Handler = (
     };
     globalMinChar?: number;
     folderPriority?: FolderPriorityOption;
+    prioritizeAliases?: boolean;
     excludeInternalLink?: boolean;
   },
 ) => Word[];

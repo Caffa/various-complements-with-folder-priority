@@ -72,9 +72,12 @@ src/
 │   ├── CustomDictionaryWordProvider.ts
 │   └── FrontMatterWordProvider.ts
 ├── model/
-│   └── Word.ts                # Word types and priorities
+│   ├── Word.ts                # Word types and priorities
+│   ├── FolderProximity.ts     # Folder-distance math
+│   └── LinkRank.ts            # Per-suggestion rank computation
 ├── storage/
-│   └── SelectionHistoryStorage.ts  # User selection history
+│   ├── SelectionHistoryStorage.ts  # User selection history
+│   └── LinkRankIndex.ts            # Inverted link index + memo
 ├── setting/
 │   └── settings.ts            # Plugin settings
 └── tokenizer/
@@ -92,7 +95,7 @@ export class WordTypeMeta {
 }
 ```
 
-**Modification needed**: Add folder distance score to Word interface.
+**Current state**: `Word` no longer carries folder frequency data. Ranking data is computed per suggestion pass from `LinkRankIndex`.
 
 #### 2. `src/provider/InternalLinkWordProvider.ts`
 Collects internal links from vault:
@@ -103,14 +106,12 @@ export class InternalLinkWordProvider {
   
   refreshWords(option: {...}): void {
     // Gets all markdown files, filters exclusions, creates Word objects
-    // Each Word has: value, type, createdPath, aliases, description
+    // Each Word has: value, type, createdPath, aliases, description, phantom?, aliasMeta?
   }
 }
 ```
 
-**Modification needed**: 
-- Track which files contain each link (frequency per folder)
-- Calculate folder proximity scores
+**Current state**: The provider builds words but does not attach folder scores. Alias handling is split between merged `aliases` (default) and standalone alias words with `aliasMeta` (when `suggestInternalLinkWithAlias` is true).
 
 #### 3. `src/provider/suggester.ts`
 Core suggestion ranking logic:
@@ -120,31 +121,55 @@ export function suggestWords(indexedWords, query, maxNum, option): Word[] {
   // 2. Filter by query match
   // 3. Sort by priority:
   //    - Fuzzy match score
-  //    - Word type priority (frontMatter > internalLink > ...)
+  //    - Front-matter pin
+  //    - Folder/link tier (fork)
   //    - Selection history
   //    - Word length
+  //    - Word type priority
   //    - Alias status
   // 4. Return top N
 }
 ```
 
-**Modification needed**: Add folder proximity to sorting criteria.
+**Current state**: `compareLinkTier` applies `fileTier` + `folderProximity.score` when `folderPriority.enabled` and a `limitingFolder` is set; with an empty `limitingFolder` only `fileTier` applies.
 
 #### 4. `src/storage/SelectionHistoryStorage.ts`
 Tracks user selections for intelligent prioritization:
 ```typescript
 export class SelectionHistoryStorage {
   data: SelectionHistoryTree;  // {hit: {value: {type: {count, lastUpdated}}}}
-  
+
   compare(w1, w2, latestUpdated): -1 | 0 | 1 {
     // Higher recent selections = higher priority
   }
 }
 ```
 
-**Can be used as reference** for implementing folder link frequency storage.
+**Current state**: Independent of folder priority; consumed after the link tier comparator.
 
-#### 5. `src/ui/AutoCompleteSuggest.ts`
+#### 5. `src/model/FolderProximity.ts`
+Pure math for folder distance:
+```typescript
+export function calculateFolderProximity(
+  linkSourceFolders: Map<folder, count>,
+  currentFilePath: string,
+  limitingFolder: string
+): FolderProximityScore;
+```
+
+#### 6. `src/model/LinkRank.ts`
+Per-word rank computation using data from `LinkRankIndex`.
+
+#### 7. `src/storage/LinkRankIndex.ts`
+Inverted index built from `metadataCache.resolvedLinks` / `unresolvedLinks`:
+```typescript
+export class LinkRankIndex {
+  getRankData(currentFilePath: string, limitingFolder: string): LinkRankData;
+  invalidate(): void;
+}
+```
+
+#### 8. `src/ui/AutoCompleteSuggest.ts`
 Main suggestion UI controller:
 ```typescript
 export class AutoCompleteSuggest extends EditorSuggest<Word> {
@@ -158,6 +183,8 @@ export class AutoCompleteSuggest extends EditorSuggest<Word> {
   getSuggestions(context): Word[] | Promise<Word[]> { ... }
 }
 ```
+
+**Current state**: Builds the `folderPriority` option per suggestion call and wires refresh events. `LinkRankIndex` now uses a two-part cache (global vault inversion + per-current-file file tier) and applies renames/deletes/`metadataCache "changed"` differentially via `onRename` / `onDelete` / `markSourceStale` at `getRankData` time; `active-leaf-change` no longer invalidates it. The internal-link word index auto-refreshes about 1 second after any note change (`metadataCache "changed"`, rename, delete, create) and still refreshes on `active-leaf-change` and settings changes.
 
 ### Data Flow
 
@@ -175,118 +202,42 @@ export class AutoCompleteSuggest extends EditorSuggest<Word> {
    ├── Debounced lookup
    ├── Query each provider's wordsByFirstLetter
    ├── Apply match strategy (prefix/partial)
-   ├── Sort by: fuzzy match → type → history → length
+   ├── Build per-pass LinkRank memo from LinkRankIndex
+   ├── Sort by: fuzzy match → frontMatter pin → link tier → history → length → type → alias
    └── Return top N suggestions
 
 4. User selects suggestion
    ├── Insert text at cursor
    └── Increment selection history
 
-5. File saved / vault changed
-   ├── refreshInternalLinkTokens()
-   └── Re-index all providers
+5. File / vault changed
+   ├── `LinkRankIndex` applies renames/deletes/`metadataCache "changed"` differentially (`onRename` / `onDelete` / `markSourceStale`) at the next `getRankData` call, with a 5000-target fallback to full rebuild
+   └── Internal-link words rebuilt on `metadataCache "changed"` (unconditional 1000 ms debounce), rename, delete, create, `active-leaf-change`, "resolved", settings change, or manual reload command
 ```
 
 ---
 
-## Implementation Plan
+## Current State
 
-### Phase 1: Data Structure for Folder Proximity
+The folder-priority implementation has been refactored from the original `LinkFrequencyStorage` + `Word.folderProximity` design to a lighter, per-suggestion rank pass backed by `LinkRankIndex`.
 
-**File**: `src/model/FolderProximity.ts` (new)
+| Stage | Status | What changed |
+|-------|--------|--------------|
+| **Baseline** | committed `f6f86ae` | `LinkRank.ts`, `FolderProximity.ts`, `LinkRankIndex.ts` replace `LinkFrequencyStorage.ts`; `suggester.ts` uses `compareLinkTier`. |
+| **D** | landing now (parallel builder) | Internal-link index auto-refreshes about 1 second after `metadataCache "changed"`, plus on vault `create`/`rename`/`delete`. New commands: **Internal link index status** and **Reload internal link index**. |
+| **E** | this pass | Settings `prioritizeAliases` (default `true`) and `suggestAliasesOnly` (default `false`, requires `suggestInternalLinkWithAlias`) added to `src/setting/settings.ts`. |
+| **F stage 1** | landing now (parallel builder) | `LinkRankIndex` incremental updates, including unresolved (phantom) links; differential `markSourceStale` / `onRename` / `onDelete` with a 5000-target full-rebuild fallback. |
+| **C** | this pass | `folderPriority.enabled` default flipped to `true`. Existing vaults need a `data.json` patch; the deploy patch for the **Novel-Writing** vault sets `enabled: true` and `limitingFolder: "Novel"`. |
 
-```typescript
-export interface FolderProximityScore {
-  level: number;           // 0 = same file, 1 = story folder, etc.
-  frequency: number;        // How many times link appears at this level
-  score: number;           // Combined score
-}
+### Per-folder precompute (stage 2) — NOT implemented
 
-export function calculateFolderProximity(
-  linkPath: string,
-  currentFilePath: string,
-  limitingFolder: string
-): FolderProximityScore;
-```
-
-### Phase 2: Link Frequency Tracker
-
-**File**: `src/storage/LinkFrequencyStorage.ts` (new)
-
-```typescript
-export class LinkFrequencyStorage {
-  // Map: linkPath -> { folderPath -> count }
-  private linkFolderFrequency: Map<string, Map<string, number>>;
-  
-  // Build index incrementally
-  async buildIndex(vault: Vault, limitingFolder: string): Promise<void>;
-  
-  // Update when file modified
-  updateFromFile(file: TFile, links: string[]): void;
-  
-  // Get frequency for link in folder hierarchy
-  getFrequencyInFolder(linkPath: string, folderPath: string): number;
-  
-  // Get all folders where link appears
-  getFoldersForLink(linkPath: string): string[];
-}
-```
-
-### Phase 3: Modify InternalLinkWordProvider
-
-**File**: `src/provider/InternalLinkWordProvider.ts`
-
-Add to refresh:
-```typescript
-// Calculate folder proximity for each link
-for (const word of this.words) {
-  const proximity = calculateFolderProximity(
-    word.createdPath,
-    currentFilePath,  // Need to pass this
-    settings.limitingFolder
-  );
-  word.folderProximity = proximity;
-}
-```
-
-### Phase 4: Modify Suggestion Ranking
-
-**File**: `src/provider/suggester.ts`
-
-Update sort logic:
-```typescript
-candidate.sort((a, b) => {
-  // 1. Fuzzy match
-  if (a.fuzzy !== b.fuzzy) return a.fuzzy ? 1 : -1;
-  
-  // 2. Folder proximity (NEW)
-  if (a.folderProximity && b.folderProximity) {
-    const proximityDiff = b.folderProximity.score - a.folderProximity.score;
-    if (proximityDiff !== 0) return proximityDiff;
-  }
-  
-  // 3. Word type priority
-  // 4. Selection history
-  // 5. Word length
-  // ...
-});
-```
-
-### Phase 5: Settings
-
-**File**: `src/setting/settings.ts`
-
-Add:
-```typescript
-interface Settings {
-  // ... existing settings
-  folderPriority: {
-    enabled: boolean;
-    limitingFolder: string;  // e.g., "Novel"
-    maxLevels: number;       // How many folder levels to consider
-  };
-}
-```
+| Dimension | Estimate |
+|-----------|----------|
+| **What** | Precomputed ranked lists per *bottom-level* folder: leaf folders only, ≥20 files, ≤2000 files, ≤512 lists LRU, top-1000 entries each. |
+| **Estimated build cost** | Lazy: ~0.3–1 ms per folder on first visit. Eager all: ~50–300 ms one-time for a 12k-note vault. |
+| **Estimated runtime gain** | Sub-microsecond per candidate — the live pairwise scoring is already µs-cheap. |
+| **Memory** | ~20–30 MB worst case. |
+| **Recommendation** | Deferred. Stage-1 incremental updates already remove the O(E)-per-change rebuild cost, so the live path is fast enough. Awaiting explicit user greenlight before adding the extra memory/complexity. |
 
 ---
 
@@ -295,39 +246,15 @@ interface Settings {
 ### Challenge
 Scanning all files to count link frequencies is expensive for large vaults.
 
-### Strategy 1: Lazy Indexing
-- Don't index everything on startup
-- Index current folder hierarchy on-demand when file opens
-- Cache results per folder
-
-### Strategy 2: Incremental Updates
-- Listen to `vault.on('modify')` events
-- Only re-index modified file
-- Update link frequencies for that file's links only
-
-### Strategy 3: Background Indexing
-- Use `requestIdleCallback` or debounced background task
-- Index folders progressively while user is idle
-- Store index in plugin data folder
-
-### Strategy 4: Smart Caching
-```typescript
-interface FolderLinkCache {
-  lastIndexed: number;
-  folderPath: string;
-  links: Map<string, number>;  // linkPath -> count
-  files: Set<string>;           // files in this folder
-}
-```
-
-### Strategy 5: Limit Scope
-- Only index files under limiting folder
-- Skip folders matching exclusion patterns
-- Use Obsidian's metadata cache for link extraction (fast)
+### Current Strategy
+- **Inverted index from metadata cache**: `LinkRankIndex` reads `metadataCache.resolvedLinks` / `unresolvedLinks` instead of parsing files.
+- **Lazy + memoized**: `getRankData(currentFilePath, limitingFolder)` keeps a two-part cache — a global vault inversion keyed on `limitingFolder` plus a per-current-file `fileTier` part. Stale sources are applied differentially at lookup time; only `limitingFolder` changes, `invalidate()`, or large diffs trigger a full global rebuild. `active-leaf-change` no longer invalidates the cache.
+- **Incremental updates**: `markSourceStale` / differential rebuild on rename/delete; 5000-target fallback to full rebuild.
+- **Limit scope**: only source folders inside `limitingFolder` are counted; an empty `limitingFolder` falls back to `fileTier`-only ranking.
 
 ### Benchmark Targets
-- Initial index: < 500ms for 1000 files
-- Per-file update: < 50ms
+- Initial rank data build: < 100ms for 10k files
+- Per-change incremental update: < 10ms
 - Suggestion latency: < 100ms (existing)
 
 ---
@@ -336,7 +263,7 @@ interface FolderLinkCache {
 
 ### Unit Tests
 1. `FolderProximity.calculateFolderProximity()` - various path scenarios
-2. `LinkFrequencyStorage` - incremental updates
+2. `LinkRankIndex` - incremental updates and invalidation
 3. Suggestion sorting with folder proximity
 
 ### Integration Tests
@@ -374,10 +301,7 @@ function calcScore(history, latestUpdated) {
 }
 ```
 
-**Folder priority should integrate with this**, not replace it. The combined score could be:
-```
-final_score = folder_proximity_score * 10 + selection_history_score
-```
+**Folder priority integrates with this**, not replaces it. The final ordering is produced by a chain of comparators; link tier (file tier + folder proximity) runs before selection history.
 
 ---
 

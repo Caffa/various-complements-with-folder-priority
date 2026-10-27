@@ -170,6 +170,7 @@ export function suggestWords(
     };
     globalMinChar?: number;
     folderPriority?: FolderPriorityOption;
+    prioritizeAliases?: boolean;
     excludeInternalLink?: boolean;
   } = {},
 ): Word[] {
@@ -179,6 +180,7 @@ export function suggestWords(
     providerMinChars,
     globalMinChar,
     folderPriority,
+    prioritizeAliases,
     excludeInternalLink,
   } = option;
   const queryStartWithUpper = capitalizeFirstLetter(query) === query;
@@ -339,6 +341,25 @@ export function suggestWords(
         return linkTierResult;
       }
 
+      // Alias priority only constrains same-target pairs. In multi-candidate
+      // sorts this pin can form cycles with selection-history, leaving the
+      // ranking order among cycle participants unspecified; no elements are lost.
+      if (
+        prioritizeAliases &&
+        aWord.type === "internalLink" &&
+        bWord.type === "internalLink"
+      ) {
+        const aTarget = aWord.createdPath ?? aWord.aliasMeta?.origin;
+        const bTarget = bWord.createdPath ?? bWord.aliasMeta?.origin;
+        if (
+          aTarget !== undefined &&
+          aTarget === bTarget &&
+          !!aWord.aliasMeta !== !!bWord.aliasMeta
+        ) {
+          return aWord.aliasMeta ? -1 : 1;
+        }
+      }
+
       if (selectionHistoryStorage) {
         const ret = selectionHistoryStorage.compare(
           aWord,
@@ -360,7 +381,13 @@ export function suggestWords(
           : -1;
       }
       if (a.alias !== b.alias) {
-        return a.alias ? 1 : -1;
+        return prioritizeAliases === true
+          ? a.alias
+            ? -1
+            : 1
+          : a.alias
+            ? 1
+            : -1;
       }
       return 0;
     })
@@ -529,6 +556,7 @@ export function suggestWordsByPartialMatch(
     };
     globalMinChar?: number;
     folderPriority?: FolderPriorityOption;
+    prioritizeAliases?: boolean;
     excludeInternalLink?: boolean;
   } = {},
 ): Word[] {
@@ -538,6 +566,7 @@ export function suggestWordsByPartialMatch(
     providerMinChars,
     globalMinChar,
     folderPriority,
+    prioritizeAliases,
     excludeInternalLink,
   } = option;
   const queryStartWithUpper = capitalizeFirstLetter(query) === query;
@@ -657,6 +686,25 @@ export function suggestWordsByPartialMatch(
         return linkTierResult;
       }
 
+      // Alias priority only constrains same-target pairs. In multi-candidate
+      // sorts this pin can form cycles with selection-history, leaving the
+      // ranking order among cycle participants unspecified; no elements are lost.
+      if (
+        prioritizeAliases &&
+        aWord.type === "internalLink" &&
+        bWord.type === "internalLink"
+      ) {
+        const aTarget = aWord.createdPath ?? aWord.aliasMeta?.origin;
+        const bTarget = bWord.createdPath ?? bWord.aliasMeta?.origin;
+        if (
+          aTarget !== undefined &&
+          aTarget === bTarget &&
+          !!aWord.aliasMeta !== !!bWord.aliasMeta
+        ) {
+          return aWord.aliasMeta ? -1 : 1;
+        }
+      }
+
       if (selectionHistoryStorage) {
         const ret = selectionHistoryStorage.compare(
           aWord,
@@ -685,7 +733,13 @@ export function suggestWordsByPartialMatch(
           : -1;
       }
       if (a.alias !== b.alias) {
-        return a.alias ? 1 : -1;
+        return prioritizeAliases === true
+          ? a.alias
+            ? -1
+            : 1
+          : a.alias
+            ? 1
+            : -1;
       }
       return 0;
     })

@@ -7,12 +7,12 @@ Pointer system for jumping to the right file fast. Every entry = path + role + k
 **Tests**: Jest (`jest.config.js`, `esbuild-jest`), colocated `*.test.ts`. `pnpm test` / `pnpm typecheck` (`tsgo -noEmit`).
 
 > [!warning] Repo state at time of writing — read this first
-> The working tree is **dirty**: HEAD is `27e711a`, and there is an **uncommitted refactor** on top of the fork commit `5f3f60a` that replaces the original folder-priority design.
-> `git status --short` shows: `A src/model/LinkRank.ts`, `A src/model/LinkRank.test.ts`, `A src/storage/LinkRankIndex.ts`, `A src/storage/LinkRankIndex.test.ts`, `D src/storage/LinkFrequencyStorage.ts`, plus `M` on `FolderProximity.ts`, `Word.ts`, `InternalLinkWordProvider.ts`, `MatchStrategy.ts`, `SpecificMatchStrategy.ts`, `suggester.ts`, `suggester.test.ts`, `AutoCompleteSuggest.ts`.
-> **This map describes the working tree (on disk), not `5f3f60a`.** `src/storage/LinkFrequencyStorage.ts` still exists in HEAD but is deleted on disk; anything referencing it (`README_FOR_AGENT.md`, `research/performance-anti-patterns-analysis.md:210-212`) is stale.
+> Baseline refactor committed at `f6f86ae` (tree was clean). This map, `README_FOR_AGENT.md`, and `research/performance-anti-patterns-analysis.md` were refreshed on 2026-10-27.
+> **Post-2026-10-27 edits shift line anchors — re-grep before trusting numbers.**
+> `src/storage/LinkFrequencyStorage.ts` is deleted; the shipped design is `LinkRank` + `LinkRankIndex`. Anything referencing `LinkFrequencyStorage` in docs is stale unless kept as an explicit historical marker.
 
 > [!warning] Stale source — `research/performance-anti-patterns-analysis.md`
-> Written pre-fork-integration. Several anchors are now wrong or resolved: it flags the `modify` handler as undebounced (now debounced, `AutoCompleteSuggest.ts:223-236`), and cites `src/storage/LinkFrequencyStorage.ts:69-94` (deleted) and `AutoCompleteSuggest.ts:212-218` (now `233-236`). Its structural claims (unbounded `wordsByFirstLetter`, `selectionHistoryStorage` growth, `suggester` intermediate arrays) still hold. `README_FOR_AGENT.md` is also stale: its "Implementation Plan" (`FolderProximity.ts`, `LinkFrequencyStorage.ts`, `Word.folderProximity`) describes the *old* design; the shipped design is `LinkRank` + `LinkRankIndex`.
+> Written pre-fork-integration. Several anchors are now wrong or resolved: it flags the `modify` handler as undebounced (now debounced, `AutoCompleteSuggest.ts`), and previously cited `src/storage/LinkFrequencyStorage.ts:69-94` (deleted). Its structural claims (unbounded `wordsByFirstLetter`, `selectionHistoryStorage` growth, `suggester` intermediate arrays) still hold. `README_FOR_AGENT.md` now describes the current `LinkRank` + `LinkRankIndex` design.
 
 ---
 
@@ -206,8 +206,8 @@ type LinkRankData = {
 
 `targetToSourceFolders` is the **inverted index**: built by walking `metadataCache.resolvedLinks` (`LinkRankIndex.ts:22-44`), skipping source folders outside `limitingFolder`, summing counts per `(target, sourceFolder)`.
 
-Caches (there are exactly two, both in memory, both non-persistent):
-- `LinkRankIndex.cached` — **single slot**, keyed on `(currentFilePath, limitingFolder)` `LinkRankIndex.ts:14-20`; rebuilt on key change or `invalidate()`; `buildCalls` counter `:6`/`:73` exists for tests.
+Caches (there are exactly two logical caches, both in memory, both non-persistent):
+- `LinkRankIndex` — **two-part cache**: a global vault inversion keyed on `limitingFolder` (`:4-14`) plus a per-current-file `fileTier` part keyed on `currentFilePath` (`:15-20`). Stale sources are applied differentially at `getRankData` time (`:40-42`, `:202-293`) with a 5000-target fallback to full rebuild (`:212-216`); `invalidate()` only clears the cache on `"resolved"` and settings updates. `buildCalls` counter `:29`/`:196` exists for tests.
 - `linkRanks: Map<Word, LinkRank>` — per suggestion pass, discarded each call `suggester.ts:280`, `:598`.
 
 There is **no per-folder cache, no persistence, no plugin data file** for folder scores. `Word` no longer carries folder data (the old `folderPriority`-era `folderFrequency?: Map<string,number>` was removed from `src/model/Word.ts`; see `git diff HEAD -- src/model/Word.ts`).
@@ -224,12 +224,12 @@ There is **no per-folder cache, no persistence, no plugin data file** for folder
 
 | Cache / index | Built at | Refreshed / invalidated by | Anchor |
 |---|---|---|---|
-| **Internal-link word index** | `refreshInternalLinkTokens()` `:943-979` (rebuild-all) | ① `metadataCache "changed"` **only if** `settings.updateInternalLinksOnSave` **and** the file's unresolved-link set changed (50 ms sleep to let the cache settle) `:258-274`; ② `workspace "active-leaf-change"` `:253`; ③ `metadataCache "resolved"` (one-shot, self-`offref`) `:277-288`; ④ settings save with `{internalLink:true}` → `main.ts:206-208`; ⑤ `popup-commands.ts:131-134` after writing an alias. | `AutoCompleteSuggest.ts:258-288`, `943` |
+| **Internal-link word index** | `refreshInternalLinkTokens()` `:943-979` (rebuild-all) | Unconditional 1000 ms debounce on `metadataCache "changed"` (`:272-279`); also `vault "rename"` / `"delete"` / `"create"` (`:243-258`), `workspace "active-leaf-change"` (`:260-269`), `metadataCache "resolved"` one-shot (`:283-294`), settings save with `{internalLink:true}` (`main.ts:252`), and `popup-commands.ts:131-134` after writing an alias. `updateInternalLinksOnSave` is deprecated and no longer gates refreshes. | `AutoCompleteSuggest.ts:234-294`, `943` |
 | **Current-file word index** | `refreshCurrentFileTokens()` `:838-869` (`vault.cachedRead` + full re-tokenize) | **300 ms debounce** on `vault "modify"`: `debouncedRefreshCurrentFileTokens` `:223-231` → `modify` handler `:233-236`; plus `active-leaf-change` `:251`, settings `main.ts:197-199`. Debounce also drives history persistence `:227-230`. | `:223-236` |
 | **Current-vault word index** | `refreshCurrentVaultTokens()` `:871-901` → `CurrentVaultWordProvider.refreshWords()` (reads every md file, 1 MB skip) | `metadataCache "resolved"` `:285`; manual command `main.ts:97-103`; settings `main.ts:200-202`. **No per-file incremental update, no modify handler.** | `:871` |
 | **Custom-dictionary index** | `refreshCustomDictionaryTokens()` `:903-941` | `"resolved"` `:283`; command `main.ts:88-95`; settings `main.ts:203-205`. | `:903` |
 | **Front-matter index** | `refreshFrontMatterTokens()` `:981-1005`; incremental `updateFrontMatterTokenIndex(file)` `:1022-1042` + `updateFrontMatterToken()` `:1044-1064` | `"changed"` → per-file index, then global re-flatten when the changed file is not the active one `:258-264`; `"resolved"` `:281`; `active-leaf-change` `:254`; settings `main.ts:209-211`. | `:258-264` |
-| **`LinkRankIndex` (folder/link rank)** | lazy `getRankData()` on first suggestion after a miss `LinkRankIndex.ts:10-75` | `invalidate()` at `AutoCompleteSuggest.ts:239` (rename), `:243` (delete), `:250` (active-leaf-change), `:260` (any metadata change), `:279` ("resolved"), `:490` (every `updateSettings`); also implicitly by the `(currentFilePath, limitingFolder)` key. | `LinkRankIndex.ts:77-79` |
+| **`LinkRankIndex` (folder/link rank)** | lazy `getRankData()` on first suggestion after a miss `LinkRankIndex.ts:34-81` | Differential apply of `onRename` / `onDelete` / `markSourceStale` at lookup time (`LinkRankIndex.ts:102-121`, `:202-293`), with `MAX_DIFF_TARGETS = 5000` fallback to full rebuild (`:212-216`). `invalidate()` is only called on `metadataCache "resolved"` (`AutoCompleteSuggest.ts:285`) and `updateSettings` (`:497`). `active-leaf-change` no longer invalidates the rank cache. | `LinkRankIndex.ts:34-81` |
 | **Selection history** | `refreshIntelligentSuggestionPrioritization()` `:1007-1020` (loads `histories.json`, `purge()`) | In-memory `increment()` per selection `:1494`; persisted by `main.ts:67-78` (5000 ms debounce, `shouldPersist` gate); rebuilt on settings save `main.ts:212-214`. | `:1007`, `main.ts:67-78` |
 | **Compiled regexes** | `updateSettings()` `:492-529` (`patternsToSuppressTrigger`, `firstCharactersDisableSuggestions`, `phrasePatternsToSuppressTrigger` + `^...$`) | Every `updateSettings` (i.e. every settings save) and `Main`-level `saveSettings`. | `:490-529` |
 | **Tokenizer instance** | `createTokenizer()` in `updateSettings()` `:537-544` | Same. Also pushed into providers at `:545-561`. | `:537-561` |
@@ -249,6 +249,8 @@ All keys live in `src/setting/settings.ts`; consumption points are in `src/ui/Au
 |---|---|---|---|
 | `enableInternalLinkComplement` | `true` | `:947-957` | Hard off-switch: clears the provider's words. |
 | `suggestInternalLinkWithAlias` | `false` | `:960` → provider `:60-108` | Switches alias mode: aliases become standalone words with `aliasMeta` (vs merged into `aliases[]`). |
+| `prioritizeAliases` | `true` | `suggester.ts` | When both a filename and an alias match, rank the alias suggestion first. |
+| `suggestAliasesOnly` | `false` | `InternalLinkWordProvider.ts` | Suppresses bare-filename suggestions for aliased notes; requires `suggestInternalLinkWithAlias`. |
 | `preserveFirstLetterCaseOnInternalLink` | `false` | `:1429-1431` → `:1339-1342` | Applies the typed case to the displayed alias text. |
 | `excludeInternalLinkPathPrefixPatterns` | `""` (newline-separated) | `:470-474`, `:961` → provider `:33-37` | Drops target files by path prefix. |
 | `excludeInternalLinkPathGlobPatterns` | `[]` | `:962-963` → provider `:39-41` (`util/glob.ts`) | Drops target files by glob. |
@@ -256,13 +258,13 @@ All keys live in `src/setting/settings.ts`; consumption points are in `src/ui/Au
 | `excludeExistingInActiveFileInternalLinks` | `false` | `:693-700` | Post-filter via `metadataCache.resolvedLinks[activeFile]`. |
 | `excludeUnresolvedInternalLinks` | `false` | `:970` → provider `:111-113` | Drops all phantom words. |
 | `excludeInternalLinksInCode` | `false` | `:605-609` → `excludeInternalLink` option → `suggester.ts:190, 549` | Suppresses internal links (only) when the cursor is in inline code or a code block; skipped during explicit linkify/partial fallback. |
-| `updateInternalLinksOnSave` | `true` | `:265-273` | Gates the `"changed"`-event re-index (the 50 ms-sleep + unresolved-set comparison). |
+| `updateInternalLinksOnSave` | `true` | `AutoCompleteSuggest.ts` | Deprecated — the internal link index now auto-refreshes about 1 second after any note change. Kept for compatibility. |
 | `insertAliasTransformedFromDisplayedInternalLink.{enabled,beforeRegExp,after}` | `false` | `:1365-1380` | Post-processing of the inserted link text. |
 | `frontMatterKeyForExclusionInternalLink` | `""` | `:967-968` → provider `:43-46` | Excludes target files with a truthy frontmatter flag. |
 | `tagsForExclusionInternalLink` | `[]` | `:969` → provider `:48-53` | Excludes target files carrying any of these tags. |
 | `internalLinkMinNumberOfCharactersForTrigger` | `0` | `:647-648` (per-provider gate), `:440` (min trigger) | Per-provider minimum query length. |
-| **`folderPriority.enabled`** | `false` | `:653` | Turns §4 ranking on/off. |
-| **`folderPriority.limitingFolder`** | `""` | `:658-659`, `:662` | Root folder bounding the proximity calculation; empty ⇒ only `fileTier` applies. |
+| **`folderPriority.enabled`** | `true` | `AutoCompleteSuggest.ts` | Turns §4 ranking on/off. |
+| **`folderPriority.limitingFolder`** | `""` | `AutoCompleteSuggest.ts` | Root folder bounding the proximity calculation; empty ⇒ only `fileTier` applies. |
 | `matchStrategy` | `"prefix"` | `:421-423`, `:156` | Chooses `suggestWords` vs `suggestWordsByPartialMatch` (both implement §4). |
 | `maxNumberOfSuggestions` | `5` | `:630`, `:705` | Slice size (applied before dedupe). |
 | `delayMilliSeconds` | `0` | `:713-714`, `:717-719` | Debounce for `getSuggestions` and close. |
@@ -283,13 +285,13 @@ Runner: `pnpm test` → `jest --coverage` (`package.json`), transform `esbuild-j
 | `src/provider/suggester.test.ts` (2530) | `pushWord` `:16`; `judge` table tests `:57`, `:102`; `suggestWords` `:150-1229`; `suggestWordsByPartialMatch` `:1230-2264`; **`describe("folder priority ranking")` `:2265-2530`** — 8 cases: file-tier beats shorter non-tier (prefix `:2314`, partial `:2331`), same-folder beats out-of-limit source `:2348`, resolved beats phantom `:2368`, history decides on tier tie `:2409`, non-internal pairs unaffected `:2436`, basename+alias share tier `:2465`, `enabled=false` ≡ no option `:2511`. | `suggester.test.ts:2265` |
 | `src/model/FolderProximity.test.ts` (223) | `calculateFolderProximity` only: same folder `:5`, parent `:26`, sibling `:64`, outside limiting folder `:108`, multiple folders `:144`, edge cases `:191`. | `:4` |
 | `src/model/LinkRank.test.ts` (196) | `computeLinkRank` (`:33`): `fileTier` from `createdPath` `:42`-ish, `aliasMeta.origin` fallback `:65`, phantom mismatch `:83`, phantom lowercase hit `:101`, `limitingFolder:""` ⇒ no proximity `:119`, missing inverted entry `:138`, out-of-limit folders filtered `:153`, disabled ⇒ no proximity `:179`. | `:37` |
-| `src/storage/LinkRankIndex.test.ts` (106) | Inversion + count aggregation `:18`, memoization (`buildCalls === 1`) `:33`, rebuild on current-file change `:46`, rebuild after `invalidate()` `:61`, out-of-limiting-folder sources excluded `:75`, `limitingFolder:""` still yields file-tier maps `:89`. | `:17` |
+| `src/storage/LinkRankIndex.test.ts` (~447 lines / 16 tests) | Inversion + count aggregation, two-part memoization (`buildCalls === 1` when only the current file changes), `invalidate()`, out-of-limit-folder filtering, empty-`limitingFolder` file-tier maps, differential `markSourceStale`/`onRename`/`onDelete`, 5000-target fallback, and a 30-step randomized differential-vs-full parity test. | `:113` |
 | `src/ui/editor-insertion.test.ts` (153) | Undo isolation: completion gets its own undo step, next keystroke doesn't merge; control case showing plain insert merges; annotation equality. | `:82-153` |
 | Others (unchanged upstream) | `src/util/strings.test.ts` (544, incl. `isInternalLink` `:231-237`), `collection-helper.test.ts`, `glob.test.ts`, `path.test.ts`, tokenizer tests (`DefaultTokenizer`, `EnglishOnly`, `Japanese`, `Korean`), `src/setting/regex-validation.test.ts`. | — |
 
 **Coverage gaps that matter for this fork**
-- **No `InternalLinkWordProvider.test.ts`** — neither alias mode (`:60-108`) nor the phantom branch (`:111-126`) nor the first-letter/alias indexing (`:129-134`) is tested.
-- **No test of `AutoCompleteSuggest` wiring**: the `folderPriority` option construction (`:653-665`), the `enabled` gate, the refresh triggers (`:233-288`), and `linkRankIndex.invalidate()` calls are all untested (the class is hard to instantiate — `EditorSuggest` + private ctor `:143`).
+- **`InternalLinkWordProvider.test.ts`** now covers alias mode, phantom links, and exclusion filters; `AutoCompleteSuggest` wiring itself remains untested.
+- **No test of `AutoCompleteSuggest` wiring**: the `folderPriority` option construction (`:653-665`), the `enabled` gate, the refresh triggers (`:233-294`), and differential `LinkRankIndex` invalidation calls are all untested (the class is hard to instantiate — `EditorSuggest` + private ctor `:143`).
 - **No test of the `"changed"` → `refreshInternalLinkTokens` gating** logic (`:265-273`), including the `previousLinksCacheInActiveFile` comparison `:269-272`.
 - `suggester.test.ts` never exercises `folderPriority` together with `frontMatter` pinning, nor the `compareLinkTier` path in `suggestWords` for alias-mode words created by the provider.
 
@@ -310,16 +312,16 @@ Runner: `pnpm test` → `jest --coverage` (`package.json`), transform `esbuild-j
 ### Runners-up
 
 - `src/model/FolderProximity.ts` — level math (`calculateFolderLevel` `:71-106`), score formula `:51`, out-of-limit early-outs `:34-36` / `:42-44`.
-- `src/storage/LinkRankIndex.ts` — inversion of `metadataCache.resolvedLinks` `:22-44`; single-slot memo key `:14-20`; `invalidate()` `:77-79`.
+- `src/storage/LinkRankIndex.ts` — inversion of `metadataCache.resolvedLinks` `:123-200`; two-part cache (`global` + `filePart`) `:4-20`; differential stale-source apply `:202-293`; `invalidate()` `:83-89`.
 - `src/app-helper.ts` — `getAliases` `:65-71` (frontmatter aliases), `searchPhantomLinks` `:247-251`, `getResolvedLinks` `:253-259`.
 
 ### Symptom → where to look
 
 | Symptom | First files (in order) |
 |---|---|
-| "Alias-typed internal link does not appear" | `InternalLinkWordProvider.ts:60-108` (is `suggestInternalLinkWithAlias` on? are aliases merged or separate words?) → `suggester.ts:123-147` (does the alias pass run? `minMatchScore`?) → `app-helper.ts:65-71` (is `parseFrontMatterAliases` returning anything? cache stale?) → `AutoCompleteSuggest.ts:258-274` (did an internal-link rebuild actually fire?) |
-| "Alias link appears but ranks wrong / folder priority ignored" | `AutoCompleteSuggest.ts:653-665` (enabled? `limitingFolder` set? active file path resolved?) → `LinkRank.ts:25-27` (`aliasMeta.origin` present for alias words?) → `LinkRankIndex.ts:14-20` (stale single-slot cache?) → `FolderProximity.ts:34-44` (current file outside limiting folder ⇒ everything is 999) |
-| "Per-folder caching / stale folder scores" | `LinkRankIndex.ts:14-20` + `:77-79` (only one slot, keyed by file+folder) → `AutoCompleteSuggest.ts:239,243,250,260,279,490` (every invalidation site) → `LinkRank.ts:71-84` (per-pass `Map<Word,LinkRank>`, thrown away each call) |
+| "Alias-typed internal link does not appear" | `InternalLinkWordProvider.ts:60-108` (is `suggestInternalLinkWithAlias` on? are aliases merged or separate words?) → `suggester.ts:123-147` (does the alias pass run? `minMatchScore`?) → `app-helper.ts:65-71` (is `parseFrontMatterAliases` returning anything? cache stale?) → `AutoCompleteSuggest.ts:234-294` (did a debounced internal-link rebuild actually fire?) |
+| "Alias link appears but ranks wrong / folder priority ignored" | `AutoCompleteSuggest.ts:653-665` (enabled? `limitingFolder` set? active file path resolved?) → `LinkRank.ts:25-27` (`aliasMeta.origin` present for alias words?) → `LinkRankIndex.ts:15-20` (stale two-part cache?) → `FolderProximity.ts:34-44` (current file outside limiting folder ⇒ everything is 999) |
+| "Per-folder caching / stale folder scores" | `LinkRankIndex.ts:4-20` + `:83-89` (two-part cache + explicit invalidate) → `AutoCompleteSuggest.ts:243,248,256,274,285,497` (differential stale sources + explicit invalidate sites) → `LinkRank.ts:71-84` (per-pass `Map<Word,LinkRank>`, thrown away each call) |
 | "Suggestions empty after plugin load" | `AutoCompleteSuggest.ts:189-293` (no eager refresh) → `:277-288` (`"resolved"` one-shot, self-offref) → `:943-957` (`enableInternalLinkComplement`) |
 | "Typing `[[` shows nothing / inserts in wrong place" | `AbstractTokenizer.ts:9` (trim chars) → `AutoCompleteSuggest.ts:1156-1165` (multi-token query) → `:1250-1264` (offsets) → `:1465-1473` (`contextStartCh + word.offset`) |
 | "Rapid typing / auto-save causes lag" | `AutoCompleteSuggest.ts:223-236` (300 ms debounce, current-file only) → `:258-274` (metadata-change rebuild) → `CurrentVaultWordProvider.ts:36-79` (if vault complement enabled) |
@@ -329,7 +331,7 @@ Runner: `pnpm test` → `jest --coverage` (`package.json`), transform `esbuild-j
 ## 9. Open questions / things this map does not settle
 
 - Whether the `"resolved"` event is reliably emitted for plugin load in Obsidian ≥ 1.11.4 — the code assumes a single emission and then unregisters (`AutoCompleteSuggest.ts:287`). Untested.
-- `AutoCompleteSuggest.getSuggestions` uses `sleep(50)` (`:266`) from Obsidian's ambient globals (`node_modules/obsidian/obsidian.d.ts:256` inside the global augmentation) — no import, so any typings change breaks typecheck.
+- The old `sleep(50)` wait before internal-link refreshes was removed; refreshes are now driven by a 1000 ms debounce on `metadataCache "changed"`.
 - `previousLinksCacheInActiveFile` (`:112`) is actually populated from the **changed** file's unresolved links (`:268`), not the active file — name vs. behaviour mismatch, relevant when debugging missed internal-link refreshes.
-- `LinkRankIndex.getRankData` rebuilds the whole vault inversion on **every** current-file change (cache key includes `builtForFilePath`, and `active-leaf-change` also invalidates). Cost is O(all resolved links) per file switch; no per-folder partial index exists.
+- `LinkRankIndex.getRankData` keeps a separate global vault inversion and per-current-file `fileTier` cache. Switching the current file only rebuilds the small `fileTier` part; the global inversion is updated differentially for stale sources and only rebuilt when the `limitingFolder` changes, `invalidate()` is called, or a diff exceeds `MAX_DIFF_TARGETS`.
 - Folder priority only affects ordering **within** internal-link pairs (`suggester.ts:285-287` returns 0 if either word is not `internalLink`), so it can never lift a link above a `currentFile`/`customDictionary` word of the same match quality except through the `fileTier` stage, which is also internal-link-only.

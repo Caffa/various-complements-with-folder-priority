@@ -9,6 +9,7 @@ function buildRankData(overrides: Partial<LinkRankData> = {}): LinkRankData {
     currentFileTargets: new Map(),
     currentFileUnresolvedNames: new Map(),
     targetToSourceFolders: new Map(),
+    unresolvedNameToSourceFolders: new Map(),
     ...overrides,
   };
 }
@@ -114,6 +115,79 @@ describe("computeLinkRank", () => {
     });
 
     expect(result.fileTier).toBe(true);
+  });
+
+  it("computes phantom folderProximity under the same gate as resolved words", () => {
+    const word = buildWord({
+      value: "PhantomName",
+      createdPath: "Novel/Ancient China/Chapter 1.md",
+      phantom: true,
+    });
+    const rankData = buildRankData({
+      unresolvedNameToSourceFolders: new Map([
+        ["phantomname", new Map([["Novel/Ancient China", 3]])],
+      ]),
+    });
+
+    const result = computeLinkRank(word, {
+      ...defaultOption,
+      rankData,
+    });
+
+    expect(result.folderProximity).toStrictEqual({
+      level: 0,
+      frequency: 3,
+      score: 3,
+    });
+  });
+
+  it("omits phantom folderProximity when limitingFolder is empty", () => {
+    const word = buildWord({
+      value: "PhantomName",
+      createdPath: "Novel/Ancient China/Chapter 1.md",
+      phantom: true,
+    });
+    const rankData = buildRankData({
+      unresolvedNameToSourceFolders: new Map([
+        ["phantomname", new Map([["Novel/Ancient China", 3]])],
+      ]),
+    });
+
+    const result = computeLinkRank(word, {
+      enabled: true,
+      currentFilePath: "Novel/Ancient China/Chapter 1.md",
+      limitingFolder: "",
+      rankData,
+    });
+
+    expect(result.fileTier).toBe(false);
+    expect(result.folderProximity).toBeUndefined();
+  });
+
+  it("omits phantom folderProximity when current file is outside limiting folder", () => {
+    const word = buildWord({
+      value: "PhantomName",
+      createdPath: "Novel/Ancient China/Chapter 1.md",
+      phantom: true,
+    });
+    const rankData = buildRankData({
+      unresolvedNameToSourceFolders: new Map([
+        ["phantomname", new Map([["Novel/Ancient China", 3]])],
+      ]),
+    });
+
+    const result = computeLinkRank(word, {
+      enabled: true,
+      currentFilePath: "Resources/Notes/Chapter 1.md",
+      limitingFolder: "Novel",
+      rankData,
+    });
+
+    expect(result.folderProximity).toStrictEqual({
+      level: 999,
+      frequency: 0,
+      score: 0,
+    });
   });
 
   it("omits folderProximity when limitingFolder is empty", () => {

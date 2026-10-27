@@ -72,39 +72,39 @@ const suppressedPattern = this.settings.patternsToSuppressTrigger.find(
 
 ## 3. File Watching Without Debouncing (MEDIUM-HIGH PRIORITY)
 
+> *Updated 2026-10-27: line anchors and behavior changed after the folder-priority refactor. The handlers below are now debounced; see `src/ui/AutoCompleteSuggest.ts` for the current wiring.*
+
 ### Issue: refreshCurrentFileTokens called on every vault modify event
-**File:** `src/ui/AutoCompleteSuggest.ts:212-218`
+**File:** `src/ui/AutoCompleteSuggest.ts` — vault `modify` handler (now debounced ~300 ms)
 
 ```typescript
-// Lines 212-218 - No debouncing on file modify
+// Post-fix state: modify handler is debounced via debouncedRefreshCurrentFileTokens
 ins.modifyEventRef = app.vault.on("modify", async (_) => {
-  await ins.refreshCurrentFileTokens(); // Re-indexes entire file content
-  if (ins.selectionHistoryStorage?.shouldPersist) {
-    ins.selectionHistoryStorage.syncPersistVersion();
-    onPersistSelectionHistory();
-  }
+  debouncedRefreshCurrentFileTokens(); // 300 ms debounce
+  debouncedPersistSelectionHistory();
 });
 ```
 
-**Risk:** Rapid file modifications (e.g., typing, auto-save) trigger multiple expensive re-indexing operations. With auto-save enabled, this could fire multiple times per second.
+**Risk:** Rapid file modifications (e.g., typing, auto-save) can still trigger multiple re-indexing operations if the debounce window is too short.
 
 ### Issue: refreshInternalLinkTokens on metadata cache changes
-**File:** `src/ui/AutoCompleteSuggest.ts:229-242`
+**File:** `src/ui/AutoCompleteSuggest.ts` — metadataCache `changed` handler
 
 ```typescript
-// Lines 229-242 - Called on every metadata cache change
+// Post-fix state: mark source stale + unconditional 1000 ms debounced refresh
 ins.metadataCacheChangeRef = app.metadataCache.on("changed", async (f) => {
   ins.updateFrontMatterTokenIndex(f);
   if (!ins.appHelper.isActiveFile(f)) {
     ins.updateFrontMatterToken();
   }
-  if (settings.updateInternalLinksOnSave) {
-    // ... triggers refreshInternalLinkTokens()
-  }
+  ins.linkRankIndex.markSourceStale(f.path);
+  ins.debouncedRefreshInternalLinkTokens(); // ~1000 ms debounce
 });
 ```
 
-**Risk:** Metadata cache changes fire frequently during Obsidian's background processing.
+The previous `updateInternalLinksOnSave` + `sleep(50)` + unresolved-links-diff gate has been replaced by an unconditional debounced refresh plus differential invalidation in `LinkRankIndex`.
+
+**Risk:** Metadata cache changes still fire frequently; the debounce mitigates but does not eliminate the cost of rebuilding the internal-link word index.
 
 ---
 
@@ -203,13 +203,17 @@ renderSuggestion(word: Word, el: HTMLElement): void {
 
 ## 7. Lack of RequestIdleCallback (LOW PRIORITY)
 
+> *Updated 2026-10-27: `src/storage/LinkFrequencyStorage.ts` was deleted in the folder-priority refactor; the inverted link index now lives in `src/storage/LinkRankIndex.ts`.*
+
 ### Issue: Heavy indexing operations don't use requestIdleCallback
-**Files:** 
+**Files:**
 - `src/ui/AutoCompleteSuggest.ts` - Multiple refresh methods
 - `src/provider/CurrentVaultWordProvider.ts:24-81`
-- `src/storage/LinkFrequencyStorage.ts:69-94`
+- `src/storage/LinkRankIndex.ts` - Differential link-rank rebuilds and 5000-target full-rebuild fallback
 
-**Recommendation:** Background indexing operations like `indexFolder` and `refreshCurrentVaultTokens` should use `requestIdleCallback` when available to avoid blocking user interactions.
+**Current design (`LinkRankIndex.ts`):** Instead of a persistent `LinkFrequencyStorage`, the fork keeps a two-part in-memory cache: a global vault inversion keyed on `limitingFolder` plus a per-current-file `fileTier` part. Source files are marked stale on `metadataCache "changed"`, renames, deletes, and creates; a 5000-target threshold falls back to a full rebuild. The global part is updated differentially at `getRankData` time, and `invalidate()` is only called on `metadataCache "resolved"` and settings updates. `active-leaf-change` no longer invalidates the cache.
+
+**Recommendation:** Background indexing operations like `refreshCurrentVaultTokens` and the `LinkRankIndex` full-rebuild fallback should use `requestIdleCallback` when available to avoid blocking user interactions.
 
 ---
 
@@ -219,11 +223,11 @@ renderSuggestion(word: Word, el: HTMLElement): void {
 |-------------|----------|----------------|-------|
 | Unbounded caches | HIGH | 5 files | 14+ lines |
 | Expensive keystroke ops | HIGH | 3 files | 20+ lines |
-| File watching w/o debounce | MEDIUM-HIGH | 1 file | 3 sections |
+| File watching (now debounced) | MEDIUM-HIGH | 1 file | 2 handlers; see updated section 3 |
 | Synchronous blocking | MEDIUM | 3 files | 30+ lines |
 | Memory leak risks | LOW-MEDIUM | 2 files | 5 lines |
 | UI rendering | LOW | 1 file | 50 lines |
-| No requestIdleCallback | LOW | 4 files | N/A |
+| No requestIdleCallback | LOW | 3 files | N/A; `LinkFrequencyStorage` replaced by `LinkRankIndex` |
 
 ---
 

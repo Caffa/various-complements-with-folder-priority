@@ -98,6 +98,8 @@ export interface Settings {
   // internal link complement
   enableInternalLinkComplement: boolean;
   suggestInternalLinkWithAlias: boolean;
+  prioritizeAliases: boolean;
+  suggestAliasesOnly: boolean;
   preserveFirstLetterCaseOnInternalLink: boolean;
   excludeInternalLinkPathPrefixPatterns: string;
   excludeInternalLinkPathGlobPatterns: string[];
@@ -232,6 +234,8 @@ export const DEFAULT_SETTINGS: Settings = {
   // internal link complement
   enableInternalLinkComplement: true,
   suggestInternalLinkWithAlias: false,
+  prioritizeAliases: true,
+  suggestAliasesOnly: false,
   preserveFirstLetterCaseOnInternalLink: false,
   excludeInternalLinkPathPrefixPatterns: "",
   excludeInternalLinkPathGlobPatterns: [],
@@ -268,8 +272,10 @@ export const DEFAULT_SETTINGS: Settings = {
   },
 
   // folder priority for internal links
+  // NOTE: existing installs need a data.json patch; a blank limitingFolder
+  // degrades to fileTier-only ranking (see src/model/LinkRank.ts:52-56).
   folderPriority: {
-    enabled: false,
+    enabled: true,
     limitingFolder: "",
   },
 
@@ -1384,11 +1390,45 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
             this.plugin.settings.suggestInternalLinkWithAlias,
           ).onChange(async (value) => {
             this.plugin.settings.suggestInternalLinkWithAlias = value;
+            refresh();
             await this.plugin.saveSettings({ internalLink: true });
           });
         });
       },
       { visible: isEnabled },
+    );
+    addFilterableSetting(
+      "Prioritize alias suggestions",
+      "When a note's alias and its filename both match, rank the alias suggestion first.",
+      (setting) => {
+        setting.addToggle((tc) => {
+          tc.setValue(this.plugin.settings.prioritizeAliases).onChange(
+            async (value) => {
+              this.plugin.settings.prioritizeAliases = value;
+              await this.plugin.saveSettings();
+            },
+          );
+        });
+      },
+      { visible: isEnabled },
+    );
+    addFilterableSetting(
+      "Suggest aliases only",
+      "For notes that have aliases, suppress the bare filename suggestion and offer only alias completions. Requires 'Suggest with an alias'.",
+      (setting) => {
+        setting.addToggle((tc) => {
+          tc.setValue(this.plugin.settings.suggestAliasesOnly).onChange(
+            async (value) => {
+              this.plugin.settings.suggestAliasesOnly = value;
+              await this.plugin.saveSettings({ internalLink: true });
+            },
+          );
+        });
+      },
+      {
+        visible: () =>
+          isEnabled() && this.plugin.settings.suggestInternalLinkWithAlias,
+      },
     );
     addFilterableSetting(
       "Preserve first-letter case",
@@ -1407,7 +1447,7 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
     );
     addFilterableSetting(
       "Update internal links on save",
-      null,
+      "Deprecated — the internal link index now auto-refreshes about 1 second after any note change, so edits made directly from the frontmatter no longer need a save/toggle. The setting is kept for compatibility and remains harmless.",
       (setting) => {
         setting.addToggle((tc) => {
           tc.setValue(this.plugin.settings.updateInternalLinksOnSave).onChange(

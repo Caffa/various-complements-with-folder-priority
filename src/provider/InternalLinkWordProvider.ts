@@ -6,9 +6,17 @@ import { isMatchedGlobPatterns } from "../util/glob";
 import { synonymAliases } from "../util/strings";
 import { pushWord, type WordsByFirstLetter } from "./suggester";
 
+export type InternalLinkRefreshStats = {
+  at: number;
+  ms: number;
+  resolvedWordCount: number;
+  phantomWordCount: number;
+};
+
 export class InternalLinkWordProvider {
   private words: Word[] = [];
   wordsByFirstLetter: WordsByFirstLetter = {};
+  lastRefresh?: InternalLinkRefreshStats;
 
   constructor(
     private app: App,
@@ -17,6 +25,7 @@ export class InternalLinkWordProvider {
 
   refreshWords(option: {
     wordAsInternalLinkAlias: boolean;
+    suppressBasenameWhenAliases: boolean;
     excludePathPrefixPatterns: string[];
     excludePathGlobPatterns: string[];
     makeSynonymAboutEmoji: boolean;
@@ -25,51 +34,42 @@ export class InternalLinkWordProvider {
     tagsForExclusion: string[];
     excludeUnresolvedLinks: boolean;
   }): void {
+    const start = performance.now();
     this.clearWords();
 
-    const resolvedInternalLinkWords: InternalLinkWord[] = this.app.vault
-      .getMarkdownFiles()
-      .filter((f) => {
-        if (
-          option.excludePathPrefixPatterns.some((x) => f.path.startsWith(x))
-        ) {
-          return false;
-        }
-
-        if (isMatchedGlobPatterns(f.path, option.excludePathGlobPatterns)) {
-          return false;
-        }
-
-        const fmkfc = option.frontMatterKeyForExclusion;
-        if (fmkfc && this.appHelper.getBoolFrontMatter(f, fmkfc)) {
-          return false;
-        }
-
-        if (option.tagsForExclusion.length > 0) {
-          const tags = this.appHelper.getTagsProperty(f);
-          if (hasSameElement(option.tagsForExclusion, tags)) {
+    try {
+      const resolvedInternalLinkWords: InternalLinkWord[] = this.app.vault
+        .getMarkdownFiles()
+        .filter((f) => {
+          if (
+            option.excludePathPrefixPatterns.some((x) => f.path.startsWith(x))
+          ) {
             return false;
           }
-        }
 
-        return true;
-      })
-      .flatMap((x) => {
-        const aliases = this.appHelper.getAliases(x);
+          if (isMatchedGlobPatterns(f.path, option.excludePathGlobPatterns)) {
+            return false;
+          }
 
-        if (option.wordAsInternalLinkAlias) {
-          return [
-            {
-              value: x.basename,
-              type: "internalLink" as const,
-              createdPath: x.path,
-              aliases: synonymAliases(x.basename, {
-                emoji: option.makeSynonymAboutEmoji,
-                accentsDiacritics: option.makeSynonymAboutAccentsDiacritics,
-              }),
-              description: x.path,
-            },
-            ...aliases.map((a) => ({
+          const fmkfc = option.frontMatterKeyForExclusion;
+          if (fmkfc && this.appHelper.getBoolFrontMatter(f, fmkfc)) {
+            return false;
+          }
+
+          if (option.tagsForExclusion.length > 0) {
+            const tags = this.appHelper.getTagsProperty(f);
+            if (hasSameElement(option.tagsForExclusion, tags)) {
+              return false;
+            }
+          }
+
+          return true;
+        })
+        .flatMap((x) => {
+          const aliases = this.appHelper.getAliases(x);
+
+          if (option.wordAsInternalLinkAlias) {
+            const aliasWords = aliases.map((a) => ({
               value: a,
               type: "internalLink" as const,
               createdPath: x.path,
@@ -81,56 +81,87 @@ export class InternalLinkWordProvider {
               aliasMeta: {
                 origin: x.path,
               },
-            })),
-          ] as InternalLinkWord[];
-        } else {
-          return [
-            {
-              value: x.basename,
-              type: "internalLink" as const,
-              createdPath: x.path,
-              aliases: [
-                ...synonymAliases(x.basename, {
+            }));
+            if (option.suppressBasenameWhenAliases && aliases.length > 0) {
+              return aliasWords as InternalLinkWord[];
+            }
+            return [
+              {
+                value: x.basename,
+                type: "internalLink" as const,
+                createdPath: x.path,
+                aliases: synonymAliases(x.basename, {
                   emoji: option.makeSynonymAboutEmoji,
                   accentsDiacritics: option.makeSynonymAboutAccentsDiacritics,
                 }),
-                ...aliases,
-                ...aliases.flatMap((al) =>
-                  synonymAliases(al, {
+                description: x.path,
+              },
+              ...aliasWords,
+            ] as InternalLinkWord[];
+          } else {
+            return [
+              {
+                value: x.basename,
+                type: "internalLink" as const,
+                createdPath: x.path,
+                aliases: [
+                  ...synonymAliases(x.basename, {
                     emoji: option.makeSynonymAboutEmoji,
                     accentsDiacritics: option.makeSynonymAboutAccentsDiacritics,
                   }),
-                ),
-              ],
-              description: x.path,
-            },
-          ] as InternalLinkWord[];
-        }
-      });
+                  ...aliases,
+                  ...aliases.flatMap((al) =>
+                    synonymAliases(al, {
+                      emoji: option.makeSynonymAboutEmoji,
+                      accentsDiacritics:
+                        option.makeSynonymAboutAccentsDiacritics,
+                    }),
+                  ),
+                ],
+                description: x.path,
+              },
+            ] as InternalLinkWord[];
+          }
+        });
 
-    const unresolvedInternalLinkWords: InternalLinkWord[] =
-      option.excludeUnresolvedLinks
-        ? []
-        : this.appHelper.searchPhantomLinks().map(({ path, link }) => {
-            return {
-              value: link,
-              type: "internalLink" as const,
-              createdPath: path,
-              aliases: synonymAliases(link, {
-                emoji: option.makeSynonymAboutEmoji,
-                accentsDiacritics: option.makeSynonymAboutAccentsDiacritics,
-              }),
-              description: `Appeared in -> ${path}`,
-              phantom: true,
-            };
-          });
+      const unresolvedInternalLinkWords: InternalLinkWord[] =
+        option.excludeUnresolvedLinks
+          ? []
+          : this.appHelper.searchPhantomLinks().map(({ path, link }) => {
+              return {
+                value: link,
+                type: "internalLink" as const,
+                createdPath: path,
+                aliases: synonymAliases(link, {
+                  emoji: option.makeSynonymAboutEmoji,
+                  accentsDiacritics: option.makeSynonymAboutAccentsDiacritics,
+                }),
+                description: `Appeared in -> ${path}`,
+                phantom: true,
+              };
+            });
 
-    this.words = [...resolvedInternalLinkWords, ...unresolvedInternalLinkWords];
-    for (const word of this.words) {
-      pushWord(this.wordsByFirstLetter, word.value.charAt(0), word);
-      word.aliases?.forEach((a) =>
-        pushWord(this.wordsByFirstLetter, a.charAt(0), word),
-      );
+      this.words = [
+        ...resolvedInternalLinkWords,
+        ...unresolvedInternalLinkWords,
+      ];
+      for (const word of this.words) {
+        pushWord(this.wordsByFirstLetter, word.value.charAt(0), word);
+        word.aliases?.forEach((a) =>
+          pushWord(this.wordsByFirstLetter, a.charAt(0), word),
+        );
+      }
+
+      this.lastRefresh = {
+        at: Date.now(),
+        ms: performance.now() - start,
+        resolvedWordCount: resolvedInternalLinkWords.length,
+        phantomWordCount: unresolvedInternalLinkWords.length,
+      };
+    } catch (e) {
+      // Leave lastRefresh unchanged on failure so status never reports stale
+      // counts; clearWords() has already emptied the index.
+      throw e;
     }
   }
 

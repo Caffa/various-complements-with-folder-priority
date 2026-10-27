@@ -2,8 +2,32 @@ import type { App } from "obsidian";
 import type { LinkRankData } from "../model/LinkRank";
 
 export class LinkRankIndex {
-  private cached?: LinkRankData;
+  private global?: {
+    builtForLimitingFolder: string;
+    targetToSourceFolders: Map<string, Map<string, number>>;
+    unresolvedNameToSourceFolders: Map<string, Map<string, number>>;
+    sourceContributions: Map<
+      string,
+      { resolved: Map<string, number>; unresolved: Map<string, number> }
+    >;
+    version: number;
+  };
+  private filePart?: {
+    builtForFilePath: string | null;
+    currentFileTargets: Map<string, number>;
+    currentFileUnresolvedNames: Map<string, number>;
+    version: number;
+  };
+  private filePartDirty = false;
+  private staleSources: Set<string> = new Set();
+  private lastReturned?: {
+    data: LinkRankData;
+    globalVersion: number;
+    filePartVersion: number;
+    filePath: string | null;
+  };
   buildCalls = 0;
+  lastBuildMs?: number;
 
   constructor(private app: App) {}
 
@@ -11,25 +35,119 @@ export class LinkRankIndex {
     currentFilePath: string | null,
     limitingFolder: string,
   ): LinkRankData {
+    if (!this.global || this.global.builtForLimitingFolder !== limitingFolder) {
+      this.rebuild(limitingFolder);
+    } else if (this.staleSources.size > 0 && limitingFolder !== "") {
+      this.applyStaleSources(limitingFolder);
+    } else if (this.staleSources.size > 0) {
+      this.staleSources.clear();
+      this.filePartDirty = true;
+    }
+    const global = this.global!;
+
     if (
-      this.cached &&
-      this.cached.builtForFilePath === currentFilePath &&
-      this.cached.builtForLimitingFolder === limitingFolder
+      !this.filePart ||
+      this.filePart.builtForFilePath !== currentFilePath ||
+      this.filePartDirty
     ) {
-      return this.cached;
+      this.rebuildFilePart(currentFilePath);
+    }
+    const filePart = this.filePart!;
+
+    if (
+      this.lastReturned &&
+      this.lastReturned.globalVersion === global.version &&
+      this.lastReturned.filePartVersion === filePart.version &&
+      this.lastReturned.filePath === currentFilePath
+    ) {
+      return this.lastReturned.data;
     }
 
+    const data: LinkRankData = {
+      builtForFilePath: currentFilePath,
+      builtForLimitingFolder: limitingFolder,
+      currentFileTargets: filePart.currentFileTargets,
+      currentFileUnresolvedNames: filePart.currentFileUnresolvedNames,
+      targetToSourceFolders: global.targetToSourceFolders,
+      unresolvedNameToSourceFolders: global.unresolvedNameToSourceFolders,
+    };
+    this.lastReturned = {
+      data,
+      globalVersion: global.version,
+      filePartVersion: filePart.version,
+      filePath: currentFilePath,
+    };
+    return data;
+  }
+
+  invalidate(): void {
+    this.global = undefined;
+    this.filePart = undefined;
+    this.filePartDirty = false;
+    this.staleSources.clear();
+    this.lastReturned = undefined;
+  }
+
+  markSourceStale(path: string): void {
+    if (!this.global) {
+      return;
+    }
+    this.removeSourceContributions(path);
+    this.staleSources.add(path);
+    if (this.filePart?.builtForFilePath === path) {
+      this.filePartDirty = true;
+    }
+  }
+
+  onRename(oldPath: string, newPath: string): void {
+    if (!this.global) {
+      return;
+    }
+    this.removeSourceContributions(oldPath);
+    this.staleSources.add(newPath);
+    if (this.filePart?.builtForFilePath === oldPath) {
+      this.filePartDirty = true;
+    }
+  }
+
+  onDelete(path: string): void {
+    if (!this.global) {
+      return;
+    }
+    this.removeSourceContributions(path);
+    if (this.filePart?.builtForFilePath === path) {
+      this.filePartDirty = true;
+    }
+  }
+
+  private rebuild(limitingFolder: string): void {
+    const start = performance.now();
     const resolvedLinks = this.app.metadataCache.resolvedLinks;
     const unresolvedLinks = this.app.metadataCache.unresolvedLinks;
 
     const targetToSourceFolders = new Map<string, Map<string, number>>();
+    const unresolvedNameToSourceFolders = new Map<
+      string,
+      Map<string, number>
+    >();
+    const sourceContributions = new Map<
+      string,
+      { resolved: Map<string, number>; unresolved: Map<string, number> }
+    >();
+
     if (limitingFolder !== "") {
       for (const [sourcePath, targets] of Object.entries(resolvedLinks)) {
         const sourceFolder = this.getParentFolder(sourcePath);
         if (!this.isWithinLimitingFolder(sourceFolder, limitingFolder)) {
           continue;
         }
+        const resolved = new Map<string, number>();
+        sourceContributions.set(sourcePath, {
+          resolved,
+          unresolved: new Map(),
+        });
         for (const [targetPath, count] of Object.entries(targets)) {
+          resolved.set(targetPath, count);
           let folderMap = targetToSourceFolders.get(targetPath);
           if (folderMap === undefined) {
             folderMap = new Map<string, number>();
@@ -41,9 +159,199 @@ export class LinkRankIndex {
           );
         }
       }
+
+      for (const [sourcePath, unresolved] of Object.entries(unresolvedLinks)) {
+        const sourceFolder = this.getParentFolder(sourcePath);
+        if (!this.isWithinLimitingFolder(sourceFolder, limitingFolder)) {
+          continue;
+        }
+        let contrib = sourceContributions.get(sourcePath);
+        if (contrib === undefined) {
+          contrib = { resolved: new Map(), unresolved: new Map() };
+          sourceContributions.set(sourcePath, contrib);
+        }
+        for (const [name, count] of Object.entries(unresolved)) {
+          const lowerName = name.toLowerCase();
+          contrib.unresolved.set(lowerName, count);
+          let folderMap = unresolvedNameToSourceFolders.get(lowerName);
+          if (folderMap === undefined) {
+            folderMap = new Map<string, number>();
+            unresolvedNameToSourceFolders.set(lowerName, folderMap);
+          }
+          folderMap.set(
+            sourceFolder,
+            (folderMap.get(sourceFolder) ?? 0) + count,
+          );
+        }
+      }
     }
 
+    this.global = {
+      builtForLimitingFolder: limitingFolder,
+      targetToSourceFolders,
+      unresolvedNameToSourceFolders,
+      sourceContributions,
+      version: (this.global?.version ?? 0) + 1,
+    };
+    this.buildCalls++;
+    this.lastBuildMs = performance.now() - start;
+    this.staleSources.clear();
+    this.filePartDirty = true;
+  }
+
+  private applyStaleSources(limitingFolder: string): void {
+    if (this.staleSources.size === 0 || !this.global) {
+      return;
+    }
+    if (limitingFolder === "") {
+      this.staleSources.clear();
+      this.filePartDirty = true;
+      return;
+    }
+
+    const MAX_DIFF_TARGETS = 5000;
+    if (this.staleSources.size > MAX_DIFF_TARGETS) {
+      this.rebuild(limitingFolder);
+      return;
+    }
+
+    const resolvedLinks = this.app.metadataCache.resolvedLinks;
+    const unresolvedLinks = this.app.metadataCache.unresolvedLinks;
+
+    for (const sourcePath of this.staleSources) {
+      const resolvedCount = Object.keys(resolvedLinks[sourcePath] ?? {}).length;
+      const unresolvedCount = Object.keys(
+        unresolvedLinks[sourcePath] ?? {},
+      ).length;
+      if (
+        resolvedCount > MAX_DIFF_TARGETS ||
+        unresolvedCount > MAX_DIFF_TARGETS
+      ) {
+        this.rebuild(limitingFolder);
+        return;
+      }
+    }
+
+    for (const sourcePath of this.staleSources) {
+      this.removeSourceContributions(sourcePath);
+
+      const sourceFolder = this.getParentFolder(sourcePath);
+      const withinLimit =
+        limitingFolder === "" ||
+        this.isWithinLimitingFolder(sourceFolder, limitingFolder);
+      if (!withinLimit) {
+        continue;
+      }
+
+      const resolved = resolvedLinks[sourcePath];
+      const unresolved = unresolvedLinks[sourcePath];
+      if (!resolved && !unresolved) {
+        continue;
+      }
+
+      const contrib = {
+        resolved: new Map<string, number>(),
+        unresolved: new Map<string, number>(),
+      };
+      this.global.sourceContributions.set(sourcePath, contrib);
+
+      if (resolved) {
+        for (const [targetPath, count] of Object.entries(resolved)) {
+          contrib.resolved.set(targetPath, count);
+          let folderMap = this.global.targetToSourceFolders.get(targetPath);
+          if (folderMap === undefined) {
+            folderMap = new Map<string, number>();
+            this.global.targetToSourceFolders.set(targetPath, folderMap);
+          }
+          folderMap.set(
+            sourceFolder,
+            (folderMap.get(sourceFolder) ?? 0) + count,
+          );
+        }
+      }
+
+      if (unresolved) {
+        for (const [name, count] of Object.entries(unresolved)) {
+          const lowerName = name.toLowerCase();
+          contrib.unresolved.set(lowerName, count);
+          let folderMap =
+            this.global.unresolvedNameToSourceFolders.get(lowerName);
+          if (folderMap === undefined) {
+            folderMap = new Map<string, number>();
+            this.global.unresolvedNameToSourceFolders.set(lowerName, folderMap);
+          }
+          folderMap.set(
+            sourceFolder,
+            (folderMap.get(sourceFolder) ?? 0) + count,
+          );
+        }
+      }
+    }
+
+    this.staleSources.clear();
+    this.filePartDirty = true;
+    this.global.version++;
+  }
+
+  private removeSourceContributions(path: string): void {
+    if (!this.global) {
+      return;
+    }
+    const old = this.global.sourceContributions.get(path);
+    if (!old) {
+      return;
+    }
+
+    const sourceFolder = this.getParentFolder(path);
+    const limitingFolder = this.global.builtForLimitingFolder;
+    const withinLimit =
+      limitingFolder === "" ||
+      this.isWithinLimitingFolder(sourceFolder, limitingFolder);
+    if (!withinLimit) {
+      this.global.sourceContributions.delete(path);
+      return;
+    }
+
+    for (const [targetPath, count] of old.resolved) {
+      const folderMap = this.global.targetToSourceFolders.get(targetPath);
+      if (folderMap) {
+        const newCount = (folderMap.get(sourceFolder) ?? 0) - count;
+        if (newCount <= 0) {
+          folderMap.delete(sourceFolder);
+        } else {
+          folderMap.set(sourceFolder, newCount);
+        }
+        if (folderMap.size === 0) {
+          this.global.targetToSourceFolders.delete(targetPath);
+        }
+      }
+    }
+
+    for (const [lowerName, count] of old.unresolved) {
+      const folderMap =
+        this.global.unresolvedNameToSourceFolders.get(lowerName);
+      if (folderMap) {
+        const newCount = (folderMap.get(sourceFolder) ?? 0) - count;
+        if (newCount <= 0) {
+          folderMap.delete(sourceFolder);
+        } else {
+          folderMap.set(sourceFolder, newCount);
+        }
+        if (folderMap.size === 0) {
+          this.global.unresolvedNameToSourceFolders.delete(lowerName);
+        }
+      }
+    }
+
+    this.global.sourceContributions.delete(path);
+  }
+
+  private rebuildFilePart(currentFilePath: string | null): void {
+    const resolvedLinks = this.app.metadataCache.resolvedLinks;
+    const unresolvedLinks = this.app.metadataCache.unresolvedLinks;
+
     const currentFileTargets = new Map<string, number>();
+    const currentFileUnresolvedNames = new Map<string, number>();
     if (currentFilePath !== null) {
       const targets = resolvedLinks[currentFilePath];
       if (targets !== undefined) {
@@ -51,10 +359,6 @@ export class LinkRankIndex {
           currentFileTargets.set(target, count);
         }
       }
-    }
-
-    const currentFileUnresolvedNames = new Map<string, number>();
-    if (currentFilePath !== null) {
       const unresolved = unresolvedLinks[currentFilePath];
       if (unresolved !== undefined) {
         for (const [name, count] of Object.entries(unresolved)) {
@@ -63,19 +367,13 @@ export class LinkRankIndex {
       }
     }
 
-    this.cached = {
+    this.filePart = {
       builtForFilePath: currentFilePath,
-      builtForLimitingFolder: limitingFolder,
       currentFileTargets,
       currentFileUnresolvedNames,
-      targetToSourceFolders,
+      version: (this.filePart?.version ?? 0) + 1,
     };
-    this.buildCalls++;
-    return this.cached;
-  }
-
-  invalidate(): void {
-    this.cached = undefined;
+    this.filePartDirty = false;
   }
 
   private getParentFolder(filePath: string): string {

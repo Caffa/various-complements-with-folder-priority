@@ -2282,6 +2282,7 @@ describe("folder priority ranking", () => {
           new Map(folders),
         ]),
       ),
+      unresolvedNameToSourceFolders: new Map(),
     };
   }
 
@@ -2526,5 +2527,172 @@ describe("folder priority ranking", () => {
     expect(withDisabled.map((x) => x.value)).toStrictEqual(
       withoutOption.map((x) => x.value),
     );
+  });
+});
+
+describe("alias priority", () => {
+  // Use same-length basename and alias so that length does not hide the
+  // same-target alias-priority tie-breaker.
+  const createIndexedWords = (): IndexedWords => ({
+    currentFile: {},
+    currentVault: {},
+    customDictionary: {},
+    internalLink: {
+      j: [
+        {
+          value: "John",
+          type: "internalLink",
+          createdPath: "Characters/John.md",
+        },
+        {
+          value: "Jony",
+          type: "internalLink",
+          createdPath: "Characters/John.md",
+          aliasMeta: { origin: "Characters/John.md" },
+        },
+      ],
+    },
+    frontMatter: {},
+  });
+
+  test("prefix: prioritizeAliases true puts same-target alias before basename", () => {
+    const indexedWords = createIndexedWords();
+    const actual = suggestWords(indexedWords, "j", 10, {
+      prioritizeAliases: true,
+    });
+    expect(actual.map((x) => x.value)).toStrictEqual(["Jony", "John"]);
+  });
+
+  test("prefix: prioritizeAliases false keeps old alias tie-break", () => {
+    const indexedWords = createIndexedWords();
+    const actual = suggestWords(indexedWords, "j", 10, {
+      prioritizeAliases: false,
+    });
+    expect(actual.map((x) => x.value)).toStrictEqual(["John", "Jony"]);
+  });
+
+  test("prefix: absent prioritizeAliases keeps old alias tie-break", () => {
+    const indexedWords = createIndexedWords();
+    const actual = suggestWords(indexedWords, "j", 10);
+    expect(actual.map((x) => x.value)).toStrictEqual(["John", "Jony"]);
+  });
+
+  test("partial: prioritizeAliases true puts same-target alias before basename", () => {
+    const indexedWords = createIndexedWords();
+    const actual = suggestWordsByPartialMatch(indexedWords, "jo", 10, {
+      prioritizeAliases: true,
+    });
+    expect(actual.map((x) => x.value)).toStrictEqual(["Jony", "John"]);
+  });
+
+  test("partial: prioritizeAliases false keeps old alias tie-break", () => {
+    const indexedWords = createIndexedWords();
+    const actual = suggestWordsByPartialMatch(indexedWords, "jo", 10, {
+      prioritizeAliases: false,
+    });
+    expect(actual.map((x) => x.value)).toStrictEqual(["John", "Jony"]);
+  });
+
+  test("partial: absent prioritizeAliases keeps old alias tie-break", () => {
+    const indexedWords = createIndexedWords();
+    const actual = suggestWordsByPartialMatch(indexedWords, "jo", 10);
+    expect(actual.map((x) => x.value)).toStrictEqual(["John", "Jony"]);
+  });
+
+  test("prefix: different-target pairs are unaffected by the new alias-priority stage", () => {
+    const indexedWords: IndexedWords = {
+      currentFile: {},
+      currentVault: {},
+      customDictionary: {},
+      internalLink: {
+        j: [
+          {
+            value: "Jane",
+            type: "internalLink",
+            createdPath: "Characters/Jane.md",
+            aliasMeta: { origin: "Characters/Jane.md" },
+          },
+          {
+            value: "J",
+            type: "internalLink",
+            createdPath: "Characters/J.md",
+          },
+        ],
+      },
+      frontMatter: {},
+    };
+    const withTrue = suggestWords(indexedWords, "j", 10, {
+      prioritizeAliases: true,
+    });
+    const withFalse = suggestWords(indexedWords, "j", 10, {
+      prioritizeAliases: false,
+    });
+    expect(withTrue.map((x) => x.value)).toStrictEqual(
+      withFalse.map((x) => x.value),
+    );
+  });
+
+  test("folder priority still dominates alias priority when both are enabled", () => {
+    const indexedWords: IndexedWords = {
+      currentFile: {},
+      currentVault: {},
+      customDictionary: {},
+      internalLink: {
+        j: [
+          {
+            value: "Jobb",
+            type: "internalLink",
+            createdPath: "Novel/B/Jobb.md",
+          },
+          {
+            value: "JobA",
+            type: "internalLink",
+            createdPath: "Novel/B/Jobb.md",
+            aliasMeta: { origin: "Novel/B/Jobb.md" },
+          },
+          {
+            value: "John",
+            type: "internalLink",
+            createdPath: "Characters/John.md",
+          },
+          {
+            value: "Jony",
+            type: "internalLink",
+            createdPath: "Characters/John.md",
+            aliasMeta: { origin: "Characters/John.md" },
+          },
+        ],
+      },
+      frontMatter: {},
+    };
+
+    const data: LinkRankData = {
+      builtForFilePath: "Novel/A/Chapter 1.md",
+      builtForLimitingFolder: "Novel",
+      currentFileTargets: new Map(),
+      currentFileUnresolvedNames: new Map(),
+      targetToSourceFolders: new Map([
+        ["Characters/John.md", new Map([["Novel/A", 1]])],
+        ["Novel/B/Jobb.md", new Map([["Novel/B", 1]])],
+      ]),
+      unresolvedNameToSourceFolders: new Map(),
+    };
+
+    const actual = suggestWords(indexedWords, "j", 10, {
+      prioritizeAliases: true,
+      folderPriority: {
+        enabled: true,
+        currentFilePath: "Novel/A/Chapter 1.md",
+        limitingFolder: "Novel",
+        rankData: data,
+      },
+    });
+
+    expect(actual.map((x) => x.value)).toStrictEqual([
+      "Jony",
+      "John",
+      "JobA",
+      "Jobb",
+    ]);
   });
 });

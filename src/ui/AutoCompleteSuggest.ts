@@ -37,7 +37,7 @@ import {
 } from "../storage/SelectionHistoryStorage";
 import { createTokenizer, type Tokenizer } from "../tokenizer/tokenizer";
 import { TokenizeStrategy } from "../tokenizer/TokenizeStrategy";
-import { setEquals, uniqWith } from "../util/collection-helper";
+import { uniqWith } from "../util/collection-helper";
 import { DEFAULT_HISTORIES_PATH } from "../util/path";
 import {
   applyQueryFirstLetterCase,
@@ -99,6 +99,7 @@ export class AutoCompleteSuggest
   debounceClose: Debouncer<[], void>;
 
   private debouncedRefreshCurrentFileTokens: Debouncer<[], Promise<void>>;
+  private debouncedRefreshInternalLinkTokens: Debouncer<[], Promise<void>>;
 
   runManually: boolean;
   completionMode: "prefix" | "partial" | "new";
@@ -109,7 +110,6 @@ export class AutoCompleteSuggest
 
   pastCurrentTokenSeparatedWhiteSpace = "";
   previousCurrentLine = "";
-  previousLinksCacheInActiveFile: Set<string> = new Set();
 
   // unsafe!!
   scope: UnsafeEditorSuggestInterface["scope"];
@@ -121,6 +121,7 @@ export class AutoCompleteSuggest
   metadataCacheChangeRef: EventRef;
   renameEventRef: EventRef;
   deleteEventRef: EventRef;
+  createEventRef: EventRef;
 
   spareEditorSuggestContext: EditorSuggestContext | null = null;
 
@@ -230,24 +231,37 @@ export class AutoCompleteSuggest
       }
     }, 300);
 
+    ins.debouncedRefreshInternalLinkTokens = debounce(async () => {
+      if (ins.unloaded) return;
+      ins.refreshInternalLinkTokens();
+    }, 1000);
+
     ins.modifyEventRef = app.vault.on("modify", (_) => {
       if (ins.unloaded) return;
       ins.debouncedRefreshCurrentFileTokens();
     });
-    ins.renameEventRef = app.vault.on("rename", (_) => {
+    ins.renameEventRef = app.vault.on("rename", (file, oldPath) => {
       if (ins.unloaded) return;
-      ins.linkRankIndex.invalidate();
+      ins.linkRankIndex.onRename(oldPath, file.path);
+      ins.debouncedRefreshInternalLinkTokens();
     });
-    ins.deleteEventRef = app.vault.on("delete", (_) => {
+    ins.deleteEventRef = app.vault.on("delete", (file) => {
       if (ins.unloaded) return;
-      ins.linkRankIndex.invalidate();
+      ins.linkRankIndex.onDelete(file.path);
+      ins.debouncedRefreshInternalLinkTokens();
+    });
+    ins.createEventRef = app.vault.on("create", (f) => {
+      if (ins.unloaded) return;
+      if (f instanceof TFile && f.extension === "md") {
+        ins.linkRankIndex.markSourceStale(f.path);
+        ins.debouncedRefreshInternalLinkTokens();
+      }
     });
     ins.activeLeafChangeRef = app.workspace.on(
       "active-leaf-change",
       async (_) => {
         if (ins.unloaded) return;
         ins.predictableCycleState = null;
-        ins.linkRankIndex.invalidate();
         await ins.refreshCurrentFileTokens();
         if (ins.unloaded) return;
         ins.refreshInternalLinkTokens();
@@ -257,20 +271,12 @@ export class AutoCompleteSuggest
 
     ins.metadataCacheChangeRef = app.metadataCache.on("changed", async (f) => {
       if (ins.unloaded) return;
-      ins.linkRankIndex.invalidate();
+      ins.linkRankIndex.markSourceStale(f.path);
       ins.updateFrontMatterTokenIndex(f);
       if (!ins.appHelper.isActiveFile(f)) {
         ins.updateFrontMatterToken();
       }
-      if (settings.updateInternalLinksOnSave) {
-        await sleep(50); // Wait for cache updated
-        if (ins.unloaded) return;
-        const currentCache = ins.appHelper.getUnresolvedLinks(f);
-        if (!setEquals(ins.previousLinksCacheInActiveFile, currentCache)) {
-          ins.refreshInternalLinkTokens();
-          ins.previousLinksCacheInActiveFile = currentCache;
-        }
-      }
+      ins.debouncedRefreshInternalLinkTokens();
     });
 
     // Avoid referring to incorrect cache
@@ -411,6 +417,7 @@ export class AutoCompleteSuggest
     this.app.metadataCache.offref(this.metadataCacheChangeRef);
     this.app.vault.offref(this.renameEventRef);
     this.app.vault.offref(this.deleteEventRef);
+    this.app.vault.offref(this.createEventRef);
   }
 
   // settings getters
@@ -663,6 +670,7 @@ export class AutoCompleteSuggest
                       ),
                     }
                   : undefined,
+                prioritizeAliases: this.settings.prioritizeAliases,
                 excludeInternalLink: excludeInternalLinkInCode,
               },
             ).map((word) => ({ ...word, offset: q.offset }));
@@ -958,6 +966,7 @@ export class AutoCompleteSuggest
 
     this.internalLinkWordProvider.refreshWords({
       wordAsInternalLinkAlias: this.settings.suggestInternalLinkWithAlias,
+      suppressBasenameWhenAliases: this.settings.suggestAliasesOnly,
       excludePathPrefixPatterns: this.excludeInternalLinkPrefixPathPatterns,
       excludePathGlobPatterns:
         this.settings.excludeInternalLinkPathGlobPatterns,

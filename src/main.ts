@@ -171,6 +171,51 @@ export default class VariousComponents extends Plugin {
         new Notice("Copy settings of Various Complements w/ Folder Priority");
       },
     });
+
+    this.addCommand({
+      id: "internal-link-index-status",
+      name: "Internal link index: show status",
+      callback: () => {
+        const provider = this.suggester.internalLinkWordProvider;
+        const rankIndex = this.suggester.linkRankIndex;
+        const lastRefresh = provider.lastRefresh;
+
+        const ageSeconds = lastRefresh
+          ? Math.round((Date.now() - lastRefresh.at) / 1000)
+          : null;
+        const lastBuildMs = rankIndex.lastBuildMs ?? null;
+
+        const resolvedFiles = Object.keys(
+          this.app.metadataCache.resolvedLinks,
+        ).length;
+        const resolvedEdges = Object.values(
+          this.app.metadataCache.resolvedLinks,
+        ).reduce((sum, targets) => sum + Object.keys(targets).length, 0);
+        const unresolvedSources = Object.keys(
+          this.app.metadataCache.unresolvedLinks,
+        ).length;
+
+        const lines = [
+          `Internal link words: ${provider.wordCount} (resolved ${lastRefresh?.resolvedWordCount ?? "-"} / phantom ${lastRefresh?.phantomWordCount ?? "-"})`,
+          `Last refresh: ${ageSeconds !== null ? `${ageSeconds}s` : "never"} ago in ${lastRefresh?.ms ?? "-"}ms`,
+          `Rank index builds: ${rankIndex.buildCalls} (last rebuild ${lastBuildMs !== null ? `${lastBuildMs}ms` : "-"})`,
+          `Resolved links: ${resolvedFiles} files, ${resolvedEdges} edges`,
+          `Unresolved: ${unresolvedSources} sources`,
+        ];
+
+        // noinspection ObjectAllocationIgnored
+        new Notice(lines.join("\n"));
+      },
+    });
+
+    this.addCommand({
+      id: "reload-internal-link-index",
+      name: "Internal link index: reload",
+      callback: async () => {
+        this.suggester.linkRankIndex.invalidate();
+        this.suggester.refreshInternalLinkTokens();
+      },
+    });
   }
 
   async loadSettings(): Promise<void> {
