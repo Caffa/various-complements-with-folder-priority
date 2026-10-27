@@ -1,5 +1,7 @@
 import { describe, expect, test } from "@jest/globals";
 import type { Word } from "../../src/model/Word";
+import type { LinkRankData } from "../model/LinkRank";
+import { SelectionHistoryStorage } from "../storage/SelectionHistoryStorage";
 import type { IndexedWords } from "../ui/AutoCompleteSuggest";
 import type { Judgement } from "./suggester";
 import {
@@ -2257,5 +2259,272 @@ describe("suggestWordsByPartialMatch", () => {
         fuzzy: false,
       },
     ]);
+  });
+});
+
+describe("folder priority ranking", () => {
+  const currentFilePath = "Novel/A/Chapter 1.md";
+  const limitingFolder = "Novel";
+
+  function createRankData(
+    currentFileTargets: [string, number][],
+    targetToSourceFolders: [string, [string, number][]][],
+    unresolvedNames: [string, number][] = [],
+  ): LinkRankData {
+    return {
+      builtForFilePath: currentFilePath,
+      builtForLimitingFolder: limitingFolder,
+      currentFileTargets: new Map(currentFileTargets),
+      currentFileUnresolvedNames: new Map(unresolvedNames),
+      targetToSourceFolders: new Map(
+        targetToSourceFolders.map(([target, folders]) => [
+          target,
+          new Map(folders),
+        ]),
+      ),
+    };
+  }
+
+  const createIndexedWords = (): IndexedWords => ({
+    currentFile: {},
+    currentVault: {},
+    customDictionary: {},
+    internalLink: {
+      j: [
+        {
+          value: "Johnny",
+          type: "internalLink",
+          createdPath: "Novel/A/Johnny.md",
+        },
+        {
+          value: "Job",
+          type: "internalLink",
+          createdPath: "Novel/B/Job.md",
+        },
+        {
+          value: "John",
+          type: "internalLink",
+          createdPath: "Characters/John.md",
+        },
+      ],
+    },
+    frontMatter: {},
+  });
+
+  test("prefix mode: file-tier word beats a shorter non-tier word", () => {
+    const indexedWords = createIndexedWords();
+    const actual = suggestWords(indexedWords, "j", 10, {
+      folderPriority: {
+        enabled: true,
+        currentFilePath,
+        limitingFolder,
+        rankData: createRankData(
+          [["Novel/A/Johnny.md", 1]],
+          [["Novel/A/Johnny.md", [["Novel/A", 1]]]],
+        ),
+      },
+    });
+
+    expect(actual.map((x) => x.value)).toStrictEqual(["Johnny", "Job", "John"]);
+  });
+
+  test("partial mode: file-tier word with longer value beats a startsWith-prefix non-tier word", () => {
+    const indexedWords = createIndexedWords();
+    const actual = suggestWordsByPartialMatch(indexedWords, "jo", 10, {
+      folderPriority: {
+        enabled: true,
+        currentFilePath,
+        limitingFolder,
+        rankData: createRankData(
+          [["Novel/A/Johnny.md", 1]],
+          [["Novel/A/Johnny.md", [["Novel/A", 1]]]],
+        ),
+      },
+    });
+
+    expect(actual.map((x) => x.value)).toStrictEqual(["Johnny", "Job", "John"]);
+  });
+
+  test("same-folder link beats link whose only source folders are outside the limiting folder", () => {
+    const indexedWords = createIndexedWords();
+    const actual = suggestWordsByPartialMatch(indexedWords, "jo", 10, {
+      folderPriority: {
+        enabled: true,
+        currentFilePath,
+        limitingFolder,
+        rankData: createRankData(
+          [],
+          [
+            ["Novel/A/Johnny.md", [["Novel/A", 1]]],
+            ["Novel/B/Job.md", [["Resources/Other", 1]]],
+          ],
+        ),
+      },
+    });
+
+    expect(actual.map((x) => x.value)).toStrictEqual(["Johnny", "Job", "John"]);
+  });
+
+  test("resolved link with folder proximity beats phantom without proximity", () => {
+    const indexedWords: IndexedWords = {
+      currentFile: {},
+      currentVault: {},
+      customDictionary: {},
+      internalLink: {
+        j: [
+          {
+            value: "John",
+            type: "internalLink",
+            createdPath: "Characters/John.md",
+            phantom: true,
+          },
+          {
+            value: "Johnny",
+            type: "internalLink",
+            createdPath: "Novel/A/Johnny.md",
+          },
+        ],
+      },
+      frontMatter: {},
+    };
+
+    const actual = suggestWordsByPartialMatch(indexedWords, "jo", 10, {
+      folderPriority: {
+        enabled: true,
+        currentFilePath,
+        limitingFolder,
+        rankData: createRankData(
+          [],
+          [
+            ["Characters/John.md", [["Novel/A", 1]]],
+            ["Novel/A/Johnny.md", [["Novel/A", 1]]],
+          ],
+        ),
+      },
+    });
+
+    expect(actual.map((x) => x.value)).toStrictEqual(["Johnny", "John"]);
+  });
+
+  test("selection history decides when link tiers tie", () => {
+    const indexedWords = createIndexedWords();
+    const history = new SelectionHistoryStorage(
+      {
+        Job: {
+          Job: {
+            internalLink: { count: 5, lastUpdated: Date.now() },
+          },
+        },
+      },
+      30,
+      1000,
+    );
+
+    const actual = suggestWords(indexedWords, "j", 10, {
+      selectionHistoryStorage: history,
+      folderPriority: {
+        enabled: true,
+        currentFilePath,
+        limitingFolder,
+        rankData: createRankData([], []),
+      },
+    });
+
+    expect(actual.map((x) => x.value)).toStrictEqual(["Job", "John", "Johnny"]);
+  });
+
+  test("non-internalLink pair skips tier block", () => {
+    const indexedWords: IndexedWords = {
+      currentFile: {
+        j: [
+          { value: "jogging", type: "currentFile", createdPath: "" },
+          { value: "joke", type: "currentFile", createdPath: "" },
+        ],
+      },
+      currentVault: {},
+      customDictionary: {},
+      internalLink: {},
+      frontMatter: {},
+    };
+
+    const withPriority = suggestWords(indexedWords, "j", 10, {
+      folderPriority: {
+        enabled: true,
+        currentFilePath,
+        limitingFolder,
+        rankData: createRankData([], []),
+      },
+    });
+    const withoutPriority = suggestWords(indexedWords, "j", 10);
+
+    expect(withPriority.map((x) => x.value)).toStrictEqual(
+      withoutPriority.map((x) => x.value),
+    );
+  });
+
+  test("word-as-alias mode: basename and alias for the same target share tier", () => {
+    const indexedWords: IndexedWords = {
+      currentFile: {},
+      currentVault: {},
+      customDictionary: {},
+      internalLink: {
+        j: [
+          {
+            value: "John",
+            type: "internalLink",
+            createdPath: "Characters/John.md",
+          },
+          {
+            value: "Johnny",
+            type: "internalLink",
+            createdPath: "Characters/John.md",
+            aliasMeta: { origin: "Characters/John.md" },
+          },
+          {
+            value: "Job",
+            type: "internalLink",
+            createdPath: "Novel/B/Job.md",
+          },
+        ],
+      },
+      frontMatter: {},
+    };
+
+    const actual = suggestWordsByPartialMatch(indexedWords, "jo", 10, {
+      folderPriority: {
+        enabled: true,
+        currentFilePath,
+        limitingFolder,
+        rankData: createRankData(
+          [["Characters/John.md", 1]],
+          [
+            ["Characters/John.md", [["Novel/A", 1]]],
+            ["Novel/B/Job.md", [["Novel/B", 1]]],
+          ],
+        ),
+      },
+    });
+
+    expect(actual.map((x) => x.value)).toStrictEqual(["John", "Johnny", "Job"]);
+  });
+
+  test("enabled=false behaves like no folderPriority option", () => {
+    const indexedWords = createIndexedWords();
+    const withDisabled = suggestWords(indexedWords, "j", 10, {
+      folderPriority: {
+        enabled: false,
+        currentFilePath,
+        limitingFolder,
+        rankData: createRankData(
+          [["Novel/A/Johnny.md", 1]],
+          [["Novel/A/Johnny.md", [["Novel/A", 1]]]],
+        ),
+      },
+    });
+    const withoutOption = suggestWords(indexedWords, "j", 10);
+
+    expect(withDisabled.map((x) => x.value)).toStrictEqual(
+      withoutOption.map((x) => x.value),
+    );
   });
 });

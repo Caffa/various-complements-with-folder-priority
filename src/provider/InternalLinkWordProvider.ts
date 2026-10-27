@@ -2,7 +2,6 @@ import type { App } from "obsidian";
 import { hasSameElement } from "../../src/util/collection-helper";
 import type { AppHelper } from "../app-helper";
 import type { InternalLinkWord, Word } from "../model/Word";
-import type { LinkFrequencyStorage } from "../storage/LinkFrequencyStorage";
 import { isMatchedGlobPatterns } from "../util/glob";
 import { synonymAliases } from "../util/strings";
 import { pushWord, type WordsByFirstLetter } from "./suggester";
@@ -10,16 +9,11 @@ import { pushWord, type WordsByFirstLetter } from "./suggester";
 export class InternalLinkWordProvider {
   private words: Word[] = [];
   wordsByFirstLetter: WordsByFirstLetter = {};
-  private linkFrequencyStorage?: LinkFrequencyStorage;
 
   constructor(
     private app: App,
     private appHelper: AppHelper,
   ) {}
-
-  setLinkFrequencyStorage(storage: LinkFrequencyStorage | undefined): void {
-    this.linkFrequencyStorage = storage;
-  }
 
   refreshWords(option: {
     wordAsInternalLinkAlias: boolean;
@@ -63,11 +57,6 @@ export class InternalLinkWordProvider {
       .flatMap((x) => {
         const aliases = this.appHelper.getAliases(x);
 
-        // Get folder frequency for this link
-        const folderFrequency = this.linkFrequencyStorage?.getLinkFolders(
-          x.path,
-        );
-
         if (option.wordAsInternalLinkAlias) {
           return [
             {
@@ -79,7 +68,6 @@ export class InternalLinkWordProvider {
                 accentsDiacritics: option.makeSynonymAboutAccentsDiacritics,
               }),
               description: x.path,
-              folderFrequency,
             },
             ...aliases.map((a) => ({
               value: a,
@@ -93,7 +81,6 @@ export class InternalLinkWordProvider {
               aliasMeta: {
                 origin: x.path,
               },
-              folderFrequency,
             })),
           ] as InternalLinkWord[];
         } else {
@@ -116,7 +103,6 @@ export class InternalLinkWordProvider {
                 ),
               ],
               description: x.path,
-              folderFrequency,
             },
           ] as InternalLinkWord[];
         }
@@ -139,10 +125,7 @@ export class InternalLinkWordProvider {
             };
           });
 
-    this.words = [
-      ...resolvedInternalLinkWords,
-      ...unresolvedInternalLinkWords,
-    ];
+    this.words = [...resolvedInternalLinkWords, ...unresolvedInternalLinkWords];
     for (const word of this.words) {
       pushWord(this.wordsByFirstLetter, word.value.charAt(0), word);
       word.aliases?.forEach((a) =>

@@ -1,3 +1,5 @@
+import type { FolderPriorityOption, LinkRank } from "../model/LinkRank";
+import { getOrComputeLinkRank } from "../model/LinkRank";
 import { type Word, WordTypeMeta } from "../model/Word";
 import type {
   HitWord,
@@ -13,7 +15,6 @@ import {
   lowerStartsWith,
   wrapFuzzy,
 } from "../util/strings";
-import { calculateFolderProximity } from "../model/FolderProximity";
 
 export type WordsByFirstLetter = { [firstLetter: string]: Word[] };
 
@@ -168,11 +169,7 @@ export function suggestWords(
       internalLink: number;
     };
     globalMinChar?: number;
-    folderPriority?: {
-      enabled: boolean;
-      currentFilePath: string | null;
-      limitingFolder: string;
-    };
+    folderPriority?: FolderPriorityOption;
     excludeInternalLink?: boolean;
   } = {},
 ): Word[] {
@@ -274,6 +271,46 @@ export function suggestWords(
     .map((x) => judge(x, query, queryStartWithUpper, option))
     .filter((x) => x.value !== undefined);
 
+  const linkRankOption: FolderPriorityOption = {
+    enabled: folderPriority?.enabled ?? false,
+    currentFilePath: folderPriority?.currentFilePath ?? null,
+    limitingFolder: folderPriority?.limitingFolder ?? "",
+    rankData: folderPriority?.rankData,
+  };
+  const linkRanks = new Map<Word, LinkRank>();
+  const compareLinkTier = (aWord: Word, bWord: Word): number => {
+    if (!linkRankOption.enabled) {
+      return 0;
+    }
+    if (aWord.type !== "internalLink" || bWord.type !== "internalLink") {
+      return 0;
+    }
+
+    const aRank = getOrComputeLinkRank(aWord, linkRankOption, linkRanks);
+    const bRank = getOrComputeLinkRank(bWord, linkRankOption, linkRanks);
+    if (aRank === undefined || bRank === undefined) {
+      return 0;
+    }
+
+    if (aRank.fileTier !== bRank.fileTier) {
+      return aRank.fileTier ? -1 : 1;
+    }
+
+    const aScore = aRank.folderProximity?.score ?? -1;
+    const bScore = bRank.folderProximity?.score ?? -1;
+    if (aScore !== bScore) {
+      return bScore - aScore;
+    }
+
+    const aLevel = aRank.folderProximity?.level ?? 999;
+    const bLevel = bRank.folderProximity?.level ?? 999;
+    if (aLevel !== bLevel) {
+      return aLevel - bLevel;
+    }
+
+    return 0;
+  };
+
   const latestUpdated = max(
     filteredJudgement.map(
       (x) =>
@@ -297,42 +334,9 @@ export function suggestWords(
         return bWord.type === "frontMatter" ? 1 : -1;
       }
 
-      // Folder priority for internal links
-      if (
-        folderPriority?.enabled &&
-        folderPriority.currentFilePath &&
-        folderPriority.limitingFolder &&
-        aWord.type === "internalLink" &&
-        bWord.type === "internalLink"
-      ) {
-        const aFolders = aWord.folderFrequency;
-        const bFolders = bWord.folderFrequency;
-
-        if (aFolders && bFolders) {
-          const aProximity = calculateFolderProximity(
-            aFolders,
-            folderPriority.currentFilePath,
-            folderPriority.limitingFolder,
-          );
-          const bProximity = calculateFolderProximity(
-            bFolders,
-            folderPriority.currentFilePath,
-            folderPriority.limitingFolder,
-          );
-
-          // Higher score = higher priority (sort earlier)
-          // Lower level = higher priority
-          if (aProximity.score !== bProximity.score) {
-            return bProximity.score - aProximity.score;
-          }
-          if (aProximity.level !== bProximity.level) {
-            return aProximity.level - bProximity.level;
-          }
-        } else if (aFolders && !bFolders) {
-          return -1; // a has folder frequency, prioritize
-        } else if (!aFolders && bFolders) {
-          return 1; // b has folder frequency, prioritize
-        }
+      const linkTierResult = compareLinkTier(aWord, bWord);
+      if (linkTierResult !== 0) {
+        return linkTierResult;
       }
 
       if (selectionHistoryStorage) {
@@ -443,7 +447,8 @@ export function judgeByPartialMatch(
     startsWithAliasMatched &&
     (startsWithAliasMatched.matched.type === "concrete_match" ||
       (startsWithAliasMatched.matched.type === "fuzzy_match" &&
-        startsWithAliasMatched.matched.score > (options?.fuzzy?.minMatchScore ?? 0)))
+        startsWithAliasMatched.matched.score >
+          (options?.fuzzy?.minMatchScore ?? 0)))
   ) {
     return {
       word: {
@@ -488,7 +493,8 @@ export function judgeByPartialMatch(
     matchedAliasIncluded &&
     (matchedAliasIncluded.matched.type === "concrete_match" ||
       (matchedAliasIncluded.matched.type === "fuzzy_match" &&
-        matchedAliasIncluded.matched.score > (options?.fuzzy?.minMatchScore ?? 0)))
+        matchedAliasIncluded.matched.score >
+          (options?.fuzzy?.minMatchScore ?? 0)))
   ) {
     return {
       word: {
@@ -522,11 +528,7 @@ export function suggestWordsByPartialMatch(
       internalLink: number;
     };
     globalMinChar?: number;
-    folderPriority?: {
-      enabled: boolean;
-      currentFilePath: string | null;
-      limitingFolder: string;
-    };
+    folderPriority?: FolderPriorityOption;
     excludeInternalLink?: boolean;
   } = {},
 ): Word[] {
@@ -587,6 +589,46 @@ export function suggestWordsByPartialMatch(
     .map((x) => judgeByPartialMatch(x, query, queryStartWithUpper, option))
     .filter((x) => x.value !== undefined);
 
+  const linkRankOption: FolderPriorityOption = {
+    enabled: folderPriority?.enabled ?? false,
+    currentFilePath: folderPriority?.currentFilePath ?? null,
+    limitingFolder: folderPriority?.limitingFolder ?? "",
+    rankData: folderPriority?.rankData,
+  };
+  const linkRanks = new Map<Word, LinkRank>();
+  const compareLinkTier = (aWord: Word, bWord: Word): number => {
+    if (!linkRankOption.enabled) {
+      return 0;
+    }
+    if (aWord.type !== "internalLink" || bWord.type !== "internalLink") {
+      return 0;
+    }
+
+    const aRank = getOrComputeLinkRank(aWord, linkRankOption, linkRanks);
+    const bRank = getOrComputeLinkRank(bWord, linkRankOption, linkRanks);
+    if (aRank === undefined || bRank === undefined) {
+      return 0;
+    }
+
+    if (aRank.fileTier !== bRank.fileTier) {
+      return aRank.fileTier ? -1 : 1;
+    }
+
+    const aScore = aRank.folderProximity?.score ?? -1;
+    const bScore = bRank.folderProximity?.score ?? -1;
+    if (aScore !== bScore) {
+      return bScore - aScore;
+    }
+
+    const aLevel = aRank.folderProximity?.level ?? 999;
+    const bLevel = bRank.folderProximity?.level ?? 999;
+    if (aLevel !== bLevel) {
+      return aLevel - bLevel;
+    }
+
+    return 0;
+  };
+
   const latestUpdated = max(
     filteredJudgement.map(
       (x) =>
@@ -610,6 +652,11 @@ export function suggestWordsByPartialMatch(
         return bWord.type === "frontMatter" ? 1 : -1;
       }
 
+      const linkTierResult = compareLinkTier(aWord, bWord);
+      if (linkTierResult !== 0) {
+        return linkTierResult;
+      }
+
       if (selectionHistoryStorage) {
         const ret = selectionHistoryStorage.compare(
           aWord,
@@ -629,44 +676,6 @@ export function suggestWordsByPartialMatch(
 
       if ((a.value ?? "").length !== (b.value ?? "").length) {
         return (a.value ?? "").length > (b.value ?? "").length ? 1 : -1;
-      }
-
-      // Folder priority for internal links
-      if (
-        folderPriority?.enabled &&
-        folderPriority.currentFilePath &&
-        folderPriority.limitingFolder &&
-        aWord.type === "internalLink" &&
-        bWord.type === "internalLink"
-      ) {
-        const aFolders = aWord.folderFrequency;
-        const bFolders = bWord.folderFrequency;
-
-        if (aFolders && bFolders) {
-          const aProximity = calculateFolderProximity(
-            aFolders,
-            folderPriority.currentFilePath,
-            folderPriority.limitingFolder,
-          );
-          const bProximity = calculateFolderProximity(
-            bFolders,
-            folderPriority.currentFilePath,
-            folderPriority.limitingFolder,
-          );
-
-          // Higher score = higher priority (sort earlier)
-          // Lower level = higher priority
-          if (aProximity.score !== bProximity.score) {
-            return bProximity.score - aProximity.score;
-          }
-          if (aProximity.level !== bProximity.level) {
-            return aProximity.level - bProximity.level;
-          }
-        } else if (aFolders && !bFolders) {
-          return -1; // a has folder frequency, prioritize
-        } else if (!aFolders && bFolders) {
-          return 1; // b has folder frequency, prioritize
-        }
       }
 
       if (notSameWordType) {

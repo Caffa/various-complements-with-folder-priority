@@ -29,7 +29,7 @@ import { SpecificMatchStrategy } from "../provider/SpecificMatchStrategy";
 import type { WordsByFirstLetter } from "../provider/suggester";
 import { suggestionUniqPredicate } from "../provider/suggester";
 import type { Settings } from "../setting/settings";
-import { LinkFrequencyStorage } from "../storage/LinkFrequencyStorage";
+import { LinkRankIndex } from "../storage/LinkRankIndex";
 import {
   type HitWord,
   SelectionHistoryStorage,
@@ -89,7 +89,7 @@ export class AutoCompleteSuggest
   internalLinkWordProvider: InternalLinkWordProvider;
   frontMatterWordProvider: FrontMatterWordProvider;
   selectionHistoryStorage: SelectionHistoryStorage | undefined;
-  linkFrequencyStorage: LinkFrequencyStorage | undefined;
+  linkRankIndex: LinkRankIndex;
 
   tokenizer: Tokenizer;
   debounceGetSuggestions: Debouncer<
@@ -119,6 +119,8 @@ export class AutoCompleteSuggest
   modifyEventRef: EventRef;
   activeLeafChangeRef: EventRef;
   metadataCacheChangeRef: EventRef;
+  renameEventRef: EventRef;
+  deleteEventRef: EventRef;
 
   spareEditorSuggestContext: EditorSuggestContext | null = null;
 
@@ -213,19 +215,7 @@ export class AutoCompleteSuggest
       ins.appHelper,
     );
 
-    // Initialize link frequency storage for folder priority
-    ins.linkFrequencyStorage = new LinkFrequencyStorage(app);
-    if (
-      settings.folderPriority.enabled &&
-      settings.folderPriority.limitingFolder
-    ) {
-      ins.linkFrequencyStorage.setLimitingFolder(
-        settings.folderPriority.limitingFolder,
-      );
-    }
-    ins.internalLinkWordProvider.setLinkFrequencyStorage(
-      ins.linkFrequencyStorage,
-    );
+    ins.linkRankIndex = new LinkRankIndex(app);
 
     await ins.updateSettings(settings);
     await ins.refreshIntelligentSuggestionPrioritization();
@@ -244,11 +234,20 @@ export class AutoCompleteSuggest
       if (ins.unloaded) return;
       ins.debouncedRefreshCurrentFileTokens();
     });
+    ins.renameEventRef = app.vault.on("rename", (_) => {
+      if (ins.unloaded) return;
+      ins.linkRankIndex.invalidate();
+    });
+    ins.deleteEventRef = app.vault.on("delete", (_) => {
+      if (ins.unloaded) return;
+      ins.linkRankIndex.invalidate();
+    });
     ins.activeLeafChangeRef = app.workspace.on(
       "active-leaf-change",
       async (_) => {
         if (ins.unloaded) return;
         ins.predictableCycleState = null;
+        ins.linkRankIndex.invalidate();
         await ins.refreshCurrentFileTokens();
         if (ins.unloaded) return;
         ins.refreshInternalLinkTokens();
@@ -258,6 +257,7 @@ export class AutoCompleteSuggest
 
     ins.metadataCacheChangeRef = app.metadataCache.on("changed", async (f) => {
       if (ins.unloaded) return;
+      ins.linkRankIndex.invalidate();
       ins.updateFrontMatterTokenIndex(f);
       if (!ins.appHelper.isActiveFile(f)) {
         ins.updateFrontMatterToken();
@@ -276,6 +276,7 @@ export class AutoCompleteSuggest
     // Avoid referring to incorrect cache
     const cacheResolvedRef = app.metadataCache.on("resolved", async () => {
       if (ins.unloaded) return;
+      ins.linkRankIndex.invalidate();
       ins.refreshInternalLinkTokens();
       ins.refreshFrontMatterTokens();
       // noinspection ES6MissingAwait
@@ -408,6 +409,8 @@ export class AutoCompleteSuggest
     this.app.vault.offref(this.modifyEventRef);
     this.app.workspace.offref(this.activeLeafChangeRef);
     this.app.metadataCache.offref(this.metadataCacheChangeRef);
+    this.app.vault.offref(this.renameEventRef);
+    this.app.vault.offref(this.deleteEventRef);
   }
 
   // settings getters
@@ -484,6 +487,7 @@ export class AutoCompleteSuggest
 
   async updateSettings(settings: Settings) {
     this.settings = settings;
+    this.linkRankIndex.invalidate();
 
     // Pre-compile regex patterns on settings change to avoid creating RegExp on every keystroke
     this.compiledSuppressPatterns = settings.patternsToSuppressTrigger
@@ -646,17 +650,19 @@ export class AutoCompleteSuggest
                 globalMinChar:
                   this.settings.minNumberOfCharactersTriggered ||
                   this.tokenizerStrategy.triggerThreshold,
-                folderPriority:
-                  this.settings.folderPriority.enabled &&
-                  this.settings.folderPriority.limitingFolder
-                    ? {
-                        enabled: true,
-                        currentFilePath:
-                          this.appHelper.getActiveFile()?.path ?? null,
-                        limitingFolder:
-                          this.settings.folderPriority.limitingFolder,
-                      }
-                    : undefined,
+                folderPriority: this.settings.folderPriority?.enabled
+                  ? {
+                      enabled: true,
+                      currentFilePath:
+                        this.appHelper.getActiveFile()?.path ?? null,
+                      limitingFolder:
+                        this.settings.folderPriority.limitingFolder ?? "",
+                      rankData: this.linkRankIndex.getRankData(
+                        this.appHelper.getActiveFile()?.path ?? null,
+                        this.settings.folderPriority.limitingFolder ?? "",
+                      ),
+                    }
+                  : undefined,
                 excludeInternalLink: excludeInternalLinkInCode,
               },
             ).map((word) => ({ ...word, offset: q.offset }));
@@ -963,22 +969,6 @@ export class AutoCompleteSuggest
       tagsForExclusion: this.settings.tagsForExclusionInternalLink,
       excludeUnresolvedLinks: this.settings.excludeUnresolvedInternalLinks,
     });
-
-    // Index folder frequency for folder priority
-    if (
-      this.settings.folderPriority.enabled &&
-      this.settings.folderPriority.limitingFolder &&
-      this.linkFrequencyStorage
-    ) {
-      this.linkFrequencyStorage.setLimitingFolder(
-        this.settings.folderPriority.limitingFolder,
-      );
-      const activeFile = this.appHelper.getActiveFile();
-      if (activeFile) {
-        // Index current file's folder hierarchy in background
-        this.linkFrequencyStorage.indexFolderHierarchy(activeFile.path);
-      }
-    }
 
     this.statusBar.setInternalLinkIndexed(
       this.internalLinkWordProvider.wordCount,

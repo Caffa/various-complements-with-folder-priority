@@ -1,3 +1,4 @@
+import type { FolderPriorityOption } from "../model/LinkRank";
 import type { Word } from "../model/Word";
 import type { SelectionHistoryStorage } from "../storage/SelectionHistoryStorage";
 import type { IndexedWords } from "../ui/AutoCompleteSuggest";
@@ -22,11 +23,7 @@ type Handler = (
       internalLink: number;
     };
     globalMinChar?: number;
-    folderPriority?: {
-      enabled: boolean;
-      currentFilePath: string | null;
-      limitingFolder: string;
-    };
+    folderPriority?: FolderPriorityOption;
     excludeInternalLink?: boolean;
   },
 ) => Word[];

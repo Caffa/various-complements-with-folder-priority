@@ -39,8 +39,6 @@ export interface InternalLinkWord extends DefaultWord {
     // path
     origin: string;
   };
-  /** Folder frequency for prioritization: folderPath -> count */
-  folderFrequency?: Map<string, number>;
 }
 export interface FrontMatterWord extends DefaultWord {
   type: "frontMatter";

@@ -14,13 +14,6 @@ export interface FolderProximityScore {
   score: number;
 }
 
-export interface LinkFolderInfo {
-  /** The link path (e.g., "Characters/John.md") */
-  linkPath: string;
-  /** Map of folder paths to appearance counts */
-  folderFrequency: Map<string, number>;
-}
-
 /**
  * Calculate the folder level distance between current file and a link's source folders.
  *
@@ -87,11 +80,7 @@ function calculateFolderLevel(
 
   // Find common prefix length
   let commonLength = 0;
-  for (
-    let i = 0;
-    i < Math.min(currentParts.length, targetParts.length);
-    i++
-  ) {
+  for (let i = 0; i < Math.min(currentParts.length, targetParts.length); i++) {
     if (currentParts[i] === targetParts[i]) {
       commonLength++;
     } else {
