@@ -482,7 +482,7 @@ Impact is judged against **this vault** (11,177-value `c` bucket, ~every-2 s aut
 
 | # | Setting | Effect | Trade-off |
 |---|---|---|---|
-| **M1** | `delayMilliSeconds` > 0 (e.g. 40–80) | Coalesces fast typing into one pass per pause. Directly multiplies keystroke cost by the coalescing factor. | Slightly laggier popup. |
+| **M1** | `delayMilliSeconds` > 0 (e.g. 40–80) | Coalesces fast typing into one pass per pause. Directly multiplies keystroke cost by the coalescing factor. | Slightly laggier popup. UX cap ~70 ms max; ~200 ms would maximize computational benefit. |
 | **M2** | `minNumberOfCharactersTriggered` = 3–4 | Suppresses the popup for 1–2 char prefixes (`AutoCompleteSuggest.ts:1234-1243`) — and `c` with 0–2 chars is the worst case. | No suggestions until 3–4 chars. |
 | **M3** | `maxNumberOfSuggestions` = 3 | Shrinks only the sort output. **Diagnostic value:** big improvement ⇒ sort (F1) dominates; no change ⇒ judge (F2/F4/F7) dominates. | Fewer options. |
 | **M4** | `internalLinkIgnoreTriggerPrefixes` = `char,chapter,world` | Removes ~10,450 of 11,177 `c`-bucket values at refresh time, zero keystroke cost. | With default alias mode, those notes become unsuggestable (§7). Pair with `suggestInternalLinkWithAlias: true` and evaluate UX. |
