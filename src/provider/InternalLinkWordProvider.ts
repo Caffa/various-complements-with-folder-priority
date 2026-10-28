@@ -33,9 +33,23 @@ export class InternalLinkWordProvider {
     frontMatterKeyForExclusion: string;
     tagsForExclusion: string[];
     excludeUnresolvedLinks: boolean;
+    ignorePrefixes?: string[];
   }): void {
     const start = performance.now();
     this.clearWords();
+
+    const ignoredPrefixPatterns = (option.ignorePrefixes ?? [])
+      .map((prefix) => prefix.trim().toLowerCase())
+      .filter((prefix) => prefix.length > 0)
+      .map(
+        (prefix) =>
+          new RegExp(`^${escapeRegExp(prefix)}[\\s\\-\\u2014\\u2013:_·]+`),
+      );
+
+    const isIgnoredBasename = (value: string): boolean => {
+      const lower = value.toLowerCase();
+      return ignoredPrefixPatterns.some((pattern) => pattern.test(lower));
+    };
 
     try {
       const resolvedInternalLinkWords: InternalLinkWord[] = this.app.vault
@@ -85,6 +99,9 @@ export class InternalLinkWordProvider {
             if (option.suppressBasenameWhenAliases && aliases.length > 0) {
               return aliasWords as InternalLinkWord[];
             }
+            if (isIgnoredBasename(x.basename)) {
+              return aliasWords as InternalLinkWord[];
+            }
             return [
               {
                 value: x.basename,
@@ -99,6 +116,9 @@ export class InternalLinkWordProvider {
               ...aliasWords,
             ] as InternalLinkWord[];
           } else {
+            if (isIgnoredBasename(x.basename)) {
+              return [] as InternalLinkWord[];
+            }
             return [
               {
                 value: x.basename,
@@ -173,4 +193,8 @@ export class InternalLinkWordProvider {
   get wordCount(): number {
     return this.words.length;
   }
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }

@@ -227,6 +227,7 @@ The folder-priority implementation has been refactored from the original `LinkFr
 | **Baseline** | committed `f6f86ae` | `LinkRank.ts`, `FolderProximity.ts`, `LinkRankIndex.ts` replace `LinkFrequencyStorage.ts`; `suggester.ts` uses `compareLinkTier`. |
 | **D** | landing now (parallel builder) | Internal-link index auto-refreshes about 1 second after `metadataCache "changed"`, plus on vault `create`/`rename`/`delete`. New commands: **Internal link index status** and **Reload internal link index**. |
 | **E** | this pass | Settings `prioritizeAliases` (default `true`) and `suggestAliasesOnly` (default `false`, requires `suggestInternalLinkWithAlias`) added to `src/setting/settings.ts`. |
+| **I** | this pass | Setting `internalLinkIgnoreTriggerPrefixes` (default `""`) added to `src/setting/settings.ts`; refresh-time basename suppression for names like `Char - Lin Fan` while alias forms (`Lin Fan`) and phantom links stay intact. Parsed from a comma-separated list. |
 | **F stage 1** | landing now (parallel builder) | `LinkRankIndex` incremental updates, including unresolved (phantom) links; differential `markSourceStale` / `onRename` / `onDelete` with a 5000-target full-rebuild fallback. |
 | **C** | this pass | `folderPriority.enabled` default flipped to `true`. Existing vaults need a `data.json` patch; the deploy patch for the **Novel-Writing** vault sets `enabled: true` and `limitingFolder: "Novel"`. |
 

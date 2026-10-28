@@ -100,6 +100,7 @@ export interface Settings {
   suggestInternalLinkWithAlias: boolean;
   prioritizeAliases: boolean;
   suggestAliasesOnly: boolean;
+  internalLinkIgnoreTriggerPrefixes: string;
   preserveFirstLetterCaseOnInternalLink: boolean;
   excludeInternalLinkPathPrefixPatterns: string;
   excludeInternalLinkPathGlobPatterns: string[];
@@ -236,6 +237,7 @@ export const DEFAULT_SETTINGS: Settings = {
   suggestInternalLinkWithAlias: false,
   prioritizeAliases: true,
   suggestAliasesOnly: false,
+  internalLinkIgnoreTriggerPrefixes: "",
   preserveFirstLetterCaseOnInternalLink: false,
   excludeInternalLinkPathPrefixPatterns: "",
   excludeInternalLinkPathGlobPatterns: [],
@@ -1429,6 +1431,21 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
         visible: () =>
           isEnabled() && this.plugin.settings.suggestInternalLinkWithAlias,
       },
+    );
+    addFilterableSetting(
+      "Ignore file names starting with (comma-separated, with divider)",
+      "Example: Char, Chapter",
+      (setting) => {
+        setting.addText((cb) => {
+          cb.setValue(
+            this.plugin.settings.internalLinkIgnoreTriggerPrefixes,
+          ).onChange(async (value) => {
+            this.plugin.settings.internalLinkIgnoreTriggerPrefixes = value;
+            await this.plugin.saveSettings({ internalLink: true });
+          });
+        });
+      },
+      { visible: isEnabled },
     );
     addFilterableSetting(
       "Preserve first-letter case",

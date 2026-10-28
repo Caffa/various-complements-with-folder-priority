@@ -986,6 +986,14 @@ export class AutoCompleteSuggest
         this.settings.frontMatterKeyForExclusionInternalLink,
       tagsForExclusion: this.settings.tagsForExclusionInternalLink,
       excludeUnresolvedLinks: this.settings.excludeUnresolvedInternalLinks,
+      ignorePrefixes: Array.from(
+        new Set(
+          this.settings.internalLinkIgnoreTriggerPrefixes
+            .split(",")
+            .map((prefix) => prefix.trim().toLowerCase())
+            .filter((prefix) => prefix.length > 0),
+        ),
+      ),
     });
 
     this.statusBar.setInternalLinkIndexed(

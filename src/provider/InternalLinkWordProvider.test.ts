@@ -294,4 +294,76 @@ describe("InternalLinkWordProvider", () => {
     expect(provider.lastRefresh!.ms).toBeGreaterThanOrEqual(0);
     expect(provider.lastRefresh!.resolvedWordCount).toBe(1);
   });
+
+  it("drops basename words whose names start with a prefix followed by a divider", () => {
+    const files = [createFile("Notes/Char - Lin Fan.md", "Char - Lin Fan")];
+    const appHelper = createAppHelper({
+      getAliases: () => ["Lin Fan"],
+    });
+    const provider = new InternalLinkWordProvider(createApp(files), appHelper);
+
+    provider.refreshWords({
+      ...baseOption,
+      wordAsInternalLinkAlias: true,
+      ignorePrefixes: ["Char"],
+    });
+
+    const words = allWords(provider);
+    expect(words.filter((w) => w.value === "Char - Lin Fan")).toHaveLength(0);
+    expect(words.find((w) => w.value === "Lin Fan")?.aliasMeta?.origin).toBe(
+      "Notes/Char - Lin Fan.md",
+    );
+  });
+
+  it("keeps file names that start with the prefix but have no divider", () => {
+    const files = [createFile("Notes/Charity Notes.md", "Charity Notes")];
+    const appHelper = createAppHelper({ getAliases: () => [] });
+    const provider = new InternalLinkWordProvider(createApp(files), appHelper);
+
+    provider.refreshWords({
+      ...baseOption,
+      ignorePrefixes: ["Char"],
+    });
+
+    expect(provider.wordCount).toBe(1);
+    expect(allWords(provider)[0].value).toBe("Charity Notes");
+  });
+
+  it("is case-insensitive and trims whitespace inside the filter", () => {
+    const files = [createFile("Notes/Char - Lin Fan.md", "Char - Lin Fan")];
+    const appHelper = createAppHelper({ getAliases: () => [] });
+    const provider = new InternalLinkWordProvider(createApp(files), appHelper);
+
+    provider.refreshWords({
+      ...baseOption,
+      ignorePrefixes: ["  cHAr   ", "Chapter"],
+    });
+
+    expect(provider.wordCount).toBe(0);
+  });
+
+  it("ignores colon- and dash-divided front tags", () => {
+    const files = [
+      createFile("Notes/Chapter: The Fall.md", "Chapter: The Fall"),
+    ];
+    const appHelper = createAppHelper({ getAliases: () => [] });
+    const provider = new InternalLinkWordProvider(createApp(files), appHelper);
+
+    provider.refreshWords({
+      ...baseOption,
+      ignorePrefixes: ["Chapter"],
+    });
+
+    expect(provider.wordCount).toBe(0);
+  });
+
+  it("default empty filter preserves prior behavior", () => {
+    const files = [createFile("Notes/Char - Lin Fan.md", "Char - Lin Fan")];
+    const appHelper = createAppHelper({ getAliases: () => ["Lan"] });
+    const provider = new InternalLinkWordProvider(createApp(files), appHelper);
+
+    provider.refreshWords({ ...baseOption, ignorePrefixes: [] });
+
+    expect(provider.wordCount).toBe(1);
+  });
 });
