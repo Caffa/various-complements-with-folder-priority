@@ -260,6 +260,17 @@ describe("computeLinkRank", () => {
 
     expect(result.folderProximity).toBeUndefined();
   });
+
+  it("honors precomputed word.fileTier when rankData is missing", () => {
+    const word = buildWord({ fileTier: true });
+
+    const result = computeLinkRank(word, {
+      ...defaultOption,
+      rankData: undefined,
+    });
+
+    expect(result.fileTier).toBe(true);
+  });
 });
 
 describe("computeLinkRank with folderRankCache", () => {

@@ -192,3 +192,18 @@ h3.various-complements__settings__header::before {
   background-color: inherit;
   border: dotted 1px;
 }
+
+.various-complements__settings
+  .various-complements__settings__global-search
+  .setting-group-search {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  background-color: var(--background-primary);
+}
+
+.various-complements__settings
+  .setting-group
+  > .setting-items:not(:has(> .setting-item:not([style*="display: none"]))) {
+  display: none;
+}

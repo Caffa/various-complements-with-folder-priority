@@ -1,5 +1,9 @@
-import { App, Notice, PluginSettingTab, Setting, SettingGroup } from "obsidian";
-import { useFilterSetting } from "../composables/settings/useFilterSetting";
+import { App, Notice, PluginSettingTab, SettingGroup } from "obsidian";
+import type { SettingsFilterRegistry } from "../composables/settings/useFilterSetting";
+import {
+  createSettingsFilterRegistry,
+  useFilterSetting,
+} from "../composables/settings/useFilterSetting";
 import type { Hotkey } from "../keys";
 import { hotkey2String, string2Hotkey } from "../keys";
 import type VariousComponents from "../main";
@@ -301,32 +305,47 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
     const { containerEl } = this;
 
     containerEl.empty();
+    containerEl.addClass("various-complements__settings");
 
     containerEl.createEl("h2", {
       text: "Various Complements w/ Folder Priority - Settings",
     });
-    this.addMainSettings(containerEl);
-    this.addAppearanceSettings(containerEl);
-    this.addKeyCustomizationSettings(containerEl);
-    this.addCurrentFileComplementSettings(containerEl);
-    this.addCurrentVaultComplementSettings(containerEl);
-    this.addCustomDictionaryComplementSettings(containerEl);
-    this.addInternalLinkComplementSettings(containerEl);
-    this.addFrontMatterComplementSettings(containerEl);
-    this.addIntelligentSuggestionPrioritizationSettings(containerEl);
-    this.addMobileSettings(containerEl);
-    this.addDebugSettings(containerEl);
+
+    const registry = createSettingsFilterRegistry();
+    const searchGroup = new SettingGroup(containerEl).addClass(
+      "various-complements__settings__global-search",
+    );
+    searchGroup.addSearch((sc) =>
+      sc.setPlaceholder("Filter settings").onChange((v) => {
+        registry.applyFilter(v);
+      }),
+    );
+
+    this.addMainSettings(containerEl, registry);
+    this.addAppearanceSettings(containerEl, registry);
+    this.addKeyCustomizationSettings(containerEl, registry);
+    this.addCurrentFileComplementSettings(containerEl, registry);
+    this.addCurrentVaultComplementSettings(containerEl, registry);
+    this.addCustomDictionaryComplementSettings(containerEl, registry);
+    this.addInternalLinkComplementSettings(containerEl, registry);
+    this.addFrontMatterComplementSettings(containerEl, registry);
+    this.addIntelligentSuggestionPrioritizationSettings(containerEl, registry);
+    this.addMobileSettings(containerEl, registry);
+    this.addDebugSettings(containerEl, registry);
   }
 
-  private addMainSettings(containerEl: HTMLElement) {
-    containerEl.createEl("h3", {
+  private addMainSettings(
+    containerEl: HTMLElement,
+    registry: SettingsFilterRegistry,
+  ) {
+    const headerEl = containerEl.createEl("h3", {
       text: "Main",
       cls: "various-complements__settings__header various-complements__settings__header__main",
     });
 
     const group = new SettingGroup(containerEl);
     const { addFilterableSetting, addConditionalElement, refresh } =
-      useFilterSetting(group);
+      useFilterSetting(group, { registry, headerEl });
 
     const usesChineseStrategy = () =>
       this.plugin.settings.strategy === TokenizeStrategy.CHINESE.name;
@@ -553,7 +572,7 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
 
     addFilterableSetting(
       "Min number of characters for trigger",
-      "Setting the value to 0 does not mean the suggestion will be triggered without any inputted character. Instead, a designated value will be used depending on the Strategy you choose.",
+      "Setting the value to 0 does not mean the suggestion will be triggered without any inputted character. Instead, a designated value will be used depending on the Strategy you choose. Note: 0 reverts to the strategy threshold (default/english/arabic 3, japanese 2, chinese/korean 1). Use 1 to force triggering after a single character (earlier, but more keystroke cost); 0 only if that gating is acceptable.",
       (setting) => {
         setting.addSlider((sc) =>
           sc
@@ -592,18 +611,22 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
       });
     });
 
-    addFilterableSetting("Delay milli-seconds for trigger", null, (setting) => {
-      setting.addSlider((sc) =>
-        sc
-          .setLimits(0, 1000, 10)
-          .setValue(this.plugin.settings.delayMilliSeconds)
-          .setDynamicTooltip()
-          .onChange(async (value) => {
-            this.plugin.settings.delayMilliSeconds = value;
-            await this.plugin.saveSettings();
-          }),
-      );
-    });
+    addFilterableSetting(
+      "Delay milli-seconds for trigger",
+      "Performance note: a ~200 ms debounce would best coalesce keystrokes/compute, but responsiveness limits the useful delay to ~70 ms max; above that the popup lags behind typing.",
+      (setting) => {
+        setting.addSlider((sc) =>
+          sc
+            .setLimits(0, 1000, 10)
+            .setValue(this.plugin.settings.delayMilliSeconds)
+            .setDynamicTooltip()
+            .onChange(async (value) => {
+              this.plugin.settings.delayMilliSeconds = value;
+              await this.plugin.saveSettings();
+            }),
+        );
+      },
+    );
 
     addFilterableSetting(
       "Disable suggestions during IME on",
@@ -746,14 +769,20 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
     );
   }
 
-  private addAppearanceSettings(containerEl: HTMLElement) {
-    containerEl.createEl("h3", {
+  private addAppearanceSettings(
+    containerEl: HTMLElement,
+    registry: SettingsFilterRegistry,
+  ) {
+    const headerEl = containerEl.createEl("h3", {
       text: "Appearance",
       cls: "various-complements__settings__header various-complements__settings__header__appearance",
     });
 
     const group = new SettingGroup(containerEl);
-    const { addFilterableSetting } = useFilterSetting(group);
+    const { addFilterableSetting } = useFilterSetting(group, {
+      registry,
+      headerEl,
+    });
 
     addFilterableSetting(
       "Show Match strategy",
@@ -815,8 +844,11 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
     });
   }
 
-  private addKeyCustomizationSettings(containerEl: HTMLElement) {
-    containerEl.createEl("h3", {
+  private addKeyCustomizationSettings(
+    containerEl: HTMLElement,
+    registry: SettingsFilterRegistry,
+  ) {
+    const headerEl = containerEl.createEl("h3", {
       text: "Key customization",
       cls: "various-complements__settings__header various-complements__settings__header__key-customization",
     });
@@ -824,7 +856,13 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
     const group = new SettingGroup(containerEl).addClass(
       "various-complements__settings__popup-hotkey",
     );
-    const { addFilterableSetting } = useFilterSetting(group);
+    const { addFilterableSetting, addConditionalElement } = useFilterSetting(
+      group,
+      {
+        registry,
+        headerEl,
+      },
+    );
 
     const li = createEl("li");
     li.append(
@@ -865,6 +903,7 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
 
     group.addSetting((setting) => {
       setting.setHeading().setName("Hotkeys").setDesc(df);
+      addConditionalElement(setting.settingEl, () => true);
     });
 
     const hotkeys = this.plugin.settings.hotkeys;
@@ -888,29 +927,36 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
       });
     });
 
-    new Setting(containerEl)
-      .setName("Propagate ESC")
-      .setDesc(
-        "It is handy if you use Vim mode because you can switch to Normal mode by one ESC, whether it shows suggestions or not.",
-      )
-      .addToggle((tc) => {
-        tc.setValue(this.plugin.settings.propagateEsc).onChange(
-          async (value) => {
-            this.plugin.settings.propagateEsc = value;
-            await this.plugin.saveSettings();
-          },
-        );
-      });
+    addFilterableSetting(
+      "Propagate ESC",
+      "It is handy if you use Vim mode because you can switch to Normal mode by one ESC, whether it shows suggestions or not.",
+      (setting) => {
+        setting.addToggle((tc) => {
+          tc.setValue(this.plugin.settings.propagateEsc).onChange(
+            async (value) => {
+              this.plugin.settings.propagateEsc = value;
+              await this.plugin.saveSettings();
+            },
+          );
+        });
+      },
+    );
   }
 
-  private addCurrentFileComplementSettings(containerEl: HTMLElement) {
-    containerEl.createEl("h3", {
+  private addCurrentFileComplementSettings(
+    containerEl: HTMLElement,
+    registry: SettingsFilterRegistry,
+  ) {
+    const headerEl = containerEl.createEl("h3", {
       text: "Current file complement",
       cls: "various-complements__settings__header various-complements__settings__header__current-file",
     });
 
     const group = new SettingGroup(containerEl);
-    const { addFilterableSetting, refresh } = useFilterSetting(group);
+    const { addFilterableSetting, refresh } = useFilterSetting(group, {
+      registry,
+      headerEl,
+    });
 
     const isEnabled = () => this.plugin.settings.enableCurrentFileComplement;
 
@@ -1005,15 +1051,18 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
     );
   }
 
-  private addCurrentVaultComplementSettings(containerEl: HTMLElement) {
-    containerEl.createEl("h3", {
+  private addCurrentVaultComplementSettings(
+    containerEl: HTMLElement,
+    registry: SettingsFilterRegistry,
+  ) {
+    const headerEl = containerEl.createEl("h3", {
       text: "Current vault complement",
       cls: "various-complements__settings__header various-complements__settings__header__current-vault",
     });
 
     const group = new SettingGroup(containerEl);
     const { addFilterableSetting, addConditionalElement, refresh } =
-      useFilterSetting(group);
+      useFilterSetting(group, { registry, headerEl });
 
     const isEnabled = () => this.plugin.settings.enableCurrentVaultComplement;
 
@@ -1185,14 +1234,20 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
     );
   }
 
-  private addCustomDictionaryComplementSettings(containerEl: HTMLElement) {
-    containerEl.createEl("h3", {
+  private addCustomDictionaryComplementSettings(
+    containerEl: HTMLElement,
+    registry: SettingsFilterRegistry,
+  ) {
+    const headerEl = containerEl.createEl("h3", {
       text: "Custom dictionary complement",
       cls: "various-complements__settings__header various-complements__settings__header__custom-dictionary",
     });
 
     const group = new SettingGroup(containerEl);
-    const { addFilterableSetting, refresh } = useFilterSetting(group);
+    const { addFilterableSetting, refresh } = useFilterSetting(group, {
+      registry,
+      headerEl,
+    });
 
     const isEnabled = () =>
       this.plugin.settings.enableCustomDictionaryComplement;
@@ -1355,15 +1410,18 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
     );
   }
 
-  private addInternalLinkComplementSettings(containerEl: HTMLElement) {
-    containerEl.createEl("h3", {
+  private addInternalLinkComplementSettings(
+    containerEl: HTMLElement,
+    registry: SettingsFilterRegistry,
+  ) {
+    const headerEl = containerEl.createEl("h3", {
       text: "Internal link complement",
       cls: "various-complements__settings__header various-complements__settings__header__internal-link",
     });
 
     const group = new SettingGroup(containerEl);
     const { addFilterableSetting, addConditionalElement, refresh } =
-      useFilterSetting(group);
+      useFilterSetting(group, { registry, headerEl });
 
     const isEnabled = () => this.plugin.settings.enableInternalLinkComplement;
     const usesAliasTransformation = () =>
@@ -1434,7 +1492,7 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
     );
     addFilterableSetting(
       "Ignore autocomplete for file names starting with these prefixes (comma-separated)",
-      "Only the file-name based completion is dropped; the note still links perfectly and any of its aliases still surface if matched. A prefix only counts when followed by a divider (space, dash, colon, …) — e.g. \"Char\" drops \"Char - Lin Fan\" but not \"Charm\". Example: Char, Chapter",
+      'Only the file-name based completion is dropped; the note still links perfectly and any of its aliases still surface if matched. A prefix only counts when followed by a divider (space, dash, colon, …) — e.g. "Char" drops "Char - Lin Fan" but not "Charm". Example: Char, Chapter',
       (setting) => {
         setting.addText((cb) => {
           cb.setValue(
@@ -1756,14 +1814,20 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
     );
   }
 
-  private addFrontMatterComplementSettings(containerEl: HTMLElement) {
-    containerEl.createEl("h3", {
+  private addFrontMatterComplementSettings(
+    containerEl: HTMLElement,
+    registry: SettingsFilterRegistry,
+  ) {
+    const headerEl = containerEl.createEl("h3", {
       text: "Front matter complement",
       cls: "various-complements__settings__header various-complements__settings__header__front-matter",
     });
 
     const group = new SettingGroup(containerEl);
-    const { addFilterableSetting, refresh } = useFilterSetting(group);
+    const { addFilterableSetting, refresh } = useFilterSetting(group, {
+      registry,
+      headerEl,
+    });
 
     const isEnabled = () => this.plugin.settings.enableFrontMatterComplement;
 
@@ -1817,14 +1881,18 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
 
   private addIntelligentSuggestionPrioritizationSettings(
     containerEl: HTMLElement,
+    registry: SettingsFilterRegistry,
   ) {
-    containerEl.createEl("h3", {
+    const headerEl = containerEl.createEl("h3", {
       text: "Intelligent suggestion prioritization",
       cls: "various-complements__settings__header various-complements__settings__header__intelligent-suggestion-prioritization",
     });
 
     const group = new SettingGroup(containerEl);
-    const { addFilterableSetting, refresh } = useFilterSetting(group);
+    const { addFilterableSetting, refresh } = useFilterSetting(group, {
+      registry,
+      headerEl,
+    });
 
     const isEnabled = () =>
       this.plugin.settings.intelligentSuggestionPrioritization.enabled;
@@ -1931,38 +1999,62 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
     );
   }
 
-  private addMobileSettings(containerEl: HTMLElement) {
-    containerEl.createEl("h3", {
+  private addMobileSettings(
+    containerEl: HTMLElement,
+    registry: SettingsFilterRegistry,
+  ) {
+    const headerEl = containerEl.createEl("h3", {
       text: "Mobile",
       cls: "various-complements__settings__header various-complements__settings__header__mobile",
     });
 
-    new Setting(containerEl).setName("Disable on mobile").addToggle((tc) => {
-      tc.setValue(this.plugin.settings.disableOnMobile).onChange(
-        async (value) => {
-          this.plugin.settings.disableOnMobile = value;
-          await this.plugin.saveSettings();
-        },
-      );
+    const group = new SettingGroup(containerEl);
+    const { addFilterableSetting } = useFilterSetting(group, {
+      registry,
+      headerEl,
+    });
+
+    addFilterableSetting("Disable on mobile", null, (setting) => {
+      setting.addToggle((tc) => {
+        tc.setValue(this.plugin.settings.disableOnMobile).onChange(
+          async (value) => {
+            this.plugin.settings.disableOnMobile = value;
+            await this.plugin.saveSettings();
+          },
+        );
+      });
     });
   }
 
-  private addDebugSettings(containerEl: HTMLElement) {
-    containerEl.createEl("h3", {
+  private addDebugSettings(
+    containerEl: HTMLElement,
+    registry: SettingsFilterRegistry,
+  ) {
+    const headerEl = containerEl.createEl("h3", {
       text: "Debug",
       cls: "various-complements__settings__header various-complements__settings__header__debug",
     });
 
-    new Setting(containerEl)
-      .setName("Show log about performance in a console")
-      .addToggle((tc) => {
-        tc.setValue(
-          this.plugin.settings.showLogAboutPerformanceInConsole,
-        ).onChange(async (value) => {
-          this.plugin.settings.showLogAboutPerformanceInConsole = value;
-          await this.plugin.saveSettings();
+    const group = new SettingGroup(containerEl);
+    const { addFilterableSetting } = useFilterSetting(group, {
+      registry,
+      headerEl,
+    });
+
+    addFilterableSetting(
+      "Show log about performance in a console",
+      null,
+      (setting) => {
+        setting.addToggle((tc) => {
+          tc.setValue(
+            this.plugin.settings.showLogAboutPerformanceInConsole,
+          ).onChange(async (value) => {
+            this.plugin.settings.showLogAboutPerformanceInConsole = value;
+            await this.plugin.saveSettings();
+          });
         });
-      });
+      },
+    );
   }
 
   async toggleMatchStrategy() {

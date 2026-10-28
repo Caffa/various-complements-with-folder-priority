@@ -2,7 +2,162 @@ import type { Setting, SettingGroup } from "obsidian";
 
 const ALWAYS_VISIBLE = () => true;
 
-export const useFilterSetting = (group: SettingGroup) => {
+export interface SettingsFilterSection {
+  headerEl: HTMLElement | null;
+  filterTargets: Array<{
+    settingEl: HTMLElement;
+    getSearchText: () => string;
+    isVisible: () => boolean;
+  }>;
+  conditionalElements: Array<{
+    el: HTMLElement;
+    isVisible: () => boolean;
+  }>;
+}
+
+export interface SettingsFilterRegistry {
+  registerSection(headerEl: HTMLElement | null): SettingsFilterSection;
+  addFilterTarget(
+    section: SettingsFilterSection,
+    settingEl: HTMLElement,
+    searchText: string,
+    isVisible?: () => boolean,
+  ): void;
+  addConditionalElement(
+    section: SettingsFilterSection,
+    el: HTMLElement,
+    isVisible: () => boolean,
+  ): void;
+  applyFilter(query: string): void;
+  refresh(): void;
+}
+
+export function createSettingsFilterRegistry(): SettingsFilterRegistry {
+  const sections: SettingsFilterSection[] = [];
+  let latestQuery = "";
+
+  const registerSection = (
+    headerEl: HTMLElement | null,
+  ): SettingsFilterSection => {
+    const section: SettingsFilterSection = {
+      headerEl,
+      filterTargets: [],
+      conditionalElements: [],
+    };
+    sections.push(section);
+    return section;
+  };
+
+  const addFilterTarget = (
+    section: SettingsFilterSection,
+    settingEl: HTMLElement,
+    searchText: string,
+    isVisible: () => boolean = ALWAYS_VISIBLE,
+  ) => {
+    section.filterTargets.push({
+      settingEl,
+      getSearchText: () => searchText,
+      isVisible,
+    });
+    applyFilter(latestQuery);
+  };
+
+  const addConditionalElement = (
+    section: SettingsFilterSection,
+    el: HTMLElement,
+    isVisible: () => boolean,
+  ) => {
+    section.conditionalElements.push({ el, isVisible });
+    applyFilter(latestQuery);
+  };
+
+  const applyFilter = (query: string) => {
+    latestQuery = query;
+    const normalizedQuery = query.trim().toLowerCase();
+    const shouldShowAll = normalizedQuery.length === 0;
+
+    for (const section of sections) {
+      let sectionHasVisibleMatch = false;
+
+      for (const target of section.filterTargets) {
+        const searchText = target.getSearchText().toLowerCase();
+        const isMatch = shouldShowAll || searchText.includes(normalizedQuery);
+        const visible = isMatch && target.isVisible();
+        target.settingEl.toggle(visible);
+        if (visible) {
+          sectionHasVisibleMatch = true;
+        }
+      }
+
+      for (const conditional of section.conditionalElements) {
+        const visible =
+          conditional.isVisible() && (shouldShowAll || sectionHasVisibleMatch);
+        conditional.el.toggle(visible);
+      }
+
+      if (section.headerEl) {
+        section.headerEl.toggle(shouldShowAll || sectionHasVisibleMatch);
+      }
+    }
+  };
+
+  const refresh = () => applyFilter(latestQuery);
+
+  return {
+    registerSection,
+    addFilterTarget,
+    addConditionalElement,
+    applyFilter,
+    refresh,
+  };
+}
+
+interface UseFilterSettingOptions {
+  registry?: SettingsFilterRegistry;
+  headerEl?: HTMLElement;
+}
+
+export const useFilterSetting = (
+  group: SettingGroup,
+  options?: UseFilterSettingOptions,
+) => {
+  if (options?.registry) {
+    const section = options.registry.registerSection(options.headerEl ?? null);
+
+    const addFilterableSetting = (
+      name: string,
+      desc: string | DocumentFragment | null,
+      build: (setting: Setting) => void,
+      option?: { visible?: () => boolean },
+    ) => {
+      const searchText = name.trim();
+      group.addSetting((setting) => {
+        setting.setName(name);
+        if (desc) {
+          setting.setDesc(desc);
+        }
+        build(setting);
+        options.registry!.addFilterTarget(
+          section,
+          setting.settingEl,
+          searchText,
+          option?.visible ?? ALWAYS_VISIBLE,
+        );
+      });
+    };
+
+    const addConditionalElement = (
+      el: HTMLElement,
+      isVisible: () => boolean,
+    ) => {
+      options.registry!.addConditionalElement(section, el, isVisible);
+    };
+
+    const refresh = () => options.registry!.refresh();
+
+    return { addFilterableSetting, addConditionalElement, refresh };
+  }
+
   const filterTargets: {
     settingEl: HTMLElement;
     getSearchText: () => string;

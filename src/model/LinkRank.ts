@@ -64,7 +64,12 @@ export function computeLinkRank(
 
   const rankData = option.rankData;
   if (!rankData) {
-    return { fileTier: false };
+    return {
+      fileTier:
+        typeof (word as any).fileTier === "boolean"
+          ? (word as any).fileTier
+          : false,
+    };
   }
 
   if (word.phantom) {

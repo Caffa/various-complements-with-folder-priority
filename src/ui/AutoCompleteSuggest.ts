@@ -50,6 +50,9 @@ import { insertWithIsolatedUndoStep } from "./editor-insertion";
 import type { CommandReturnType } from "./popup-commands";
 import * as commands from "./popup-commands";
 import type { ProviderStatusBar } from "./ProviderStatusBar";
+import { isPureShortening } from "./suggestion-memory";
+
+type SuggestionMemory = { word: string; words: Word[] };
 
 function buildLogMessage(message: string, msec: number) {
   return `${message}: ${Math.round(msec)}[ms]`;
@@ -92,6 +95,7 @@ export class AutoCompleteSuggest
   selectionHistoryStorage: SelectionHistoryStorage | undefined;
   linkRankIndex: LinkRankIndex;
   folderRankCache: FolderRankCache;
+  folderAnnotationGeneration = 0;
 
   tokenizer: Tokenizer;
   debounceGetSuggestions: Debouncer<
@@ -142,6 +146,24 @@ export class AutoCompleteSuggest
     candidates: string[];
     currentIndex: number;
   } | null = null;
+
+  /**
+   * Cache for freeze-serve: when the next query is a pure shortening of a
+   * single, offset-0 token, and the other serve guards hold, we replay the
+   * previous suggestion list without recomputing it.
+   *
+   * Gate is string-shaped, not gesture-shaped: a shorter-prefix RETYPE serves
+   * too, because the stored words are a valid superset and the offset===0
+   * guard keeps the anchor stable.
+   *
+   * Serve guards: single token + offset 0 + completionMode matches the
+   * configured match strategy + not in frontmatter + not run manually + not
+   * excluded by excludeInternalLinksInCode.
+   */
+  private recentSuggestionMemory?: SuggestionMemory;
+
+  /** Incremented by updateSettings() to invalidate in-flight debounced runs. */
+  private settingsEpoch = 0;
 
   private constructor(app: App, statusBar: ProviderStatusBar) {
     super(app);
@@ -237,7 +259,7 @@ export class AutoCompleteSuggest
     ins.debouncedRefreshInternalLinkTokens = debounce(async () => {
       if (ins.unloaded) return;
       ins.refreshInternalLinkTokens();
-    }, 1000);
+    }, 2500);
 
     ins.modifyEventRef = app.vault.on("modify", (_) => {
       if (ins.unloaded) return;
@@ -503,6 +525,8 @@ export class AutoCompleteSuggest
 
   async updateSettings(settings: Settings) {
     this.settings = settings;
+    this.recentSuggestionMemory = undefined;
+    this.settingsEpoch++;
     this.linkRankIndex.invalidate();
     this.folderRankCache.invalidate();
 
@@ -577,8 +601,10 @@ export class AutoCompleteSuggest
       settings.delimiterToDivideSuggestionsForDisplayFromInsertion || null,
     );
 
+    // delayMilliSeconds: computational perf favors ~200ms debounce, but UX caps useful delay at ~70ms max.
     this.debounceGetSuggestions = debounce(
       (context: EditorSuggestContext, cb: (words: Word[]) => void) => {
+        const epochAtStart = this.settingsEpoch;
         const start = performance.now();
 
         this.showDebugLog(() => `[context.query]: ${context.query}`);
@@ -625,15 +651,31 @@ export class AutoCompleteSuggest
           (this.appHelper.inInlineCode(context.editor) ||
             this.appHelper.inCodeBlock(context.editor));
 
-        let words = parsedQuery.queries
-          .filter(
-            (x, i, xs) =>
-              parsedQuery.currentFrontMatter ||
-              (this.settings.minNumberOfWordsTriggeredPhrase + i - 1 <
-                xs.length &&
-                x.word.length >= this.minNumberTriggered &&
-                !x.word.endsWith(" ")),
-          )
+        const qFiltered = parsedQuery.queries.filter(
+          (x, i, xs) =>
+            parsedQuery.currentFrontMatter ||
+            (this.settings.minNumberOfWordsTriggeredPhrase + i - 1 <
+              xs.length &&
+              x.word.length >= this.minNumberTriggered &&
+              !x.word.endsWith(" ")),
+        );
+
+        if (
+          !parsedQuery.currentFrontMatter &&
+          qFiltered.length === 1 &&
+          qFiltered[0].offset === 0 &&
+          !this.runManually &&
+          !excludeInternalLinkInCode &&
+          parsedQuery.completionMode === this.matchStrategy.name &&
+          this.recentSuggestionMemory &&
+          epochAtStart === this.settingsEpoch &&
+          isPureShortening(this.recentSuggestionMemory.word, qFiltered[0].word)
+        ) {
+          cb(this.recentSuggestionMemory.words);
+          return;
+        }
+
+        let words = qFiltered
           .map((q) => {
             const handler =
               parsedQuery.currentFrontMatter &&
@@ -674,11 +716,7 @@ export class AutoCompleteSuggest
                         this.appHelper.getActiveFile()?.path ?? null,
                       limitingFolder:
                         this.settings.folderPriority.limitingFolder ?? "",
-                      rankData: this.linkRankIndex.getRankData(
-                        this.appHelper.getActiveFile()?.path ?? null,
-                        this.settings.folderPriority.limitingFolder ?? "",
-                      ),
-                      folderRankCache: this.folderRankCache,
+                      // Decoupled from keystroke path: ranks precomputed at refresh.
                     }
                   : undefined,
                 prioritizeAliases: this.settings.prioritizeAliases,
@@ -718,12 +756,25 @@ export class AutoCompleteSuggest
           );
         }
 
-        cb(
-          uniqWith(words, suggestionUniqPredicate).slice(
-            0,
-            this.settings.maxNumberOfSuggestions,
-          ),
+        const finalWords = uniqWith(words, suggestionUniqPredicate).slice(
+          0,
+          this.settings.maxNumberOfSuggestions,
         );
+
+        cb(finalWords);
+
+        if (
+          !parsedQuery.currentFrontMatter &&
+          qFiltered.length === 1 &&
+          qFiltered[0].offset === 0 &&
+          !this.runManually &&
+          epochAtStart === this.settingsEpoch
+        ) {
+          this.recentSuggestionMemory = {
+            word: qFiltered[0].word,
+            words: finalWords.map((w) => ({ ...w })),
+          };
+        }
 
         this.showDebugLog(() =>
           buildLogMessage("Get suggestions", performance.now() - start),
@@ -1019,18 +1070,44 @@ export class AutoCompleteSuggest
       currentFilePath: this.appHelper.getActiveFile()?.path ?? undefined,
     });
 
-    if (this.settings.folderPriority?.enabled) {
-      const activePath = this.appHelper.getActiveFile()?.path ?? null;
-      const rankData = this.linkRankIndex.getRankData(
-        activePath,
-        this.settings.folderPriority.limitingFolder ?? "",
-      );
-      this.internalLinkWordProvider.annotateRankData(
-        activePath,
-        this.settings.folderPriority.limitingFolder ?? "",
-        rankData,
-        this.folderRankCache,
-      );
+    if (
+      this.settings.folderPriority?.enabled &&
+      (this.settings.folderPriority.limitingFolder ?? "") !== ""
+    ) {
+      const capturedActivePath = this.appHelper.getActiveFile()?.path ?? null;
+      const capturedLimitingFolder =
+        this.settings.folderPriority.limitingFolder ?? "";
+      const generation = ++this.folderAnnotationGeneration;
+
+      // Decouple folder prioritization from typing: defer heavy rank
+      // computation (LinkRankIndex scan + FolderRankCache build) to idle.
+      const annotate = () => {
+        if (this.unloaded) return;
+        if (generation !== this.folderAnnotationGeneration) return;
+        if (!this.settings?.folderPriority?.enabled) return;
+        if ((this.settings.folderPriority?.limitingFolder ?? "") === "") return;
+        try {
+          const rankData = this.linkRankIndex.getRankData(
+            capturedActivePath,
+            capturedLimitingFolder,
+          );
+          this.internalLinkWordProvider.annotateRankData(
+            capturedActivePath,
+            capturedLimitingFolder,
+            rankData,
+            this.folderRankCache,
+          );
+        } catch {
+          // best-effort; stale ranks fall back to no-op sort contribution
+        }
+      };
+      const ric = (globalThis as { requestIdleCallback?: Function })
+        .requestIdleCallback;
+      if (typeof ric === "function") {
+        ric(annotate, { timeout: 4000 });
+      } else {
+        setTimeout(annotate, 0);
+      }
     }
 
     this.statusBar.setInternalLinkIndexed(

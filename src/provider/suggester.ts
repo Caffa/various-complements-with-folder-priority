@@ -6,13 +6,11 @@ import type {
   SelectionHistoryStorage,
 } from "../storage/SelectionHistoryStorage";
 import type { IndexedWords } from "../ui/AutoCompleteSuggest";
-import { max, uniqWith } from "../util/collection-helper";
+import { uniqWith } from "../util/collection-helper";
 import {
   capitalizeFirstLetter,
-  lowerFuzzy,
-  lowerFuzzyStarsWith,
-  lowerIncludes,
   lowerStartsWith,
+  microFuzzy,
   wrapFuzzy,
 } from "../util/strings";
 
@@ -25,6 +23,27 @@ export interface Judgement {
   value?: string;
   alias: boolean;
 }
+
+type JudgementLite = {
+  word: Word;
+  hit?: string;
+  value?: string;
+  alias: boolean;
+  fuzzy?: boolean;
+  startsQuery?: boolean;
+  type: Word["type"];
+};
+
+function historyKey(lite: JudgementLite): HitWord {
+  return {
+    ...lite.word,
+    hit: lite.hit!,
+    value: lite.alias ? lite.word.value : lite.hit!,
+  } as HitWord;
+}
+
+const NONE = { type: "none" as const };
+const STARTS_CONCRETE = wrapFuzzy(lowerStartsWith);
 
 export function suggestionUniqPredicate(a: Word, b: Word) {
   if (a.value !== b.value) {
@@ -142,8 +161,20 @@ function compareFolderRankStage(
   return d === 0 ? 0 : d > 0 ? 1 : -1;
 }
 
+function materializeWord(lite: JudgementLite, query: string): Word {
+  const hit = lite.hit!;
+  if (lite.fuzzy === undefined) {
+    return { ...lite.word, hit };
+  }
+  const base =
+    !lite.alias && hit !== lite.word.value
+      ? { ...lite.word, value: hit }
+      : lite.word;
+  return { ...base, hit, fuzzy: lite.fuzzy, query };
+}
+
 // Public for tests
-export function judge(
+export function judgeLite(
   word: Word,
   query: string,
   queryStartWithUpper: boolean,
@@ -152,21 +183,24 @@ export function judge(
       minMatchScore: number;
     };
   },
-): Judgement {
+  queryLower?: string,
+): JudgementLite {
+  const qLower = queryLower ?? query.toLowerCase();
   if (query === "") {
     return {
-      word: {
-        ...word,
-        hit: word.value,
-      },
+      word,
+      hit: word.value,
       value: word.value,
       alias: false,
+      type: word.type,
     };
   }
 
-  const matcher = options?.fuzzy ? lowerFuzzy : wrapFuzzy(lowerStartsWith);
-
-  const matched = matcher(word.value, query);
+  const useFuzzy = options?.fuzzy !== undefined;
+  const valueLower = word.value.toLowerCase();
+  const matched = useFuzzy
+    ? microFuzzy(valueLower, qLower)
+    : STARTS_CONCRETE(valueLower, qLower);
   if (
     matched.type === "concrete_match" ||
     (matched.type === "fuzzy_match" &&
@@ -179,59 +213,81 @@ export function judge(
     ) {
       const c = capitalizeFirstLetter(word.value);
       return {
-        word: {
-          ...word,
-          value: c,
-          hit: c,
-          fuzzy: matched.type === "fuzzy_match",
-          query,
-        },
+        word,
+        hit: c,
         value: c,
         alias: false,
+        fuzzy: matched.type === "fuzzy_match",
+        type: word.type,
       };
     } else {
       return {
-        word: {
-          ...word,
-          hit: word.value,
-          fuzzy: matched.type === "fuzzy_match",
-          query,
-        },
+        word,
+        hit: word.value,
         value: word.value,
         alias: false,
+        fuzzy: matched.type === "fuzzy_match",
+        type: word.type,
       };
     }
   }
 
-  const matchedAlias = word.aliases
-    ?.map((a) => ({ aliases: a, matched: matcher(a, query) }))
-    .sort((a, b) =>
-      a.matched.type === "concrete_match" && b.matched.type !== "concrete_match"
-        ? -1
-        : 0,
-    )
-    .find((x) => x.matched.type !== "none");
+  let chosenAlias: string | undefined;
+  let aliasFuzzy = false;
+  let aliasScore = 0;
+  if (word.aliases) {
+    for (const a of word.aliases) {
+      const aLower = a.toLowerCase();
+      const m = useFuzzy
+        ? microFuzzy(aLower, qLower)
+        : STARTS_CONCRETE(aLower, qLower);
+      if (m.type === "concrete_match") {
+        chosenAlias = a;
+        aliasFuzzy = false;
+        break;
+      }
+      if (chosenAlias === undefined && m.type === "fuzzy_match") {
+        chosenAlias = a;
+        aliasFuzzy = true;
+        aliasScore = m.score;
+      }
+    }
+  }
   if (
-    matchedAlias &&
-    (matchedAlias.matched.type === "concrete_match" ||
-      (matchedAlias.matched.type === "fuzzy_match" &&
-        matchedAlias.matched.score > (options?.fuzzy?.minMatchScore ?? 0)))
+    chosenAlias !== undefined &&
+    (!aliasFuzzy || aliasScore > (options?.fuzzy?.minMatchScore ?? 0))
   ) {
     return {
-      word: {
-        ...word,
-        hit: matchedAlias.aliases,
-        fuzzy: matchedAlias.matched.type === "fuzzy_match",
-        query,
-      },
-      value: matchedAlias.aliases,
+      word,
+      hit: chosenAlias,
+      value: chosenAlias,
       alias: true,
+      fuzzy: aliasFuzzy,
+      type: word.type,
     };
   }
 
+  return { word, alias: false, type: word.type };
+}
+
+export function judge(
+  word: Word,
+  query: string,
+  queryStartWithUpper: boolean,
+  options?: {
+    fuzzy?: {
+      minMatchScore: number;
+    };
+  },
+): Judgement {
+  const lite = judgeLite(word, query, queryStartWithUpper, options);
+  if (lite.hit === undefined) {
+    return { word: lite.word, alias: false };
+  }
   return {
-    word,
-    alias: false,
+    word: materializeWord(lite, query),
+    value: lite.hit,
+    alias: lite.alias,
   };
 }
 
@@ -266,7 +322,10 @@ export function suggestWords(
     prioritizeAliases,
     excludeInternalLink,
   } = option;
-  const queryStartWithUpper = capitalizeFirstLetter(query) === query;
+  const queryStartWithUpper =
+    query === "" || query.charAt(0).toUpperCase() === query.charAt(0);
+  const queryLower = query.toLowerCase();
+  const c0 = query.charAt(0);
 
   // プロバイダー別の最小文字数チェック関数
   const shouldIncludeProvider = (
@@ -297,58 +356,56 @@ export function suggestWords(
       ? flattenFrontMatterWords()
       : [
           ...(shouldIncludeProvider("currentFile")
-            ? (indexedWords.currentFile[query.charAt(0)] ?? [])
+            ? (indexedWords.currentFile[c0] ?? [])
             : []),
           ...(shouldIncludeProvider("currentFile")
-            ? (indexedWords.currentFile[query.charAt(0).toLowerCase()] ?? [])
+            ? (indexedWords.currentFile[c0.toLowerCase()] ?? [])
             : []),
           ...(shouldIncludeProvider("currentVault")
-            ? (indexedWords.currentVault[query.charAt(0)] ?? [])
+            ? (indexedWords.currentVault[c0] ?? [])
             : []),
           ...(shouldIncludeProvider("currentVault")
-            ? (indexedWords.currentVault[query.charAt(0).toLowerCase()] ?? [])
+            ? (indexedWords.currentVault[c0.toLowerCase()] ?? [])
             : []),
           ...(shouldIncludeProvider("customDictionary")
-            ? (indexedWords.customDictionary[query.charAt(0)] ?? [])
+            ? (indexedWords.customDictionary[c0] ?? [])
             : []),
           ...(shouldIncludeProvider("customDictionary")
-            ? (indexedWords.customDictionary[query.charAt(0).toLowerCase()] ??
-              [])
+            ? (indexedWords.customDictionary[c0.toLowerCase()] ?? [])
             : []),
           ...(shouldIncludeProvider("internalLink")
-            ? (indexedWords.internalLink[query.charAt(0)] ?? [])
+            ? (indexedWords.internalLink[c0] ?? [])
             : []),
           ...(shouldIncludeProvider("internalLink")
-            ? (indexedWords.internalLink[query.charAt(0).toLowerCase()] ?? [])
+            ? (indexedWords.internalLink[c0.toLowerCase()] ?? [])
             : []),
         ]
     : frontMatter
       ? flattenFrontMatterWords()
       : [
           ...(shouldIncludeProvider("currentFile")
-            ? (indexedWords.currentFile[query.charAt(0)] ?? [])
+            ? (indexedWords.currentFile[c0] ?? [])
             : []),
           ...(shouldIncludeProvider("currentFile")
-            ? (indexedWords.currentFile[query.charAt(0).toUpperCase()] ?? [])
+            ? (indexedWords.currentFile[c0.toUpperCase()] ?? [])
             : []),
           ...(shouldIncludeProvider("currentVault")
-            ? (indexedWords.currentVault[query.charAt(0)] ?? [])
+            ? (indexedWords.currentVault[c0] ?? [])
             : []),
           ...(shouldIncludeProvider("currentVault")
-            ? (indexedWords.currentVault[query.charAt(0).toUpperCase()] ?? [])
+            ? (indexedWords.currentVault[c0.toUpperCase()] ?? [])
             : []),
           ...(shouldIncludeProvider("customDictionary")
-            ? (indexedWords.customDictionary[query.charAt(0)] ?? [])
+            ? (indexedWords.customDictionary[c0] ?? [])
             : []),
           ...(shouldIncludeProvider("customDictionary")
-            ? (indexedWords.customDictionary[query.charAt(0).toUpperCase()] ??
-              [])
+            ? (indexedWords.customDictionary[c0.toUpperCase()] ?? [])
             : []),
           ...(shouldIncludeProvider("internalLink")
-            ? (indexedWords.internalLink[query.charAt(0)] ?? [])
+            ? (indexedWords.internalLink[c0] ?? [])
             : []),
           ...(shouldIncludeProvider("internalLink")
-            ? (indexedWords.internalLink[query.charAt(0).toUpperCase()] ?? [])
+            ? (indexedWords.internalLink[c0.toUpperCase()] ?? [])
             : []),
         ];
 
@@ -356,33 +413,115 @@ export function suggestWords(
   // Phase 2: run the full judge (fuzzy + aliases) only if Phase 1 did not
   // already produce enough candidates. Avoids expensive matching on the common
   // fast path where a simple prefix is enough.
-  let filteredJudgement: Judgement[];
+  let filteredJudgement: JudgementLite[] = [];
+  let latestUpdated = 0;
   if (query === "") {
-    filteredJudgement = Array.from(words)
-      .map((x) => judge(x, query, queryStartWithUpper, option))
-      .filter((x) => x.value !== undefined);
+    for (const w of words) {
+      const lite: JudgementLite = {
+        word: w,
+        hit: w.value,
+        value: w.value,
+        alias: false,
+        type: w.type,
+      };
+      filteredJudgement.push(lite);
+      if (selectionHistoryStorage) {
+        const lu =
+          selectionHistoryStorage.getSelectionHistory(historyKey(lite))
+            ?.lastUpdated ?? 0;
+        if (lu > latestUpdated) {
+          latestUpdated = lu;
+        }
+      }
+    }
   } else {
-    const exactWords: Word[] = [];
+    const exactLites: JudgementLite[] = [];
     const restWords: Word[] = [];
     for (const w of words) {
-      const isExact =
-        lowerStartsWith(w.value, query) ||
-        (w.aliases ?? []).some((a) => lowerStartsWith(a, query));
-      if (isExact) {
-        exactWords.push(w);
+      const valueLower = w.value.toLowerCase();
+      let lite: JudgementLite | undefined;
+      if (valueLower.startsWith(queryLower)) {
+        if (
+          queryStartWithUpper &&
+          w.type !== "internalLink" &&
+          w.type !== "frontMatter"
+        ) {
+          const c = capitalizeFirstLetter(w.value);
+          lite = {
+            word: w,
+            hit: c,
+            value: c,
+            alias: false,
+            fuzzy: false,
+            type: w.type,
+          };
+        } else {
+          lite = {
+            word: w,
+            hit: w.value,
+            value: w.value,
+            alias: false,
+            fuzzy: false,
+            type: w.type,
+          };
+        }
+      } else {
+        let aliasHit: string | undefined;
+        for (const a of w.aliases ?? []) {
+          if (a.toLowerCase().startsWith(queryLower)) {
+            aliasHit = a;
+            break;
+          }
+        }
+        if (aliasHit !== undefined) {
+          lite = {
+            word: w,
+            hit: aliasHit,
+            value: aliasHit,
+            alias: true,
+            fuzzy: false,
+            type: w.type,
+          };
+        }
+      }
+      if (lite) {
+        exactLites.push(lite);
+        if (selectionHistoryStorage) {
+          const lu =
+            selectionHistoryStorage.getSelectionHistory(historyKey(lite))
+              ?.lastUpdated ?? 0;
+          if (lu > latestUpdated) {
+            latestUpdated = lu;
+          }
+        }
       } else {
         restWords.push(w);
       }
     }
-    const exactJudged = exactWords
-      .map((x) => judge(x, query, queryStartWithUpper, { fuzzy: undefined }))
-      .filter((x) => x.value !== undefined);
-    filteredJudgement = exactJudged;
-    if (exactJudged.length < maxNum && restWords.length > 0) {
-      const restJudged = restWords
-        .map((x) => judge(x, query, queryStartWithUpper, option))
-        .filter((x) => x.value !== undefined);
-      filteredJudgement = [...exactJudged, ...restJudged];
+    filteredJudgement = exactLites;
+    if (exactLites.length < maxNum && restWords.length > 0) {
+      const restLites: JudgementLite[] = [];
+      for (const w of restWords) {
+        const lite = judgeLite(
+          w,
+          query,
+          queryStartWithUpper,
+          option,
+          queryLower,
+        );
+        if (lite.hit !== undefined) {
+          restLites.push(lite);
+          if (selectionHistoryStorage) {
+            const lu =
+              selectionHistoryStorage.getSelectionHistory(historyKey(lite))
+                ?.lastUpdated ?? 0;
+            if (lu > latestUpdated) {
+              latestUpdated = lu;
+            }
+          }
+        }
+      }
+      filteredJudgement = [...exactLites, ...restLites];
     }
   }
 
@@ -442,21 +581,12 @@ export function suggestWords(
     return 0;
   };
 
-  const latestUpdated = max(
-    filteredJudgement.map(
-      (x) =>
-        selectionHistoryStorage?.getSelectionHistory(x.word as HitWord)
-          ?.lastUpdated ?? 0,
-    ),
-    0,
-  );
-
   const candidate = selectTopK(filteredJudgement, maxNum, (a, b) => {
-    const aWord = a.word as HitWord;
-    const bWord = b.word as HitWord;
+    const aWord = a.word;
+    const bWord = b.word;
 
-    if (a.word.fuzzy !== b.word.fuzzy) {
-      return a.word.fuzzy ? 1 : -1;
+    if (a.fuzzy !== b.fuzzy) {
+      return a.fuzzy ? 1 : -1;
     }
 
     const notSameWordType = aWord.type !== bWord.type;
@@ -489,7 +619,13 @@ export function suggestWords(
     }
 
     if (selectionHistoryStorage) {
-      const ret = selectionHistoryStorage.compare(aWord, bWord, latestUpdated);
+      const aHitWord = historyKey(a);
+      const bHitWord = historyKey(b);
+      const ret = selectionHistoryStorage.compare(
+        aHitWord,
+        bHitWord,
+        latestUpdated,
+      );
       if (ret !== 0) {
         return ret;
       }
@@ -506,8 +642,8 @@ export function suggestWords(
       return folderRankResult;
     }
 
-    if ((a.value ?? "").length !== (b.value ?? "").length) {
-      return (a.value ?? "").length > (b.value ?? "").length ? 1 : -1;
+    if ((a.hit ?? "").length !== (b.hit ?? "").length) {
+      return (a.hit ?? "").length > (b.hit ?? "").length ? 1 : -1;
     }
     if (notSameWordType) {
       return WordTypeMeta.of(bWord.type).priority >
@@ -519,14 +655,179 @@ export function suggestWords(
       return prioritizeAliases === true ? (a.alias ? -1 : 1) : a.alias ? 1 : -1;
     }
     return 0;
-  }).map((x) => x.word);
+  }).map((lite) => materializeWord(lite, query));
 
   // XXX: There is no guarantee that equals with max, but it is important for performance
   return uniqWith(candidate, suggestionUniqPredicate);
 }
 
-// TODO: refactoring
 // Public for tests
+export function judgeLiteByPartialMatch(
+  word: Word,
+  query: string,
+  queryStartWithUpper: boolean,
+  options?: {
+    fuzzy?: {
+      minMatchScore: number;
+    };
+  },
+  queryLower?: string,
+): JudgementLite {
+  const qLower = queryLower ?? query.toLowerCase();
+  if (query === "") {
+    return {
+      word,
+      hit: word.value,
+      value: word.value,
+      alias: false,
+      type: word.type,
+    };
+  }
+
+  const useFuzzy = options?.fuzzy !== undefined;
+
+  const minMatchScore = options?.fuzzy?.minMatchScore ?? 0;
+  const matchStartsWith = (value: string) => {
+    const valueLower = value.toLowerCase();
+    if (useFuzzy) {
+      if (valueLower[0] !== qLower[0]) {
+        return NONE;
+      }
+      const m = microFuzzy(valueLower, qLower);
+      if (m.type === "fuzzy_match" && m.score <= minMatchScore) {
+        return NONE;
+      }
+      return m;
+    }
+    return valueLower.startsWith(qLower)
+      ? { type: "concrete_match" as const }
+      : NONE;
+  };
+
+  const matchIncludes = (value: string) => {
+    const valueLower = value.toLowerCase();
+    if (useFuzzy) {
+      const m = microFuzzy(valueLower, qLower);
+      if (m.type === "fuzzy_match" && m.score <= minMatchScore) {
+        return NONE;
+      }
+      return m;
+    }
+    return valueLower.includes(qLower)
+      ? { type: "concrete_match" as const }
+      : NONE;
+  };
+
+  const startsWithMatched = matchStartsWith(word.value);
+  if (startsWithMatched.type !== "none") {
+    const fuzzy = startsWithMatched.type === "fuzzy_match";
+    if (
+      queryStartWithUpper &&
+      word.type !== "internalLink" &&
+      word.type !== "frontMatter"
+    ) {
+      const c = capitalizeFirstLetter(word.value);
+      return {
+        word,
+        hit: c,
+        value: c,
+        alias: false,
+        fuzzy,
+        type: word.type,
+      };
+    }
+    return {
+      word,
+      hit: word.value,
+      value: word.value,
+      alias: false,
+      fuzzy,
+      type: word.type,
+    };
+  }
+
+  let chosenAlias: string | undefined;
+  let aliasFuzzy = false;
+  let aliasScore = 0;
+  if (word.aliases) {
+    for (const a of word.aliases) {
+      const m = matchStartsWith(a);
+      if (m.type === "concrete_match") {
+        chosenAlias = a;
+        aliasFuzzy = false;
+        aliasScore = 0;
+        break;
+      }
+      if (chosenAlias === undefined && m.type === "fuzzy_match") {
+        chosenAlias = a;
+        aliasFuzzy = true;
+        aliasScore = m.score;
+      }
+    }
+  }
+  if (
+    chosenAlias !== undefined &&
+    (!aliasFuzzy || aliasScore > minMatchScore)
+  ) {
+    return {
+      word,
+      hit: chosenAlias,
+      value: chosenAlias,
+      alias: true,
+      fuzzy: aliasFuzzy,
+      type: word.type,
+    };
+  }
+
+  const includesMatched = matchIncludes(word.value);
+  if (includesMatched.type !== "none") {
+    const fuzzy = includesMatched.type === "fuzzy_match";
+    return {
+      word,
+      hit: word.value,
+      value: word.value,
+      alias: false,
+      fuzzy,
+      type: word.type,
+    };
+  }
+
+  chosenAlias = undefined;
+  aliasFuzzy = false;
+  aliasScore = 0;
+  if (word.aliases) {
+    for (const a of word.aliases) {
+      const m = matchIncludes(a);
+      if (m.type === "concrete_match") {
+        chosenAlias = a;
+        aliasFuzzy = false;
+        aliasScore = 0;
+        break;
+      }
+      if (chosenAlias === undefined && m.type === "fuzzy_match") {
+        chosenAlias = a;
+        aliasFuzzy = true;
+        aliasScore = m.score;
+      }
+    }
+  }
+  if (
+    chosenAlias !== undefined &&
+    (!aliasFuzzy || aliasScore > minMatchScore)
+  ) {
+    return {
+      word,
+      hit: chosenAlias,
+      value: chosenAlias,
+      alias: true,
+      fuzzy: aliasFuzzy,
+      type: word.type,
+    };
+  }
+
+  return { word, alias: false, type: word.type };
+}
+
 export function judgeByPartialMatch(
   word: Word,
   query: string,
@@ -537,132 +838,20 @@ export function judgeByPartialMatch(
     };
   },
 ): Judgement {
-  if (query === "") {
-    return {
-      word: { ...word, hit: word.value },
-      value: word.value,
-      alias: false,
-    };
+  const lite = judgeLiteByPartialMatch(
+    word,
+    query,
+    queryStartWithUpper,
+    options,
+  );
+  if (lite.hit === undefined) {
+    return { word: lite.word, alias: false };
   }
-
-  const startsWithMatcher = options?.fuzzy
-    ? lowerFuzzyStarsWith
-    : wrapFuzzy(lowerStartsWith);
-  const includesMatcher = options?.fuzzy
-    ? lowerFuzzy
-    : wrapFuzzy(lowerIncludes);
-
-  const startsWithMatched = startsWithMatcher(word.value, query);
-  if (
-    startsWithMatched.type === "concrete_match" ||
-    (startsWithMatched.type === "fuzzy_match" &&
-      startsWithMatched.score > (options?.fuzzy?.minMatchScore ?? 0))
-  ) {
-    if (
-      queryStartWithUpper &&
-      word.type !== "internalLink" &&
-      word.type !== "frontMatter"
-    ) {
-      const c = capitalizeFirstLetter(word.value);
-      return {
-        word: {
-          ...word,
-          value: c,
-          hit: c,
-          fuzzy: startsWithMatched.type === "fuzzy_match",
-          query,
-        },
-        value: c,
-        alias: false,
-      };
-    } else {
-      return {
-        word: {
-          ...word,
-          hit: word.value,
-          fuzzy: startsWithMatched.type === "fuzzy_match",
-          query,
-        },
-        value: word.value,
-        alias: false,
-      };
-    }
-  }
-
-  const startsWithAliasMatched = word.aliases
-    ?.map((a) => ({ aliases: a, matched: startsWithMatcher(a, query) }))
-    .sort((a, b) =>
-      a.matched.type === "concrete_match" && b.matched.type !== "concrete_match"
-        ? -1
-        : 0,
-    )
-    .find((x) => x.matched.type !== "none");
-  if (
-    startsWithAliasMatched &&
-    (startsWithAliasMatched.matched.type === "concrete_match" ||
-      (startsWithAliasMatched.matched.type === "fuzzy_match" &&
-        startsWithAliasMatched.matched.score >
-          (options?.fuzzy?.minMatchScore ?? 0)))
-  ) {
-    return {
-      word: {
-        ...word,
-        hit: startsWithAliasMatched.aliases,
-        fuzzy: startsWithAliasMatched.matched.type === "fuzzy_match",
-        query,
-      },
-      value: startsWithAliasMatched.aliases,
-      alias: true,
-    };
-  }
-
-  const includesMatched = includesMatcher(word.value, query);
-  if (
-    includesMatched &&
-    (includesMatched.type === "concrete_match" ||
-      (includesMatched.type === "fuzzy_match" &&
-        includesMatched.score > (options?.fuzzy?.minMatchScore ?? 0)))
-  ) {
-    return {
-      word: {
-        ...word,
-        hit: word.value,
-        fuzzy: includesMatched.type === "fuzzy_match",
-        query,
-      },
-      value: word.value,
-      alias: false,
-    };
-  }
-
-  const matchedAliasIncluded = word.aliases
-    ?.map((a) => ({ aliases: a, matched: includesMatcher(a, query) }))
-    .sort((a, b) =>
-      a.matched.type === "concrete_match" && b.matched.type !== "concrete_match"
-        ? -1
-        : 0,
-    )
-    .find((x) => x.matched.type !== "none");
-  if (
-    matchedAliasIncluded &&
-    (matchedAliasIncluded.matched.type === "concrete_match" ||
-      (matchedAliasIncluded.matched.type === "fuzzy_match" &&
-        matchedAliasIncluded.matched.score >
-          (options?.fuzzy?.minMatchScore ?? 0)))
-  ) {
-    return {
-      word: {
-        ...word,
-        hit: matchedAliasIncluded.aliases,
-        fuzzy: matchedAliasIncluded.matched.type === "fuzzy_match",
-        query,
-      },
-      value: matchedAliasIncluded.aliases,
-      alias: true,
-    };
-  }
-
-  return { word: word, alias: false };
+  return {
+    word: materializeWord(lite, query),
+    value: lite.hit,
+    alias: lite.alias,
+  };
 }
 
 export function suggestWordsByPartialMatch(
@@ -696,7 +885,9 @@ export function suggestWordsByPartialMatch(
     prioritizeAliases,
     excludeInternalLink,
   } = option;
-  const queryStartWithUpper = capitalizeFirstLetter(query) === query;
+  const queryStartWithUpper =
+    query === "" || query.charAt(0).toUpperCase() === query.charAt(0);
+  const queryLower = query.toLowerCase();
 
   // プロバイダー別の最小文字数チェック関数
   const shouldIncludeProvider = (
@@ -741,9 +932,29 @@ export function suggestWordsByPartialMatch(
           ? flatObjectValues(indexedWords.internalLink)
           : []),
       ];
-  const filteredJudgement = Array.from(words)
-    .map((x) => judgeByPartialMatch(x, query, queryStartWithUpper, option))
-    .filter((x) => x.value !== undefined);
+  const filteredJudgement: JudgementLite[] = [];
+  let latestUpdated = 0;
+  for (const x of words) {
+    const lite = judgeLiteByPartialMatch(
+      x,
+      query,
+      queryStartWithUpper,
+      option,
+      queryLower,
+    );
+    if (lite.hit !== undefined) {
+      lite.startsQuery = (lite.hit ?? "").toLowerCase().startsWith(queryLower);
+      filteredJudgement.push(lite);
+      if (selectionHistoryStorage) {
+        const lu =
+          selectionHistoryStorage.getSelectionHistory(historyKey(lite))
+            ?.lastUpdated ?? 0;
+        if (lu > latestUpdated) {
+          latestUpdated = lu;
+        }
+      }
+    }
+  }
 
   const linkRankOption: FolderPriorityOption = {
     enabled: folderPriority?.enabled ?? false,
@@ -801,21 +1012,12 @@ export function suggestWordsByPartialMatch(
     return 0;
   };
 
-  const latestUpdated = max(
-    filteredJudgement.map(
-      (x) =>
-        selectionHistoryStorage?.getSelectionHistory(x.word as HitWord)
-          ?.lastUpdated ?? 0,
-    ),
-    0,
-  );
-
   const candidate = selectTopK(filteredJudgement, maxNum, (a, b) => {
-    const aWord = a.word as HitWord;
-    const bWord = b.word as HitWord;
+    const aWord = a.word;
+    const bWord = b.word;
 
-    if (a.word.fuzzy !== b.word.fuzzy) {
-      return a.word.fuzzy ? 1 : -1;
+    if (a.fuzzy !== b.fuzzy) {
+      return a.fuzzy ? 1 : -1;
     }
 
     const notSameWordType = aWord.type !== bWord.type;
@@ -848,16 +1050,20 @@ export function suggestWordsByPartialMatch(
     }
 
     if (selectionHistoryStorage) {
-      const ret = selectionHistoryStorage.compare(aWord, bWord, latestUpdated);
+      const aHitWord = historyKey(a);
+      const bHitWord = historyKey(b);
+      const ret = selectionHistoryStorage.compare(
+        aHitWord,
+        bHitWord,
+        latestUpdated,
+      );
       if (ret !== 0) {
         return ret;
       }
     }
 
-    const as = lowerStartsWith(a.value ?? "", query);
-    const bs = lowerStartsWith(b.value ?? "", query);
-    if (as !== bs) {
-      return bs ? 1 : -1;
+    if (a.startsQuery !== b.startsQuery) {
+      return b.startsQuery ? 1 : -1;
     }
 
     // keep in sync with the other chain (folder-rank stage)
@@ -871,8 +1077,8 @@ export function suggestWordsByPartialMatch(
       return folderRankResult;
     }
 
-    if ((a.value ?? "").length !== (b.value ?? "").length) {
-      return (a.value ?? "").length > (b.value ?? "").length ? 1 : -1;
+    if ((a.hit ?? "").length !== (b.hit ?? "").length) {
+      return (a.hit ?? "").length > (b.hit ?? "").length ? 1 : -1;
     }
 
     if (notSameWordType) {
@@ -885,7 +1091,7 @@ export function suggestWordsByPartialMatch(
       return prioritizeAliases === true ? (a.alias ? -1 : 1) : a.alias ? 1 : -1;
     }
     return 0;
-  }).map((x) => x.word);
+  }).map((lite) => materializeWord(lite, query));
 
   // XXX: There is no guarantee that equals with max, but it is important for performance
   return uniqWith(candidate, suggestionUniqPredicate);

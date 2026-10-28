@@ -2730,3 +2730,72 @@ describe("alias priority", () => {
     ]);
   });
 });
+
+describe("selection history alias key regression", () => {
+  const createIndexedWords = (): IndexedWords => ({
+    currentFile: {},
+    currentVault: {},
+    customDictionary: {},
+    internalLink: {
+      a: [
+        {
+          value: "aaaA",
+          type: "internalLink",
+          aliases: ["aliasA"],
+          createdPath: "a/aaaA.md",
+        },
+        {
+          value: "aaaB",
+          type: "internalLink",
+          aliases: ["aliasA"],
+          createdPath: "b/aaaB.md",
+        },
+      ],
+    },
+    frontMatter: {},
+  });
+
+  test("prefix mode: history recorded under [alias][basename] outranks equal candidate without history", () => {
+    const indexedWords = createIndexedWords();
+    const now = Date.now();
+    const history = new SelectionHistoryStorage(
+      {
+        aliasA: {
+          aaaA: {
+            internalLink: { count: 1, lastUpdated: now },
+          },
+        },
+      },
+      365,
+      1000,
+    );
+
+    const actual = suggestWords(indexedWords, "ali", 10, {
+      selectionHistoryStorage: history,
+    });
+
+    expect(actual.map((x) => x.value)).toStrictEqual(["aaaA", "aaaB"]);
+  });
+
+  test("partial mode: history recorded under [alias][basename] outranks equal candidate without history", () => {
+    const indexedWords = createIndexedWords();
+    const now = Date.now();
+    const history = new SelectionHistoryStorage(
+      {
+        aliasA: {
+          aaaA: {
+            internalLink: { count: 1, lastUpdated: now },
+          },
+        },
+      },
+      365,
+      1000,
+    );
+
+    const actual = suggestWordsByPartialMatch(indexedWords, "ali", 10, {
+      selectionHistoryStorage: history,
+    });
+
+    expect(actual.map((x) => x.value)).toStrictEqual(["aaaA", "aaaB"]);
+  });
+});

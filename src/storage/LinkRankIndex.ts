@@ -106,8 +106,13 @@ export class LinkRankIndex {
     if (!this.global) {
       return;
     }
+    if (this.global.builtForLimitingFolder === "") {
+      return;
+    }
     this.snapshotSourceContributions(path);
-    this.removeSourceContributions(path);
+    // Defer the actual map mutation to applyStaleSources (run lazily by
+    // getRankData) so the typing path only records intent; it never
+    // walks a source's link map synchronously.
     this.staleSources.add(path);
     if (this.filePart?.builtForFilePath === path) {
       this.filePartDirty = true;
