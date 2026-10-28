@@ -55,15 +55,24 @@ export function computeLinkRank(
   word: InternalLinkWord,
   option: FolderPriorityOption,
 ): LinkRank {
+  if ((word as any)._rankPrecomputed === true) {
+    return {
+      fileTier: (word as any).fileTier ?? false,
+      folderProximity: (word as any).folderProximity,
+      rank: (word as any).linkRank,
+    };
+  }
+
   const rankData = option.rankData;
   if (!rankData) {
     return { fileTier: false };
   }
 
   if (word.phantom) {
-    const fileTier = rankData.currentFileUnresolvedNames.has(
-      word.value.toLowerCase(),
-    );
+    const fileTier =
+      typeof word.fileTier === "boolean"
+        ? word.fileTier
+        : rankData.currentFileUnresolvedNames.has(word.value.toLowerCase());
 
     let folderProximity: FolderProximityScore | undefined;
     let rank: number | undefined;
@@ -110,7 +119,10 @@ export function computeLinkRank(
     return { fileTier: false };
   }
 
-  const fileTier = rankData.currentFileTargets.has(target);
+  const fileTier =
+    typeof word.fileTier === "boolean"
+      ? word.fileTier
+      : rankData.currentFileTargets.has(target);
 
   let folderProximity: FolderProximityScore | undefined;
   let rank: number | undefined;

@@ -120,6 +120,10 @@ export class FolderRankCache implements FolderRankCacheLike {
     this.structureEpoch++;
   }
 
+  primeSummary(): void {
+    this.ensureSummary();
+  }
+
   invalidate(): void {
     this.lists.clear();
     this.qualifications.clear();

@@ -1,6 +1,8 @@
 import type { App } from "obsidian";
 import { hasSameElement } from "../../src/util/collection-helper";
 import type { AppHelper } from "../app-helper";
+import type { FolderPriorityOption, LinkRankData } from "../model/LinkRank";
+import { computeLinkRank } from "../model/LinkRank";
 import type { InternalLinkWord, Word } from "../model/Word";
 import { isMatchedGlobPatterns } from "../util/glob";
 import { synonymAliases } from "../util/strings";
@@ -34,6 +36,7 @@ export class InternalLinkWordProvider {
     tagsForExclusion: string[];
     excludeUnresolvedLinks: boolean;
     ignorePrefixes?: string[];
+    currentFilePath?: string;
   }): void {
     const start = performance.now();
     this.clearWords();
@@ -165,6 +168,39 @@ export class InternalLinkWordProvider {
         ...resolvedInternalLinkWords,
         ...unresolvedInternalLinkWords,
       ];
+
+      // Precompute current-file membership ("fileTier") onto internal-link
+      // words at refresh time instead of per-candidate Map lookup during sort.
+      // Only set when currentFilePath is provided; otherwise leave undefined so
+      // computeLinkRank can fall back to the live rankData.
+      if (option.currentFilePath) {
+        const currentFileTargets = new Set<string>();
+        const currentFileUnresolvedNames = new Set<string>();
+        const resolvedLinkMap =
+          this.app.metadataCache.resolvedLinks?.[option.currentFilePath] ?? {};
+        for (const target of Object.keys(resolvedLinkMap)) {
+          currentFileTargets.add(target);
+        }
+        const unresolvedLinkMap =
+          this.app.metadataCache.unresolvedLinks?.[option.currentFilePath] ??
+          {};
+        for (const name of Object.keys(unresolvedLinkMap)) {
+          currentFileUnresolvedNames.add(name.toLowerCase());
+        }
+        for (const word of this.words) {
+          const ilw = word as InternalLinkWord;
+          if (ilw.phantom) {
+            ilw.fileTier = currentFileUnresolvedNames.has(
+              word.value.toLowerCase(),
+            );
+          } else {
+            const target = ilw.createdPath ?? ilw.aliasMeta?.origin;
+            ilw.fileTier =
+              target !== undefined && currentFileTargets.has(target);
+          }
+        }
+      }
+
       for (const word of this.words) {
         pushWord(this.wordsByFirstLetter, word.value.charAt(0), word);
         word.aliases?.forEach((a) =>
@@ -182,6 +218,43 @@ export class InternalLinkWordProvider {
       // Leave lastRefresh unchanged on failure so status never reports stale
       // counts; clearWords() has already emptied the index.
       throw e;
+    }
+  }
+
+  annotateRankData(
+    currentFilePath: string | null,
+    limitingFolder: string,
+    rankData: LinkRankData,
+    folderRankCache?: any,
+  ): void {
+    // Only meaningful when folder priority is enabled (caller guards), but be
+    // defensive: an empty limiting folder still benefits from fileTier precompute.
+    const option: FolderPriorityOption = {
+      enabled: limitingFolder !== "",
+      currentFilePath,
+      limitingFolder,
+      rankData,
+      folderRankCache,
+    };
+    const cachedList =
+      limitingFolder !== "" &&
+      currentFilePath !== null &&
+      folderRankCache &&
+      rankData
+        ? folderRankCache.getList(currentFilePath, limitingFolder, rankData)
+        : undefined;
+    option.cachedList = cachedList;
+
+    for (const word of this.words) {
+      if (word.type !== "internalLink") {
+        continue;
+      }
+      const lr = computeLinkRank(word as any, option);
+      const ilw = word as any;
+      ilw.fileTier = lr.fileTier;
+      ilw.folderProximity = lr.folderProximity;
+      ilw.linkRank = lr.rank;
+      ilw._rankPrecomputed = true;
     }
   }
 

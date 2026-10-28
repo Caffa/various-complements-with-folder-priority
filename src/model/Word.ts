@@ -1,3 +1,4 @@
+import type { FolderProximityScore } from "./FolderProximity";
 export type WordType =
   | "currentFile"
   | "currentVault"
@@ -39,6 +40,10 @@ export interface InternalLinkWord extends DefaultWord {
     // path
     origin: string;
   };
+  fileTier?: boolean;
+  folderProximity?: FolderProximityScore;
+  linkRank?: number;
+  _rankPrecomputed?: boolean;
 }
 export interface FrontMatterWord extends DefaultWord {
   type: "frontMatter";

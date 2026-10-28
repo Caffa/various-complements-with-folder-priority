@@ -247,12 +247,14 @@ export class AutoCompleteSuggest
       if (ins.unloaded) return;
       ins.linkRankIndex.onRename(oldPath, file.path);
       ins.folderRankCache.bumpStructure();
+      ins.primeFolderSummaryIdle();
       ins.debouncedRefreshInternalLinkTokens();
     });
     ins.deleteEventRef = app.vault.on("delete", (file) => {
       if (ins.unloaded) return;
       ins.linkRankIndex.onDelete(file.path);
       ins.folderRankCache.bumpStructure();
+      ins.primeFolderSummaryIdle();
       ins.debouncedRefreshInternalLinkTokens();
     });
     ins.createEventRef = app.vault.on("create", (f) => {
@@ -260,6 +262,7 @@ export class AutoCompleteSuggest
       if (f instanceof TFile && f.extension === "md") {
         ins.linkRankIndex.markSourceStale(f.path);
         ins.folderRankCache.bumpStructure();
+        ins.primeFolderSummaryIdle();
         ins.debouncedRefreshInternalLinkTokens();
       }
     });
@@ -502,7 +505,6 @@ export class AutoCompleteSuggest
     this.settings = settings;
     this.linkRankIndex.invalidate();
     this.folderRankCache.invalidate();
-    this.folderRankCache.bumpStructure();
 
     // Pre-compile regex patterns on settings change to avoid creating RegExp on every keystroke
     this.compiledSuppressPatterns = settings.patternsToSuppressTrigger
@@ -957,6 +959,26 @@ export class AutoCompleteSuggest
     );
   }
 
+  primeFolderSummaryIdle(): void {
+    const prime = () => {
+      if (this.unloaded) return;
+      if (this.settings?.folderPriority?.enabled) {
+        try {
+          this.folderRankCache.primeSummary();
+        } catch {
+          // best-effort; cache rebuilds lazily anyway
+        }
+      }
+    };
+    const ric = (globalThis as { requestIdleCallback?: Function })
+      .requestIdleCallback;
+    if (typeof ric === "function") {
+      ric(prime, { timeout: 2000 });
+    } else {
+      setTimeout(prime, 0);
+    }
+  }
+
   refreshInternalLinkTokens(): void {
     const start = performance.now();
     this.statusBar.setInternalLinkIndexing();
@@ -994,11 +1016,33 @@ export class AutoCompleteSuggest
             .filter((prefix) => prefix.length > 0),
         ),
       ),
+      currentFilePath: this.appHelper.getActiveFile()?.path ?? undefined,
     });
+
+    if (this.settings.folderPriority?.enabled) {
+      try {
+        const activePath = this.appHelper.getActiveFile()?.path ?? null;
+        const rankData = this.linkRankIndex.getRankData(
+          activePath,
+          this.settings.folderPriority.limitingFolder ?? "",
+        );
+        this.internalLinkWordProvider.annotateRankData(
+          activePath,
+          this.settings.folderPriority.limitingFolder ?? "",
+          rankData,
+          this.folderRankCache,
+        );
+      } catch {
+        // best-effort; run-time fallback still works
+      }
+    }
 
     this.statusBar.setInternalLinkIndexed(
       this.internalLinkWordProvider.wordCount,
     );
+
+    this.primeFolderSummaryIdle();
+
     this.showDebugLog(() =>
       buildLogMessage("Index internal link tokens", performance.now() - start),
     );

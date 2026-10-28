@@ -59,6 +59,61 @@ export function pushWord(
   wordsByFirstLetter[key].push(word);
 }
 
+// Select the top k items according to comparator, while preserving the order of
+// equal items (stable). Uses O(N*k) insertion which is faster than O(N log N)
+// for small k (typical maxNum <= 20).
+export function selectTopK<T>(
+  items: Iterable<T>,
+  k: number,
+  comparator: (a: T, b: T) => number,
+): T[] {
+  if (k <= 0) {
+    return [];
+  }
+  const result: { item: T; seq: number }[] = [];
+  let seq = 0;
+  for (const item of items) {
+    const currentSeq = seq++;
+    if (result.length < k) {
+      let inserted = false;
+      for (let i = 0; i < result.length; i++) {
+        const cmp = comparator(item, result[i].item);
+        const tie = cmp === 0 ? currentSeq - result[i].seq : 0;
+        if (cmp < 0 || (cmp === 0 && tie < 0)) {
+          result.splice(i, 0, { item, seq: currentSeq });
+          inserted = true;
+          break;
+        }
+      }
+      if (!inserted) {
+        result.push({ item, seq: currentSeq });
+      }
+    } else {
+      const worst = result[result.length - 1];
+      const cmp = comparator(item, worst.item);
+      const tie = cmp === 0 ? currentSeq - worst.seq : 0;
+      if (cmp < 0 || (cmp === 0 && tie < 0)) {
+        // replace worst
+        result.pop();
+        let inserted = false;
+        for (let i = 0; i < result.length; i++) {
+          const c2 = comparator(item, result[i].item);
+          const tie2 = c2 === 0 ? currentSeq - result[i].seq : 0;
+          if (c2 < 0 || (c2 === 0 && tie2 < 0)) {
+            result.splice(i, 0, { item, seq: currentSeq });
+            inserted = true;
+            break;
+          }
+        }
+        if (!inserted) {
+          result.push({ item, seq: currentSeq });
+        }
+      }
+    }
+  }
+  return result.map((r) => r.item);
+}
+
 function compareFolderRankStage(
   aWord: Word,
   bWord: Word,
@@ -297,9 +352,39 @@ export function suggestWords(
             : []),
         ];
 
-  const filteredJudgement = Array.from(words)
-    .map((x) => judge(x, query, queryStartWithUpper, option))
-    .filter((x) => x.value !== undefined);
+  // Phase 1: cheap exact prefix matches only (no fuzzy, no aliases-as-infix).
+  // Phase 2: run the full judge (fuzzy + aliases) only if Phase 1 did not
+  // already produce enough candidates. Avoids expensive matching on the common
+  // fast path where a simple prefix is enough.
+  let filteredJudgement: Judgement[];
+  if (query === "") {
+    filteredJudgement = Array.from(words)
+      .map((x) => judge(x, query, queryStartWithUpper, option))
+      .filter((x) => x.value !== undefined);
+  } else {
+    const exactWords: Word[] = [];
+    const restWords: Word[] = [];
+    for (const w of words) {
+      const isExact =
+        lowerStartsWith(w.value, query) ||
+        (w.aliases ?? []).some((a) => lowerStartsWith(a, query));
+      if (isExact) {
+        exactWords.push(w);
+      } else {
+        restWords.push(w);
+      }
+    }
+    const exactJudged = exactWords
+      .map((x) => judge(x, query, queryStartWithUpper, { fuzzy: undefined }))
+      .filter((x) => x.value !== undefined);
+    filteredJudgement = exactJudged;
+    if (exactJudged.length < maxNum && restWords.length > 0) {
+      const restJudged = restWords
+        .map((x) => judge(x, query, queryStartWithUpper, option))
+        .filter((x) => x.value !== undefined);
+      filteredJudgement = [...exactJudged, ...restJudged];
+    }
+  }
 
   const linkRankOption: FolderPriorityOption = {
     enabled: folderPriority?.enabled ?? false,
@@ -366,88 +451,75 @@ export function suggestWords(
     0,
   );
 
-  const candidate = filteredJudgement
-    .sort((a, b) => {
-      const aWord = a.word as HitWord;
-      const bWord = b.word as HitWord;
+  const candidate = selectTopK(filteredJudgement, maxNum, (a, b) => {
+    const aWord = a.word as HitWord;
+    const bWord = b.word as HitWord;
 
-      if (a.word.fuzzy !== b.word.fuzzy) {
-        return a.word.fuzzy ? 1 : -1;
-      }
+    if (a.word.fuzzy !== b.word.fuzzy) {
+      return a.word.fuzzy ? 1 : -1;
+    }
 
-      const notSameWordType = aWord.type !== bWord.type;
-      if (frontMatter && notSameWordType) {
-        return bWord.type === "frontMatter" ? 1 : -1;
-      }
+    const notSameWordType = aWord.type !== bWord.type;
+    if (frontMatter && notSameWordType) {
+      return bWord.type === "frontMatter" ? 1 : -1;
+    }
 
-      const linkTierResult = compareLinkTier(aWord, bWord);
-      if (linkTierResult !== 0) {
-        return linkTierResult;
-      }
+    const linkTierResult = compareLinkTier(aWord, bWord);
+    if (linkTierResult !== 0) {
+      return linkTierResult;
+    }
 
-      // Alias priority only constrains same-target pairs. In multi-candidate
-      // sorts this pin can form cycles with selection-history, leaving the
-      // ranking order among cycle participants unspecified; no elements are lost.
+    // Alias priority only constrains same-target pairs. In multi-candidate
+    // sorts this pin can form cycles with selection-history, leaving the
+    // ranking order among cycle participants unspecified; no elements are lost.
+    if (
+      prioritizeAliases &&
+      aWord.type === "internalLink" &&
+      bWord.type === "internalLink"
+    ) {
+      const aTarget = aWord.createdPath ?? aWord.aliasMeta?.origin;
+      const bTarget = bWord.createdPath ?? bWord.aliasMeta?.origin;
       if (
-        prioritizeAliases &&
-        aWord.type === "internalLink" &&
-        bWord.type === "internalLink"
+        aTarget !== undefined &&
+        aTarget === bTarget &&
+        !!aWord.aliasMeta !== !!bWord.aliasMeta
       ) {
-        const aTarget = aWord.createdPath ?? aWord.aliasMeta?.origin;
-        const bTarget = bWord.createdPath ?? bWord.aliasMeta?.origin;
-        if (
-          aTarget !== undefined &&
-          aTarget === bTarget &&
-          !!aWord.aliasMeta !== !!bWord.aliasMeta
-        ) {
-          return aWord.aliasMeta ? -1 : 1;
-        }
+        return aWord.aliasMeta ? -1 : 1;
       }
+    }
 
-      if (selectionHistoryStorage) {
-        const ret = selectionHistoryStorage.compare(
-          aWord,
-          bWord,
-          latestUpdated,
-        );
-        if (ret !== 0) {
-          return ret;
-        }
+    if (selectionHistoryStorage) {
+      const ret = selectionHistoryStorage.compare(aWord, bWord, latestUpdated);
+      if (ret !== 0) {
+        return ret;
       }
+    }
 
-      // keep in sync with the other chain (folder-rank stage)
-      const folderRankResult = compareFolderRankStage(
-        aWord,
-        bWord,
-        linkRankOption,
-        linkRanks,
-      );
-      if (folderRankResult !== 0) {
-        return folderRankResult;
-      }
+    // keep in sync with the other chain (folder-rank stage)
+    const folderRankResult = compareFolderRankStage(
+      aWord,
+      bWord,
+      linkRankOption,
+      linkRanks,
+    );
+    if (folderRankResult !== 0) {
+      return folderRankResult;
+    }
 
-      if ((a.value ?? "").length !== (b.value ?? "").length) {
-        return (a.value ?? "").length > (b.value ?? "").length ? 1 : -1;
-      }
-      if (notSameWordType) {
-        return WordTypeMeta.of(bWord.type).priority >
-          WordTypeMeta.of(aWord.type).priority
-          ? 1
-          : -1;
-      }
-      if (a.alias !== b.alias) {
-        return prioritizeAliases === true
-          ? a.alias
-            ? -1
-            : 1
-          : a.alias
-            ? 1
-            : -1;
-      }
-      return 0;
-    })
-    .map((x) => x.word)
-    .slice(0, maxNum);
+    if ((a.value ?? "").length !== (b.value ?? "").length) {
+      return (a.value ?? "").length > (b.value ?? "").length ? 1 : -1;
+    }
+    if (notSameWordType) {
+      return WordTypeMeta.of(bWord.type).priority >
+        WordTypeMeta.of(aWord.type).priority
+        ? 1
+        : -1;
+    }
+    if (a.alias !== b.alias) {
+      return prioritizeAliases === true ? (a.alias ? -1 : 1) : a.alias ? 1 : -1;
+    }
+    return 0;
+  }).map((x) => x.word);
 
   // XXX: There is no guarantee that equals with max, but it is important for performance
   return uniqWith(candidate, suggestionUniqPredicate);
@@ -738,95 +810,82 @@ export function suggestWordsByPartialMatch(
     0,
   );
 
-  const candidate = filteredJudgement
-    .sort((a, b) => {
-      const aWord = a.word as HitWord;
-      const bWord = b.word as HitWord;
+  const candidate = selectTopK(filteredJudgement, maxNum, (a, b) => {
+    const aWord = a.word as HitWord;
+    const bWord = b.word as HitWord;
 
-      if (a.word.fuzzy !== b.word.fuzzy) {
-        return a.word.fuzzy ? 1 : -1;
-      }
+    if (a.word.fuzzy !== b.word.fuzzy) {
+      return a.word.fuzzy ? 1 : -1;
+    }
 
-      const notSameWordType = aWord.type !== bWord.type;
-      if (frontMatter && notSameWordType) {
-        return bWord.type === "frontMatter" ? 1 : -1;
-      }
+    const notSameWordType = aWord.type !== bWord.type;
+    if (frontMatter && notSameWordType) {
+      return bWord.type === "frontMatter" ? 1 : -1;
+    }
 
-      const linkTierResult = compareLinkTier(aWord, bWord);
-      if (linkTierResult !== 0) {
-        return linkTierResult;
-      }
+    const linkTierResult = compareLinkTier(aWord, bWord);
+    if (linkTierResult !== 0) {
+      return linkTierResult;
+    }
 
-      // Alias priority only constrains same-target pairs. In multi-candidate
-      // sorts this pin can form cycles with selection-history, leaving the
-      // ranking order among cycle participants unspecified; no elements are lost.
+    // Alias priority only constrains same-target pairs. In multi-candidate
+    // sorts this pin can form cycles with selection-history, leaving the
+    // ranking order among cycle participants unspecified; no elements are lost.
+    if (
+      prioritizeAliases &&
+      aWord.type === "internalLink" &&
+      bWord.type === "internalLink"
+    ) {
+      const aTarget = aWord.createdPath ?? aWord.aliasMeta?.origin;
+      const bTarget = bWord.createdPath ?? bWord.aliasMeta?.origin;
       if (
-        prioritizeAliases &&
-        aWord.type === "internalLink" &&
-        bWord.type === "internalLink"
+        aTarget !== undefined &&
+        aTarget === bTarget &&
+        !!aWord.aliasMeta !== !!bWord.aliasMeta
       ) {
-        const aTarget = aWord.createdPath ?? aWord.aliasMeta?.origin;
-        const bTarget = bWord.createdPath ?? bWord.aliasMeta?.origin;
-        if (
-          aTarget !== undefined &&
-          aTarget === bTarget &&
-          !!aWord.aliasMeta !== !!bWord.aliasMeta
-        ) {
-          return aWord.aliasMeta ? -1 : 1;
-        }
+        return aWord.aliasMeta ? -1 : 1;
       }
+    }
 
-      if (selectionHistoryStorage) {
-        const ret = selectionHistoryStorage.compare(
-          aWord,
-          bWord,
-          latestUpdated,
-        );
-        if (ret !== 0) {
-          return ret;
-        }
+    if (selectionHistoryStorage) {
+      const ret = selectionHistoryStorage.compare(aWord, bWord, latestUpdated);
+      if (ret !== 0) {
+        return ret;
       }
+    }
 
-      const as = lowerStartsWith(a.value ?? "", query);
-      const bs = lowerStartsWith(b.value ?? "", query);
-      if (as !== bs) {
-        return bs ? 1 : -1;
-      }
+    const as = lowerStartsWith(a.value ?? "", query);
+    const bs = lowerStartsWith(b.value ?? "", query);
+    if (as !== bs) {
+      return bs ? 1 : -1;
+    }
 
-      // keep in sync with the other chain (folder-rank stage)
-      const folderRankResult = compareFolderRankStage(
-        aWord,
-        bWord,
-        linkRankOption,
-        linkRanks,
-      );
-      if (folderRankResult !== 0) {
-        return folderRankResult;
-      }
+    // keep in sync with the other chain (folder-rank stage)
+    const folderRankResult = compareFolderRankStage(
+      aWord,
+      bWord,
+      linkRankOption,
+      linkRanks,
+    );
+    if (folderRankResult !== 0) {
+      return folderRankResult;
+    }
 
-      if ((a.value ?? "").length !== (b.value ?? "").length) {
-        return (a.value ?? "").length > (b.value ?? "").length ? 1 : -1;
-      }
+    if ((a.value ?? "").length !== (b.value ?? "").length) {
+      return (a.value ?? "").length > (b.value ?? "").length ? 1 : -1;
+    }
 
-      if (notSameWordType) {
-        return WordTypeMeta.of(bWord.type).priority >
-          WordTypeMeta.of(aWord.type).priority
-          ? 1
-          : -1;
-      }
-      if (a.alias !== b.alias) {
-        return prioritizeAliases === true
-          ? a.alias
-            ? -1
-            : 1
-          : a.alias
-            ? 1
-            : -1;
-      }
-      return 0;
-    })
-    .map((x) => x.word)
-    .slice(0, maxNum);
+    if (notSameWordType) {
+      return WordTypeMeta.of(bWord.type).priority >
+        WordTypeMeta.of(aWord.type).priority
+        ? 1
+        : -1;
+    }
+    if (a.alias !== b.alias) {
+      return prioritizeAliases === true ? (a.alias ? -1 : 1) : a.alias ? 1 : -1;
+    }
+    return 0;
+  }).map((x) => x.word);
 
   // XXX: There is no guarantee that equals with max, but it is important for performance
   return uniqWith(candidate, suggestionUniqPredicate);
