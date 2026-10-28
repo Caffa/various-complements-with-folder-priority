@@ -14,5 +14,5 @@
     "lib": ["dom", "es5", "es6", "es7"],
     "allowSyntheticDefaultImports": true
   },
-  "include": ["**/*.ts", "**/*.mts"]
+  "include": ["src/**/*.ts", "src/**/*.mts"]
 }
