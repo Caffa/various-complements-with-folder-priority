@@ -1,5 +1,4 @@
 import type { FolderProximityScore } from "./FolderProximity";
-import { calculateFolderProximity } from "./FolderProximity";
 import type { InternalLinkWord, Word } from "./Word";
 
 export type LinkRankData = {
@@ -99,15 +98,6 @@ export function computeLinkRank(
           score: entry.score,
         };
         rank = entry.rank;
-      } else {
-        const sourceFolders = rankData.unresolvedNameToSourceFolders.get(key);
-        if (sourceFolders) {
-          folderProximity = calculateFolderProximity(
-            sourceFolders,
-            option.currentFilePath,
-            option.limitingFolder,
-          );
-        }
       }
     }
 
@@ -150,15 +140,6 @@ export function computeLinkRank(
         score: entry.score,
       };
       rank = entry.rank;
-    } else {
-      const sourceFolders = rankData.targetToSourceFolders.get(target);
-      if (sourceFolders) {
-        folderProximity = calculateFolderProximity(
-          sourceFolders,
-          option.currentFilePath,
-          option.limitingFolder,
-        );
-      }
     }
   }
 

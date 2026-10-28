@@ -18,3 +18,7 @@ INSTRUCTION_HISTORY.md
 
 # copied plugin folders
 various-complements-with-folder-priority/
+
+# benchmark artifacts
+bench/results/
+bench/.gen/

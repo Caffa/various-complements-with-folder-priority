@@ -2360,6 +2360,17 @@ describe("folder priority ranking", () => {
             ["Novel/B/Job.md", [["Resources/Other", 1]]],
           ],
         ),
+        folderRankCache: {
+          getList: () => ({
+            folder: "Novel/A",
+            builtForLimitingFolder: limitingFolder,
+            globalVersion: 1,
+            resolvedScores: new Map([
+              ["Novel/A/Johnny.md", { level: 0, frequency: 1, score: 1 }],
+            ]),
+            unresolvedScores: new Map(),
+          }),
+        },
       },
     });
 
@@ -2401,6 +2412,17 @@ describe("folder priority ranking", () => {
             ["Novel/A/Johnny.md", [["Novel/A", 1]]],
           ],
         ),
+        folderRankCache: {
+          getList: () => ({
+            folder: "Novel/A",
+            builtForLimitingFolder: limitingFolder,
+            globalVersion: 1,
+            resolvedScores: new Map([
+              ["Novel/A/Johnny.md", { level: 0, frequency: 1, score: 1 }],
+            ]),
+            unresolvedScores: new Map(),
+          }),
+        },
       },
     });
 
@@ -2685,6 +2707,18 @@ describe("alias priority", () => {
         currentFilePath: "Novel/A/Chapter 1.md",
         limitingFolder: "Novel",
         rankData: data,
+        folderRankCache: {
+          getList: () => ({
+            folder: "Novel/A",
+            builtForLimitingFolder: "Novel",
+            globalVersion: 1,
+            resolvedScores: new Map([
+              ["Characters/John.md", { level: 0, frequency: 1, score: 1 }],
+              ["Novel/B/Jobb.md", { level: 1, frequency: 1, score: 1 }],
+            ]),
+            unresolvedScores: new Map(),
+          }),
+        },
       },
     });
 

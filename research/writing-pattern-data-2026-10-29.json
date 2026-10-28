@@ -1,0 +1,3368 @@
+{
+  "meta": {
+    "generatedAt": "2026-10-28T08:10:51.385Z",
+    "vault": "/Users/caffae/Notes/Novel-Writing",
+    "days": 30,
+    "windowStart": "2026-09-28T08:10:51.385Z",
+    "windowEnd": "2026-10-28T08:10:51.385Z",
+    "burstGapMinutes": 30,
+    "tool": "scripts/analyze-novel-vault.mjs",
+    "version": 1,
+    "scan": {
+      "markdownFilesDiscovered": 14434,
+      "markdownFilesParsed": 14433,
+      "skippedLargeFiles": 1,
+      "readErrors": 0,
+      "maxBytes": 4194304,
+      "concurrency": 12,
+      "bytesRead": 189784006,
+      "totalScanMs": 2813
+    }
+  },
+  "corpus": {
+    "fileCount": 14433,
+    "directoryCount": 1525,
+    "totalWords": 28916918,
+    "totalCjkChars": 3468,
+    "totalLinkOccurrences": 593570,
+    "uniqueLinkTargets": 15486,
+    "linkSyntaxCounts": {
+      "wikiLinks": 590392,
+      "wikiLinksWithAlias": 565968,
+      "wikiEmbeds": 2581,
+      "markdownLinks": 130,
+      "markdownEmbeds": 474,
+      "externalLinksIgnored": 6342,
+      "inlineLinkOccurrences": 590522,
+      "allLinkOccurrencesIncludingEmbeds": 593577
+    },
+    "distinctLinksPerFileSum": 111934,
+    "derived": {
+      "linksPer1kWords": 20.53,
+      "linksPerActiveDay": 19147.42,
+      "activeFilesPerDay": 19.1,
+      "wordsPerActiveFile": 2003.5,
+      "medianFileWords": 212,
+      "distinctTargetsPerLinkOccurrence": 0.0261,
+      "shareOfOccurrencesMatchingChaPrefix": 0.9147
+    }
+  },
+  "modificationActivity": {
+    "windowDays": 30,
+    "filesModified": 573,
+    "percentOfVaultModified": 3.97,
+    "activeDays": 31,
+    "perDay": {
+      "2026-09-28": 12,
+      "2026-09-29": 6,
+      "2026-09-30": 19,
+      "2026-10-01": 6,
+      "2026-10-02": 9,
+      "2026-10-03": 27,
+      "2026-10-04": 17,
+      "2026-10-05": 26,
+      "2026-10-06": 47,
+      "2026-10-07": 32,
+      "2026-10-08": 43,
+      "2026-10-09": 37,
+      "2026-10-10": 45,
+      "2026-10-11": 37,
+      "2026-10-12": 21,
+      "2026-10-13": 10,
+      "2026-10-14": 15,
+      "2026-10-15": 9,
+      "2026-10-16": 9,
+      "2026-10-17": 3,
+      "2026-10-18": 11,
+      "2026-10-19": 10,
+      "2026-10-20": 6,
+      "2026-10-21": 18,
+      "2026-10-22": 21,
+      "2026-10-23": 28,
+      "2026-10-24": 11,
+      "2026-10-25": 13,
+      "2026-10-26": 9,
+      "2026-10-27": 12,
+      "2026-10-28": 4
+    },
+    "linkOccurrencesInModifiedFiles": 55827,
+    "wordsInModifiedFiles": 2264176,
+    "linkOccurrencesPerModifiedFile": 97.43,
+    "linkOccurrencesPerActiveDay": 1800.87,
+    "bursts": {
+      "count": 193,
+      "gapMinutes": 30,
+      "durationMinutes": {
+        "median": 0,
+        "p90": 61.75,
+        "max": 333.47,
+        "mean": 20.29
+      },
+      "fileCount": {
+        "median": 1,
+        "p90": 7,
+        "max": 35,
+        "mean": 2.97
+      },
+      "totalEstimatedWordsTouched": 2264176,
+      "sessions": [
+        {
+          "startedAt": "2026-09-28T09:23:51.876Z",
+          "endedAt": "2026-09-28T09:42:10.255Z",
+          "durationMinutes": 18.31,
+          "fileCount": 4,
+          "chapterFiles": 4,
+          "estimatedWordsTouched": 15377,
+          "files": [
+            "Novel/Zombie Apocalypse/OG Problems/Extra Reborn/Stone Cold Plotter/Chapter - T1 Who to kill.md",
+            "Novel/Zombie Apocalypse/OG Problems/Extra Reborn/Stone Cold Plotter/Chapter - T2 Military Base standards.md",
+            "Novel/Ancient China/Chop these evil things/Drunk on Moon/Chapter - T1 Holding onto this.md",
+            "Novel/Ancient China/Chop these evil things/Drunk on Moon/Chapter - T2 I am dad.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-09-28T11:09:47.913Z",
+          "endedAt": "2026-09-28T11:09:47.913Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 130,
+          "files": [
+            "Novel/Same Starter Village/Adventurer Group/It began with a lie/About - It began with a lie.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-09-28T13:40:13.901Z",
+          "endedAt": "2026-09-28T15:04:53.621Z",
+          "durationMinutes": 84.66,
+          "fileCount": 7,
+          "chapterFiles": 7,
+          "estimatedWordsTouched": 41362,
+          "files": [
+            "Novel/Same Starter Village/Adventurer Group/It began with a lie/Chapter - T2 Easy Life.md",
+            "Novel/Transmigator/The one who turned back time/Chapter - T1 My owner.md",
+            "Novel/Transmigator/The one who turned back time/Chapter - T2 Obedient Thing.md",
+            "Novel/Transmigator/The one who turned back time/Chapter - T3 Talent.md",
+            "Novel/Transmigator/The one who turned back time/Chapter - T4 Management.md",
+            "Novel/Transmigator/The one who turned back time/Chapter - T5 Meeting calamity.md",
+            "Novel/Transmigator/The one who turned back time/Chapter - T6 working with calamity gege.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-09-28T20:38:18.179Z",
+          "endedAt": "2026-09-28T20:38:18.179Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 2798,
+          "files": [
+            "Novel/Twin Affair/Confused cry/Chapter - T2 Exciting times.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-09-29T07:55:27.618Z",
+          "endedAt": "2026-09-29T07:56:26.100Z",
+          "durationMinutes": 0.97,
+          "fileCount": 2,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 160,
+          "files": [
+            "World Building/Char - Lin Dongguo.md",
+            "World Building/Char - Lin Jugang.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-09-29T11:08:56.887Z",
+          "endedAt": "2026-09-29T11:08:56.887Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 126,
+          "files": [
+            "Novel/Same Starter Village/Dreaming of lives/About - Dreaming of lives.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-09-29T14:15:24.000Z",
+          "endedAt": "2026-09-29T14:15:24.000Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 71,
+          "files": [
+            "World Building/Char - Si Zhubo.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-09-29T14:59:51.241Z",
+          "endedAt": "2026-09-29T14:59:51.241Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 62,
+          "files": [
+            "World Building/Char - Zhong Leiqi.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-09-29T17:37:28.680Z",
+          "endedAt": "2026-09-29T17:37:28.680Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 10234,
+          "files": [
+            "Novel/Same Starter Village/Dreaming of lives/Chapter - T2 You make your own luck.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-09-30T06:15:59.571Z",
+          "endedAt": "2026-09-30T06:15:59.571Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 3581,
+          "files": [
+            "Novel/Same Starter Village/Dreaming of lives/Chapter - T3 My study companion.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-09-30T07:48:07.084Z",
+          "endedAt": "2026-09-30T07:48:07.084Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 64,
+          "files": [
+            "World Building/Char - Zhong Fangchuan.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-09-30T09:15:58.571Z",
+          "endedAt": "2026-09-30T11:47:46.777Z",
+          "durationMinutes": 151.8,
+          "fileCount": 16,
+          "chapterFiles": 15,
+          "estimatedWordsTouched": 59461,
+          "files": [
+            "Novel/Same Starter Village/Dreaming of lives/Chapter - T4 My talent.md",
+            "Novel/Same Starter Village/Dreaming of lives/Chapter - T5 You have worked hard rest now.md",
+            "Novel/Hunter Born/White Rock Villa/Fake dead/Chapter - T3 Working well.md",
+            "Novel/Hunter Born/White Rock Villa/Fake dead/Chapter - T4 Tralalala I am a chubby chub chub.md",
+            "Novel/Hunter Born/White Rock Villa/Fake dead/Chapter - T6 Ancestors say.md",
+            "Novel/Hunter Born/White Rock Villa/Fake dead/Chapter - T7 Creative farming.md",
+            "Novel/Hunter Born/White Rock Villa/Fake dead/Chapter - T8 Fertile waters.md",
+            "Novel/Hunter Born/White Rock Villa/Fake dead/Chapter - T9 Chaos.md",
+            "Novel/Hunter Born/White Rock Villa/Fake dead/Chapter - T10 Long separation.md",
+            "World Building/Char - Feng KaiMing.md",
+            "Novel/Hunter Born/White Rock Villa/Fake dead/Chapter - T11 Seeing visions of beauty.md",
+            "Novel/Hunter Born/White Rock Villa/Fake dead/Chapter - T13 A sighting.md",
+            "Novel/Hunter Born/Hidden Away/Co-existing/Chapter - T3 Have Prospects.md",
+            "Novel/Same Starter Village/Adventurer Group/It began with a lie/Chapter - T1 My fiancee ah.md",
+            "Novel/Celestial Master/Martial Uncle/Chapter - T1 Being aggressively pursued.md",
+            "Novel/Celestial Master/Martial Uncle/Chapter - T2 Pillmaking is an obsession.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-09-30T16:51:32.129Z",
+          "endedAt": "2026-09-30T16:51:32.129Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 4650,
+          "files": [
+            "Novel/Same Starter Village/Three chances/Chapter - T4 Bet our lives here.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-01T03:49:10.423Z",
+          "endedAt": "2026-10-01T04:03:31.579Z",
+          "durationMinutes": 14.35,
+          "fileCount": 2,
+          "chapterFiles": 2,
+          "estimatedWordsTouched": 13154,
+          "files": [
+            "Novel/College Students Gamer/Not worth fighting for/Chapter - T1 Step back.md",
+            "Novel/College Students Gamer/Different doors/Chapter - T1 Leaving the familiar.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-01T06:22:55.882Z",
+          "endedAt": "2026-10-01T06:22:55.882Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 268,
+          "files": [
+            "World Building/Char - He Yuqi.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-01T12:48:30.848Z",
+          "endedAt": "2026-10-01T12:56:14.080Z",
+          "durationMinutes": 7.72,
+          "fileCount": 2,
+          "chapterFiles": 2,
+          "estimatedWordsTouched": 12411,
+          "files": [
+            "Novel/Same Starter Village/Adventurer Group/Stepping back/Chapter - T1 Sudden changes.md",
+            "Novel/Same Starter Village/Adventurer Group/Stepping back/Chapter - T2 New dynamics.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-01T17:43:38.953Z",
+          "endedAt": "2026-10-01T17:43:38.953Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 2055,
+          "files": [
+            "Novel/Still a village girl/Lacking belief/Chapter - T1 Start with a plunge.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-01T18:58:30.835Z",
+          "endedAt": "2026-10-01T18:58:30.835Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 8001,
+          "files": [
+            "Novel/Modern Swap Reject/Cadillac Life/Chapter - T1 My own wolfdog.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-02T05:48:56.608Z",
+          "endedAt": "2026-10-02T05:48:56.608Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 78,
+          "files": [
+            "World Building/Char - Gui Yunhong.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-02T07:38:07.542Z",
+          "endedAt": "2026-10-02T07:43:17.776Z",
+          "durationMinutes": 5.17,
+          "fileCount": 3,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 468,
+          "files": [
+            "World Building/Char - Zhang Fanhui.md",
+            "World Building/Char - Hu Jinyu.md",
+            "World Building/World - Modern Swap Reject.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-02T08:21:34.727Z",
+          "endedAt": "2026-10-02T08:25:48.945Z",
+          "durationMinutes": 4.24,
+          "fileCount": 2,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 2262,
+          "files": [
+            "Novel/Same Starter Village/Dreaming of lives/Chapter - T1 Bad luck.md",
+            "Novel/Same Starter Village/From the moment I could crawl/About - From the moment I could crawl.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-02T12:12:46.853Z",
+          "endedAt": "2026-10-02T12:12:46.853Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 438,
+          "files": [
+            "Novel/Same Starter Village/From the moment I could crawl/Chapter - T2 Now you come to me.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-02T17:00:32.514Z",
+          "endedAt": "2026-10-02T17:00:32.514Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 2194,
+          "files": [
+            "Novel/Same Starter Village/Alternative routes are complicated/Chapter - T1 dream a little dream.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-02T19:20:12.018Z",
+          "endedAt": "2026-10-02T19:20:12.018Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 7875,
+          "files": [
+            "Novel/Ancient China/As Huanxin/What I want is power/Chapter - T1 Greetings to my cousins.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-03T04:31:48.776Z",
+          "endedAt": "2026-10-03T04:44:18.440Z",
+          "durationMinutes": 12.49,
+          "fileCount": 2,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 357,
+          "files": [
+            "World Building/Char - Zhen Feiwan.md",
+            "World Building/World - Others treasures.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-03T10:38:16.000Z",
+          "endedAt": "2026-10-03T12:04:38.249Z",
+          "durationMinutes": 86.37,
+          "fileCount": 10,
+          "chapterFiles": 10,
+          "estimatedWordsTouched": 29467,
+          "files": [
+            "Novel/Poor lil rich girl/Chapter - T2 So I poor.md",
+            "Novel/Naruto/Shunri/Shores/Chapter - T1 Despite it all.md",
+            "Novel/Naruto/Shunri/Dubious governance/Chapter - T1 Legality issues.md",
+            "Novel/Naruto/Shunri/Dubious governance/Chapter - T2 Troubles of the clans.md",
+            "Novel/Naruto/Muida-Takashi Fam/Last song/Chapter - T1 Interrupt.md",
+            "Novel/Naruto/Muida-Takashi Fam/Last song/Chapter - T2 Non combatant.md",
+            "Novel/Naruto/Muida-Takashi Fam/Dress down/Chapter - T1 Mood is right.md",
+            "Novel/Naruto/Muida-Takashi Fam/Dress down/Chapter - T2 Sick pigs.md",
+            "Novel/Naruto/Muida-Takashi Fam/Studious/Chapter - T1 Me a bookie.md",
+            "Novel/Naruto/Muida-Takashi Fam/Fascination/Chapter - T2 Strength.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-03T12:40:01.330Z",
+          "endedAt": "2026-10-03T14:42:55.834Z",
+          "durationMinutes": 122.91,
+          "fileCount": 13,
+          "chapterFiles": 13,
+          "estimatedWordsTouched": 63734,
+          "files": [
+            "Novel/Naruto/Muida-Takashi Fam/Fascination/Chapter - T3 Read a book.md",
+            "Novel/Naruto/Muida-Takashi Fam/Fascination/Chapter - T4 I will not die in truth.md",
+            "Novel/Naruto/Muida-Takashi Fam/Vapid Reasons/Chapter - T1 gentle suggestions.md",
+            "Novel/Naruto/ANBU Food Pig/Chapter - T1 I haf some.md",
+            "Novel/Naruto/Past Char/Catalogue/Chapter - T1 Still alive.md",
+            "Novel/Naruto/Past Char/Catalogue/Chapter - T2 Me and my paperwork.md",
+            "Novel/Naruto/Past Char/Catalogue/Chapter - T3 My son.md",
+            "Novel/Naruto/Past Char/Catalogue/Chapter - T4 Effects on War.md",
+            "Novel/Naruto/Senju-Childe/Chapter - T1 Nothing can save one who wishes to die.md",
+            "Novel/Naruto/Senju-Childe/Chapter - T2 I will eat your soul.md",
+            "Novel/Naruto/Senju-Childe/Chapter - T3 Interface and intuition.md",
+            "Novel/Naruto/Senju-Childe/Chapter - T4 I am OP.md",
+            "Novel/Naruto/Senju-Childe/Chapter - T5 Slow Development.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-03T19:17:01.569Z",
+          "endedAt": "2026-10-03T19:39:55.267Z",
+          "durationMinutes": 22.89,
+          "fileCount": 4,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 588,
+          "files": [
+            "World Building/Char - Ling Xun.md",
+            "World Building/Char - Chu Wanwan.md",
+            "World Building/Char - Ling Qi.md",
+            "Attachments/Chapter - day 4 - who speaks french spanich german chinese.excalidraw.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-04T06:46:34.869Z",
+          "endedAt": "2026-10-04T07:22:16.504Z",
+          "durationMinutes": 35.69,
+          "fileCount": 4,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 204,
+          "files": [
+            "World Building/Char - Cui Huixin.md",
+            "World Building/Char - Qing Xue.md",
+            "World Building/Char - Mu Lin.md",
+            "World Building/Char - Nie MingJue.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-04T10:43:19.364Z",
+          "endedAt": "2026-10-04T10:43:19.364Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 38461,
+          "files": [
+            "Writing Archive/Retired Stories/Refusing to Lie/Chapter - Day 6k - underworld event.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-04T11:58:10.875Z",
+          "endedAt": "2026-10-04T12:14:33.184Z",
+          "durationMinutes": 16.37,
+          "fileCount": 2,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 1059,
+          "files": [
+            "World Building/Char - Ling Zhongyong.md",
+            "World Building/World - Cheated Marriage.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-04T13:26:28.410Z",
+          "endedAt": "2026-10-04T13:45:59.226Z",
+          "durationMinutes": 19.51,
+          "fileCount": 5,
+          "chapterFiles": 4,
+          "estimatedWordsTouched": 13243,
+          "files": [
+            "Novel/Coop Inheritance/Encounters/Chapter - T1 Jerk back.md",
+            "Novel/Coop Inheritance/Encounters/Chapter - T2 I can think too.md",
+            "Novel/Coop Inheritance/Cuddly Bundle/Chapter - T1 Proposal Spins.md",
+            "World Building/World - Coop Inheritance.md",
+            "Novel/Coop Inheritance/Faints/Chapter - T3 Responsibilities.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-04T14:18:00.239Z",
+          "endedAt": "2026-10-04T14:18:00.239Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 9355,
+          "files": [
+            "Novel/Coop Inheritance/Circling Danger/Chapter - T2 Me and my regrets.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-04T16:58:42.838Z",
+          "endedAt": "2026-10-04T16:58:42.838Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 736,
+          "files": [
+            "Novel/School Xianxia/Lil Aunt/Chapter - T1 Patience.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-04T17:41:42.818Z",
+          "endedAt": "2026-10-04T17:42:59.352Z",
+          "durationMinutes": 1.28,
+          "fileCount": 2,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 140,
+          "files": [
+            "World Building/Char - Mo Qinyi.md",
+            "World Building/Char - Huoxing.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-04T18:50:22.298Z",
+          "endedAt": "2026-10-04T19:52:07.044Z",
+          "durationMinutes": 61.75,
+          "fileCount": 6,
+          "chapterFiles": 6,
+          "estimatedWordsTouched": 30965,
+          "files": [
+            "Novel/Naruto/Born from Dirt/Misc/Sketch Sketch/Chapter - T1 Status.md",
+            "Novel/Naruto/Born from Dirt/Misc/Sketch Sketch/Chapter - T2 Admin lottery.md",
+            "Novel/Elemental Nations/CharKyosuke/Chapter - T2 Politics.md",
+            "Novel/Elite Realm/Elite School/Chapter - T5 Next Day Cooking D28 to D30.md",
+            "Novel/Naruto/Hatake Family/Bereft Uncle/Chapter - T11 Love we cannot.md",
+            "Novel/Ancient China/Yan Residence/Thirst for Danger/Chapter - T1 With Shisong.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-04T20:24:10.391Z",
+          "endedAt": "2026-10-04T20:49:34.647Z",
+          "durationMinutes": 25.4,
+          "fileCount": 3,
+          "chapterFiles": 3,
+          "estimatedWordsTouched": 13444,
+          "files": [
+            "Novel/Ancient China/Crown Prince Residence/Not Yours (Nanny)/Chapter - T4 A long campaign.md",
+            "Novel/Naruto/Born from Dirt/Mednin/Not a finger/Chapter - T12 There is nothing controlled about madness.md",
+            "Novel/Worm/Protectorate Fae/Foreign Ward/Chapter - T3 Trouble.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-04T21:23:05.847Z",
+          "endedAt": "2026-10-04T22:17:24.713Z",
+          "durationMinutes": 54.31,
+          "fileCount": 4,
+          "chapterFiles": 4,
+          "estimatedWordsTouched": 38957,
+          "files": [
+            "Novel/Worm/Protectorate Fae/Foreign Ward/Chapter - T4 Cauldron.md",
+            "Novel/Worm/Protectorate Fae/Foreign Ward/Chapter - T5 Reality looks.md",
+            "Novel/Worm/Protectorate Fae/Foreign Ward/Chapter - T6 Relationships.md",
+            "Novel/Worm/Protectorate Fae/Foreign Ward/Chapter - T8 Covering House Things.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-05T04:39:08.226Z",
+          "endedAt": "2026-10-05T04:39:08.226Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 1629,
+          "files": [
+            "Novel/School Xianxia/Lil Aunt/Chapter - T2 Tamed by owner.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-05T05:10:43.058Z",
+          "endedAt": "2026-10-05T05:57:59.138Z",
+          "durationMinutes": 47.27,
+          "fileCount": 4,
+          "chapterFiles": 4,
+          "estimatedWordsTouched": 39241,
+          "files": [
+            "Novel/Worm/Unusual spins/FW - Child Thinker/Chapter - (T10) T1 Scion Dad.md",
+            "Novel/Ancient China/Crown Prince Residence/Not Yours (Nanny)/Chapter - T1 The disaster here.md",
+            "Novel/Stone Age/Stone Age Breakup/Gods/Chapter - D14.md",
+            "Novel/Stone Age/Stone Age Breakup/Gods/Chapter - D15 to D16 Camp in forest.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-05T09:29:31.685Z",
+          "endedAt": "2026-10-05T09:29:31.685Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 62,
+          "files": [
+            "World Building/Char - Zhuang Lanqing.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-05T11:45:26.912Z",
+          "endedAt": "2026-10-05T12:14:53.194Z",
+          "durationMinutes": 29.44,
+          "fileCount": 2,
+          "chapterFiles": 2,
+          "estimatedWordsTouched": 7808,
+          "files": [
+            "Novel/Zombie Apocalypse/Other team/Opportunity Shared/Chapter - T1 Someone to deal.md",
+            "Novel/Elite Realm/Elite School/Chapter - T18 Cadet Session D18 (D170).md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-05T13:21:37.757Z",
+          "endedAt": "2026-10-05T13:21:37.757Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 5125,
+          "files": [
+            "Writing Archive/Pwp/PWP - Licks.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-05T14:21:42.285Z",
+          "endedAt": "2026-10-05T14:21:42.285Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 587,
+          "files": [
+            "World Building/World - Zombie Apocalypse.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-05T16:12:07.619Z",
+          "endedAt": "2026-10-05T16:33:39.674Z",
+          "durationMinutes": 21.53,
+          "fileCount": 6,
+          "chapterFiles": 5,
+          "estimatedWordsTouched": 25432,
+          "files": [
+            "My List - stories I searched for.md",
+            "Novel/OHSHC/Child Support/Chapter - T1 Drifted away.md",
+            "Novel/OHSHC/Child Support/Chapter - T3 Standards.md",
+            "Novel/OHSHC/Child Support/Chapter - T4 See you.md",
+            "Novel/Zombie Apocalypse/OG Problems/Difficult crafty me/Chapter - T1 Clinging on.md",
+            "Novel/Zombie Apocalypse/Other team/Opportunity Shared/Chapter - T2 Laundry and toilet time.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-05T18:25:57.006Z",
+          "endedAt": "2026-10-05T18:25:57.006Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 4228,
+          "files": [
+            "Novel/Zombie Apocalypse/Other team/Opportunity Shared/Chapter - T3 We lie flat.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-05T18:57:14.185Z",
+          "endedAt": "2026-10-05T21:18:46.850Z",
+          "durationMinutes": 141.54,
+          "fileCount": 13,
+          "chapterFiles": 13,
+          "estimatedWordsTouched": 66314,
+          "files": [
+            "Novel/Naruto/Born from Dirt/Partnership/Found V2 Structure/Chapter - T4 will to do things.md",
+            "Novel/Naruto/Inoue/Is sis (Am Yuka)/Brother Snap/Chapter - T1 Begone with the old.md",
+            "Novel/Naruto/Inoue/Is sis (Am Yuka)/Brother Snap/Chapter - T2 Watching the family planning.md",
+            "Novel/Naruto/Inoue/Is sis (Am Yuka)/Brother Snap/Chapter - T3 Go away from here.md",
+            "Novel/Naruto/Hatake Family/Poison Affairs/Chapter - T2 i dah fanciness.md",
+            "Novel/Naruto/Clans/Alr Married (Shikaku x Yoshino)/Paranoia Galore Scent/Chapter - T1 Stress n sleep.md",
+            "Novel/Naruto/Clans/Alr Married (Shikaku x Yoshino)/Paranoia Galore Scent/Chapter - T2 other children.md",
+            "Novel/Naruto/Clans/Alr Married (Shikaku x Yoshino)/Paranoia Galore Scent/Chapter - T3 Doing better.md",
+            "Novel/Naruto/Born from Dirt/Combat Invalidated/Schrondinger Char/Chapter - T1 (T2) Still alive n plans.md",
+            "Novel/Naruto/Born from Dirt/Combat Invalidated/Schrondinger Char/Chapter - T5 Problems and Maturity.md",
+            "Novel/Naruto/Inoue/Has Sis/Tricks/Chapter - T1 Bully you a bit.md",
+            "Novel/Naruto/Vi-Seisa/Broken light/Chapter - T2 hotties.md",
+            "Novel/Naruto/Vi-Seisa/Managing Mistress/Chapter - T3 Homey.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-06T05:37:29.836Z",
+          "endedAt": "2026-10-06T06:06:12.919Z",
+          "durationMinutes": 28.72,
+          "fileCount": 3,
+          "chapterFiles": 3,
+          "estimatedWordsTouched": 12257,
+          "files": [
+            "Novel/Zombie Apocalypse/Other team/Opportunity Shared/Chapter - T4 Rookie village.md",
+            "Novel/Naruto/Born from Dirt/Live for those feelings/Chapter - T4 Ramping down.md",
+            "Novel/Naruto/Born from Dirt/Live for those feelings/Chapter - T5 Sus Relationships.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-06T07:20:04.965Z",
+          "endedAt": "2026-10-06T08:17:33.798Z",
+          "durationMinutes": 57.48,
+          "fileCount": 7,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 2092,
+          "files": [
+            "Novel/Part-time Homemaker/Here and everywhere (Origin)/About - Here and everywhere (Origin).md",
+            "Novel/Naruto/Born from Dirt/Partnership/Icarus Calls/Chapter - T8 The one who wakes.md",
+            "World Building/Char - Fang Jialing.md",
+            "World Building/Char - Wu Hai.md",
+            "World Building/Char - Yan Wanghao.md",
+            "World Building/Char - Meng Qiangjian.md",
+            "World Building/Char - Yu Xiuyue.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-06T09:33:13.333Z",
+          "endedAt": "2026-10-06T10:21:37.339Z",
+          "durationMinutes": 48.4,
+          "fileCount": 6,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 3019,
+          "files": [
+            "Novel/Part-time Homemaker/Here and everywhere (Origin)/Chapter - T1 I am here.md",
+            "World Building/Char - Qi Shilei.md",
+            "World Building/Char - Luo Fei.md",
+            "World Building/Char - Lian Zhen.md",
+            "World Building/Char - Hou Jianfei.md",
+            "World Building/Char - Tang Shiwei.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-06T11:28:24.514Z",
+          "endedAt": "2026-10-06T12:21:49.173Z",
+          "durationMinutes": 53.41,
+          "fileCount": 5,
+          "chapterFiles": 2,
+          "estimatedWordsTouched": 4360,
+          "files": [
+            "Novel/Part-time Homemaker/Here and everywhere (Origin)/Chapter - T2 Inkling.md",
+            "World Building/Char - Xian Jiu.md",
+            "World Building/Char - Xian Qi.md",
+            "World Building/World - Part-time Homemaker.md",
+            "Novel/Part-time Homemaker/Here and everywhere (Origin)/Chapter - T3 I have feelings too.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-06T14:28:05.403Z",
+          "endedAt": "2026-10-06T15:12:55.461Z",
+          "durationMinutes": 44.83,
+          "fileCount": 6,
+          "chapterFiles": 6,
+          "estimatedWordsTouched": 26654,
+          "files": [
+            "Novel/Naruto/Born from Dirt/My own child/Hiding Within/Chapter - T1 our secrets.md",
+            "Novel/Naruto/Born from Dirt/My own child/Hiding Within/Chapter - T2 got myself a child.md",
+            "Novel/Naruto/Born from Dirt/My own child/Hiding Within/Chapter - T3 all for you.md",
+            "Novel/Naruto/Born from Dirt/My own child/Hiding Within/Chapter - T4 Reborn.md",
+            "Novel/Naruto/Born from Dirt/My own child/Hiding Within/Chapter - T5 passing time.md",
+            "Novel/Zombie Apocalypse/Sickening/Chapter - T1 My priorities.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-06T16:30:05.770Z",
+          "endedAt": "2026-10-06T16:30:05.770Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 2775,
+          "files": [
+            "Novel/Zombie Apocalypse/Other team/Most dangerous setting/Chapter - T1 Things we want.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-06T17:45:04.619Z",
+          "endedAt": "2026-10-06T17:45:04.619Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 124,
+          "files": [
+            "Novel/Celestial Master/Formations are Supreme/About - Formations are Supreme.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-06T19:30:56.103Z",
+          "endedAt": "2026-10-06T20:26:47.250Z",
+          "durationMinutes": 55.85,
+          "fileCount": 4,
+          "chapterFiles": 4,
+          "estimatedWordsTouched": 29583,
+          "files": [
+            "Novel/Naruto/Clans/Post Marriage/Hopeful Aftermath/Chapter - T2 upset and negotiations.md",
+            "Novel/Naruto/Clans/Post Marriage/Hopeful Aftermath/Chapter - T3 You add on stress after stress.md",
+            "Novel/Naruto/Clans/Post Marriage/Hopeful Aftermath/Chapter - T4 New dynamics.md",
+            "Novel/Naruto/Clans/Alr Married (Shikaku x Yoshino)/Misjudgement/Chapter - T2 Unexpected death.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-07T05:07:59.528Z",
+          "endedAt": "2026-10-07T05:34:47.330Z",
+          "durationMinutes": 26.8,
+          "fileCount": 2,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 1228,
+          "files": [
+            "Novel/Ancient China/Roads to hell/About - Roads to hell.md",
+            "World Building/World - Mou Dynasty Military Army System.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-07T06:51:18.069Z",
+          "endedAt": "2026-10-07T06:51:18.069Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 1921,
+          "files": [
+            "Novel/Ancient China/Roads to hell/Chapter - T1 Overheard.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-07T07:23:16.010Z",
+          "endedAt": "2026-10-07T09:48:26.544Z",
+          "durationMinutes": 145.18,
+          "fileCount": 17,
+          "chapterFiles": 17,
+          "estimatedWordsTouched": 76961,
+          "files": [
+            "Novel/Ancient China/As Huanxin/The power I hold/Chapter - T1 Orders to be obeyed.md",
+            "Novel/Ancient China/As Huanxin/The power I hold/Chapter - T2 Holding the city.md",
+            "Novel/Ancient China/Future or Time Travel/A bit of pettiness/Chapter - T1 Little grudges.md",
+            "Novel/Ancient China/Future or Time Travel/A bit of pettiness/Chapter - T2 Worries and letting go.md",
+            "Novel/Ancient China/Future or Time Travel/A bit of pettiness/Chapter - T3 Joyful.md",
+            "Novel/Ancient China/Future or Time Travel/A bit of pettiness/Chapter - T4 Old teacher.md",
+            "Novel/Ancient China/Future or Time Travel/A bit of pettiness/Chapter - T5 Charmed.md",
+            "Novel/Ancient China/Chop these evil things/Slap Slap Slap/Chapter - T1 Domineering Temperament.md",
+            "Novel/Ancient China/Chop these evil things/Slap Slap Slap/Chapter - T2 Worries all over the place.md",
+            "Novel/Ancient China/Chop these evil things/Slap Slap Slap/Chapter - T3 We going to war.md",
+            "Novel/Ancient China/As Huanxin/one of the womenfolk/Chapter - T3 Assess both sides.md",
+            "Novel/Ancient China/Second Prince/Fierce wife/Chapter - T3 say what.md",
+            "Novel/Ancient China/Crown Prince Residence/Directly related/Chapter - T4 Noble Wife Manner.md",
+            "Novel/Ancient China/Crown Prince Residence/Directly related/Chapter - T2 Who cares for you.md",
+            "Novel/Ancient China/Crown Prince Residence/Directly related/Chapter - T3 Family Time.md",
+            "Novel/Ancient China/Crown Prince Residence/Dis Relationship/Chapter - T1 A different perspective.md",
+            "Novel/Zombie Apocalypse/Other team/Recognition/Chapter - T1 Top rankers.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-07T10:32:35.367Z",
+          "endedAt": "2026-10-07T10:32:35.367Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 122,
+          "files": [
+            "Novel/Naruto/Clans/Vicious Revenge/Aggravated main wife/About - Aggravated main wife.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-07T15:25:05.594Z",
+          "endedAt": "2026-10-07T16:04:22.805Z",
+          "durationMinutes": 39.29,
+          "fileCount": 6,
+          "chapterFiles": 6,
+          "estimatedWordsTouched": 24380,
+          "files": [
+            "Novel/Naruto/Clans/Vicious Revenge/Born of Spite/Chapter - T2 Relationships in flex.md",
+            "Novel/Naruto/Clans/Vicious Revenge/Born of Spite/Chapter - T3 Old relationships reactivate.md",
+            "Novel/Naruto/Born from Dirt/Academy Times/Focus/Chapter - T1 What I care about.md",
+            "Novel/Naruto/Born from Dirt/Academy Times/Talent Support/Chapter - T1 You over me.md",
+            "Novel/Naruto/Born from Dirt/Academy Times/Talent Support/Chapter - T2 Stats.md",
+            "Novel/Naruto/Born from Dirt/Academy Times/Talent Support/Chapter - T3 Snatch.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-07T16:56:44.556Z",
+          "endedAt": "2026-10-07T18:58:22.091Z",
+          "durationMinutes": 121.63,
+          "fileCount": 11,
+          "chapterFiles": 11,
+          "estimatedWordsTouched": 66721,
+          "files": [
+            "Novel/Naruto/Born from Dirt/Academy Times/Talent Support/Chapter - T4 Success is written like this.md",
+            "Novel/Naruto/Born from Dirt/Academy Times/Talent Support/Chapter - T5 I promised you.md",
+            "Novel/Naruto/Born from Dirt/Academy Times/Simple Talents/Chapter - T2 Lil Talents.md",
+            "Novel/Naruto/Born from Dirt/Academy Times/Simple Talents/Chapter - T3 Our final year.md",
+            "Novel/Naruto/Born from Dirt/Academy Times/Enchant from young/Chapter - T1 All creatures.md",
+            "Novel/Naruto/Born from Dirt/Academy Times/Enchant from young/Chapter - T2 Strength comes from others.md",
+            "Novel/Naruto/Born from Dirt/Academy Times/Enchant from young/Chapter - T4 Tightlipped disapproval.md",
+            "Novel/Naruto/Born from Dirt/Academy Times/Sparks of obsession /Chapter - T1 we first meet.md",
+            "Novel/Naruto/Born from Dirt/Academy Times/Sparks of obsession /Chapter - T2 We are together.md",
+            "Novel/Naruto/Born from Dirt/Academy Times/Want Family/Chapter - T1 Which Clan.md",
+            "Novel/School Xianxia/Su Fam/Wait for big thigh/Chapter - T1 Subtle package.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-07T19:48:16.974Z",
+          "endedAt": "2026-10-07T21:15:24.177Z",
+          "durationMinutes": 87.12,
+          "fileCount": 9,
+          "chapterFiles": 9,
+          "estimatedWordsTouched": 51205,
+          "files": [
+            "Novel/School Xianxia/Su Fam/Wait for big thigh/Chapter - T4 Squishy Squishy.md",
+            "Novel/School Xianxia/Su Fam/Wait for big thigh/Chapter - T5 Wat dis strategic plan.md",
+            "Novel/School Xianxia/Su Fam/Wait for big thigh/Chapter - T6 Aiming for the stars.md",
+            "Novel/School Xianxia/Su Fam/Wait for big thigh/Chapter - T7 Sideways.md",
+            "Novel/School Xianxia/Su Fam/Wait for big thigh/Chapter - T8 How are you so lazy.md",
+            "Novel/Game of Thrones/Teen Char (Bastard of Aemon)/Delivering presents/Chapter - T1 I am fluent in Valyrian.md",
+            "Novel/Game of Thrones/Teen Char (Bastard of Aemon)/Delivering presents/Chapter - T2 My protection.md",
+            "Novel/Beastman/Mother of Five/Reborn/Cynical Independence/Chapter - T3 Vicious quarrels.md",
+            "Novel/Magic Char/New Edition/Quiet Sighs/Chapter - T1 My soul calls for food.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-08T04:42:53.209Z",
+          "endedAt": "2026-10-08T05:48:19.727Z",
+          "durationMinutes": 65.44,
+          "fileCount": 5,
+          "chapterFiles": 5,
+          "estimatedWordsTouched": 30511,
+          "files": [
+            "Novel/Naruto/Born from Dirt/Academy Times/Opposing Twins/Chapter - T1 Why is there this hatred.md",
+            "Novel/Naruto/Other Couple/Nara Clan/Capabilities/Chapter - T3 Trust in me.md",
+            "Novel/Naruto/Other Couple/Nara Clan/Capabilities/Chapter - T4 Greetings to my elders.md",
+            "Novel/Naruto/Other Couple/Nara Clan/Capabilities/Chapter - T5 Search for Strength.md",
+            "Novel/Naruto/Born from Dirt/Academy Times/Simple Talents/Chapter - T4 Bwaha I am here for you.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-08T08:35:20.410Z",
+          "endedAt": "2026-10-08T09:36:46.112Z",
+          "durationMinutes": 61.43,
+          "fileCount": 5,
+          "chapterFiles": 2,
+          "estimatedWordsTouched": 10584,
+          "files": [
+            "Novel/Naruto/Born from Dirt/Academy Times/Simple Talents/Chapter - T1 Big boss jie.md",
+            "Novel/School Xianxia/Su Fam/Wait for big thigh/Chapter - T2 What is this thing.md",
+            "World Building/Char - Su Wenyang.md",
+            "World Building/Char - Su Zhaoyin.md",
+            "World Building/World - School Xianxia.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-08T10:25:11.329Z",
+          "endedAt": "2026-10-08T12:21:06.864Z",
+          "durationMinutes": 115.93,
+          "fileCount": 12,
+          "chapterFiles": 12,
+          "estimatedWordsTouched": 62104,
+          "files": [
+            "Novel/Swap Villagers/Quick assassin/Chapter - T1 Temper Temper.md",
+            "Novel/Law exams/Venting/Chapter - T1 Vixen.md",
+            "Novel/Naruto/Stray Reincarnations/Reincarnations Identity Remake/Chapter - T1 You always replace me.md",
+            "Novel/Naruto/Stray Reincarnations/Reincarnations Identity Remake/Chapter - T2 A temptation.md",
+            "Novel/Stone Age Widowed/Changes/Chapter - T1 relationship.md",
+            "Novel/Worm/Tinkers/My Words/Chapter - T2 My words have power.md",
+            "Novel/Swap Villagers/Let of/Chapter - T1 Gave up.md",
+            "Writing Archive/Retired Stories/Refusing to Lie/Chapter - day 4b - morning - SIDE Parents.md",
+            "Novel/Village in Disguise/Will not save/Chapter - T1 Swap saviours.md",
+            "Novel/Village in Disguise/Test of Skill/Chapter - T1 Aggressive.md",
+            "Novel/Village in Disguise/Test of Skill/Chapter - T2 The details.md",
+            "Novel/Village in Disguise/Test of Skill/Chapter - T3 I must catch up.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-08T18:47:07.381Z",
+          "endedAt": "2026-10-08T19:37:26.871Z",
+          "durationMinutes": 50.32,
+          "fileCount": 6,
+          "chapterFiles": 6,
+          "estimatedWordsTouched": 32601,
+          "files": [
+            "Novel/Magic Char/New Edition/Tate-Seer-Visions/Early on/Chapter - T1 You are not coming back.md",
+            "Novel/Magic Char/New Edition/Tate-Seer-Visions/Early on/Chapter - T2 We making it.md",
+            "Novel/Magic Char/New Edition/Tate-Seer-Visions/Early on/Chapter - T3 With the Tates.md",
+            "Novel/Magic Char/New Edition/Tate-Seer-Visions/Early on/Chapter - T4 Awkward Bee.md",
+            "Novel/Magic Char/New Edition/Tate-Seer-Visions/Early on/Chapter - T5 Our family is adjusting.md",
+            "Novel/Magic Char/New Edition/Tate-Seer-Visions/Early on/Chapter - T6 In time.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-09T03:11:24.798Z",
+          "endedAt": "2026-10-09T04:16:34.243Z",
+          "durationMinutes": 65.16,
+          "fileCount": 8,
+          "chapterFiles": 8,
+          "estimatedWordsTouched": 39249,
+          "files": [
+            "Novel/Magic Char/New Edition/Tate-Seer-Visions/Many Snippets/Chapter - T1 Power Take Hold.md",
+            "Novel/Magic Char/New Edition/Tate-Seer-Visions/Seeing flashes/Chapter - T1 Building on.md",
+            "Novel/Magic Char/New Edition/Tate-Seer-Visions/Seeing flashes/Chapter - T2 watchu doin.md",
+            "Novel/Magic Char/New Edition/Tate-Seer-Visions/Seeing flashes/Chapter - T3 Others push in.md",
+            "Novel/Magic Char/New Edition/Tate-Seer-Visions/Seeing flashes/Chapter - T4 Healing Relations.md",
+            "Novel/Magic Char/New Edition/Tate-Seer-Visions/A sense of wonder/Chapter - T1 Quick Chats.md",
+            "Novel/Magic Char/New Edition/Tate-Seer-Visions/A sense of wonder/Chapter - T2 Speeding ahead.md",
+            "Novel/Magic Char/New Edition/Tate-Seer-Visions/A sense of wonder/Chapter - T3 Problem-solver.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-09T05:01:40.494Z",
+          "endedAt": "2026-10-09T05:07:25.220Z",
+          "durationMinutes": 5.75,
+          "fileCount": 2,
+          "chapterFiles": 2,
+          "estimatedWordsTouched": 10032,
+          "files": [
+            "Novel/Magic Char/New Edition/Queenie/Complex Mood/Chapter - T1 unwilling to let go.md",
+            "Novel/Magic Char/New Edition/Queenie/Complex Mood/Chapter - T2 Love I torment you.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-09T05:51:39.530Z",
+          "endedAt": "2026-10-09T06:38:39.357Z",
+          "durationMinutes": 47,
+          "fileCount": 5,
+          "chapterFiles": 5,
+          "estimatedWordsTouched": 19213,
+          "files": [
+            "Novel/Magic Char/New Edition/Queenie/Complex Mood/Chapter - T3 Harvest Moon Realm.md",
+            "Novel/Magic Char/New Edition/Queenie/Complex Mood/Chapter - T4 Xiang yu.md",
+            "Novel/Magic Char/New Edition/Queenie/Complex Mood/Chapter - T5 The games begin.md",
+            "Novel/Magic Char/New Edition/Queenie/Complex Mood/Chapter - T6 Practical skills.md",
+            "Novel/Magic Char/New Edition/Queenie/Complex Mood/Chapter - T1 What is my problem.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-09T08:37:32.295Z",
+          "endedAt": "2026-10-09T08:37:32.295Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 2702,
+          "files": [
+            "Novel/Magic Char/New Edition/Push push/Chapter - T1 desecration.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-09T09:23:37.821Z",
+          "endedAt": "2026-10-09T09:23:37.821Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 1597,
+          "files": [
+            "Novel/Magic Char/New Edition/Simplest metric/Chapter - T1 What is my problem.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-09T11:11:49.420Z",
+          "endedAt": "2026-10-09T11:52:20.594Z",
+          "durationMinutes": 40.52,
+          "fileCount": 6,
+          "chapterFiles": 6,
+          "estimatedWordsTouched": 24783,
+          "files": [
+            "Novel/Ancient China/Powerful Huanxin/Permission to Bear Arms/Chapter - T1 Personal Strength.md",
+            "Novel/Zombie Apocalypse/OG Problems/Fever Dream/Chapter - T2 Hermit.md",
+            "Novel/Zombie Apocalypse/OG Problems/Fever Dream/Chapter - T3 good mistakes.md",
+            "Novel/Zombie Apocalypse/OG Problems/Fever Dream/Chapter - T4 What I eat.md",
+            "Novel/Ancient China/Crown Prince Residence/Female Advisor/Chapter - T5 tentative peace.md",
+            "Novel/Ancient China/Crown Prince Residence/Female Advisor/Chapter - T6 problem comes.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-09T13:04:14.733Z",
+          "endedAt": "2026-10-09T14:14:00.326Z",
+          "durationMinutes": 69.76,
+          "fileCount": 7,
+          "chapterFiles": 7,
+          "estimatedWordsTouched": 32687,
+          "files": [
+            "Novel/Ancient China/Crown Prince Residence/Female Advisor/Chapter - T7 marshalling troops.md",
+            "Novel/Ancient China/Crown Prince Residence/Female Advisor/Chapter - T8 bunnies.md",
+            "Novel/Ancient China/Crown Prince Residence/Female Advisor/Chapter - T9 My ridiculousness.md",
+            "Novel/Ancient China/Crown Prince Residence/Female Advisor/Chapter - T10 Life changes.md",
+            "Novel/Magic Char/New Edition/Black fam harmony/My capabitilies/Chapter - T2 With Strength.md",
+            "Novel/Magic Char/New Edition/Queenie/Owned/Chapter - T1 Reality.md",
+            "Novel/Magic Char/New Edition/Queenie/Owned/Chapter - T2 I am very funny.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-09T15:51:54.035Z",
+          "endedAt": "2026-10-09T17:01:39.785Z",
+          "durationMinutes": 69.76,
+          "fileCount": 10,
+          "chapterFiles": 10,
+          "estimatedWordsTouched": 33542,
+          "files": [
+            "Novel/Cookery Lady/The world that we belong to defers/Chapter - T3 Finding you.md",
+            "Novel/Naruto/Born from Dirt/Mednin/Have a plan/Chapter - T5 never ending drama.md",
+            "Novel/Ancient China/Crown Prince Residence/Gossipy/Chapter - T6 Where are they.md",
+            "Novel/Ancient China/Crown Prince Residence/Gossipy/Chapter - T7 Suspicious.md",
+            "Novel/Ancient China/Crown Prince Residence/Gossipy/Chapter - T1 Entering.md",
+            "Novel/Ancient China/Crown Prince Residence/Gossipy/Chapter - T2 Together comes out.md",
+            "Novel/Ancient China/Crown Prince Residence/Gossipy/Chapter - T3 Coaching.md",
+            "Novel/Ancient China/Crown Prince Residence/Gossipy/Chapter - T4 Contrast.md",
+            "Novel/Ancient China/Crown Prince Residence/Gossipy/Chapter - T5 Swap.md",
+            "Novel/Ancient China/Crown Prince Residence/Gossipy/Chapter - T8 So it is.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-09T17:42:56.589Z",
+          "endedAt": "2026-10-09T22:19:01.163Z",
+          "durationMinutes": 276.08,
+          "fileCount": 20,
+          "chapterFiles": 20,
+          "estimatedWordsTouched": 101610,
+          "files": [
+            "Novel/Ancient China/Crown Prince Residence/Gossipy/Chapter - T9 Power over life and death.md",
+            "Novel/Ancient China/Crown Prince Residence/Gossipy/Chapter - T10 A step into the underworld.md",
+            "Novel/Ancient China/Crown Prince Residence/Gossipy/Chapter - T11 With Time.md",
+            "Novel/Ancient China/Crown Prince Residence/Gossipy/Chapter - T12 Only woman.md",
+            "Novel/Ancient China/Crown Prince Residence/Gossipy/Chapter - T12 How we age.md",
+            "Novel/Ancient China/Crown Prince Residence/Gossipy/Chapter - T13 A child of two families.md",
+            "Novel/Ancient China/Crown Prince Residence/Gossipy/Chapter - T14 Guilt.md",
+            "Novel/Ancient China/Crown Prince Residence/Gossipy/Chapter - T15 Not meeting again.md",
+            "Novel/Ancient China/Crown Prince Residence/Plotter Lady/Chapter - T1 Both sides falter.md",
+            "Novel/Ancient China/Crown Prince Residence/Plotter Lady/Chapter - T2 Where to go.md",
+            "Novel/Ancient China/Crown Prince Residence/Plotter Lady/Chapter - T3 Rolling disasters.md",
+            "Novel/Ancient China/Crown Prince Residence/Plotter Lady/Chapter - T4 Final Disaster.md",
+            "Novel/Ancient China/Crown Prince Residence/Chubby Concubine/Chapter - T1 In the chaos.md",
+            "Novel/Ancient China/Crown Prince Residence/Insights/Chapter - T2 Goddess of Avoidance.md",
+            "Novel/Ancient China/Crown Prince Residence/Insights/Chapter - T3 Arriving and taking loot.md",
+            "Novel/Ancient China/Crown Prince Residence/Insights/Chapter - T4 Home base.md",
+            "Novel/Ancient China/Crown Prince Residence/Insights/Chapter - T5 Growing up well.md",
+            "Novel/Ancient China/Crown Prince Residence/Insights/Chapter - T6 Live with what peace.md",
+            "Novel/Ancient China/Crown Prince Residence/Insights/Chapter - T9 I am a real person too.md",
+            "Novel/Ancient China/Crown Prince Residence/Unparalleled Arrogance/Chapter - T1 who owns the world.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-10T05:15:08.704Z",
+          "endedAt": "2026-10-10T05:25:05.924Z",
+          "durationMinutes": 9.95,
+          "fileCount": 4,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 1482,
+          "files": [
+            "Novel/Ancient China/As Huanxin/A Person of Myth/About - A Person of Myth.md",
+            "World - spiritual peasants realm (Hunter Born).md",
+            "World Building/Char - Yun Shuke.md",
+            "10 Templates/11 File Template/Modal Character Sheet V2 - Auto World.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-10T08:04:06.600Z",
+          "endedAt": "2026-10-10T08:04:06.600Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 66,
+          "files": [
+            "World Building/Char - Yi Xiuying.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-10T09:47:20.253Z",
+          "endedAt": "2026-10-10T09:47:20.253Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 126,
+          "files": [
+            "Novel/Same Starter Village/What to trade/About - What to trade.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-10T11:11:22.890Z",
+          "endedAt": "2026-10-10T11:11:22.890Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 61,
+          "files": [
+            "World Building/Char - Si Xisi.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-10T13:07:55.835Z",
+          "endedAt": "2026-10-10T13:45:39.954Z",
+          "durationMinutes": 37.74,
+          "fileCount": 5,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 381,
+          "files": [
+            "World Building/Char - Si Haner.md",
+            "World Building/Char - Ping-sao.md",
+            "World Building/Char - Wu Ya.md",
+            "World Building/Char - Liu Ya.md",
+            "World Building/Char - Old Widow Wei.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-10T15:12:43.914Z",
+          "endedAt": "2026-10-10T20:46:12.050Z",
+          "durationMinutes": 333.47,
+          "fileCount": 35,
+          "chapterFiles": 35,
+          "estimatedWordsTouched": 159871,
+          "files": [
+            "Novel/Village in Disguise/Tired out/Chapter - T1 Arent you tired.md",
+            "Novel/Village in Disguise/Complicated feelings/Chapter - T1 A trick for a trick.md",
+            "Novel/Village in Disguise/Incoming/Chapter - T1 marriage preparations.md",
+            "Novel/Village in Disguise/This feeling that hurts/Chapter - T2 Panic.md",
+            "Novel/Village in Disguise/Quiet disappointment/Chapter - T1 Swallow it down.md",
+            "Novel/Village in Disguise/Call it off/Chapter - T1 The stakes.md",
+            "Novel/Village in Disguise/Call it off/Chapter - T2 Friendly warning.md",
+            "Novel/Village in Disguise/Call it off/Chapter - T3 Fair to a fault.md",
+            "Novel/Village in Disguise/Forthright confrontation/Chapter - T1 This is my answer.md",
+            "Novel/Village in Disguise/Forthright confrontation/Chapter - T2 Politics is a dog fight.md",
+            "Novel/Village in Disguise/Settings/Chapter - T1 Placement position.md",
+            "Novel/Village in Disguise/Bet on this love/Chapter - T1 on your back.md",
+            "Novel/Village in Disguise/Bet on this love/Chapter - T2 The power of rumors.md",
+            "Novel/Village in Disguise/Traps for each other/Chapter - T1 me the specialist.md",
+            "Novel/Village in Disguise/Whose things/Chapter - T1 My things.md",
+            "Novel/Village in Disguise/Once married/Chapter - T1 Cold huh.md",
+            "Novel/Village in Disguise/Once married/Chapter - T2 what to do.md",
+            "Novel/Village in Disguise/Once married/Chapter - T3 Bout of disbelief.md",
+            "Novel/Village in Disguise/Both reborn at once/Chapter - T1 Who to marry.md",
+            "Novel/Village in Disguise/Little tricks played back/Chapter - T1 A lunge.md",
+            "Novel/Village in Disguise/Sugar is not as sweet as power/Chapter - T1 Awesome.md",
+            "Novel/Village in Disguise/Hand slipped/Chapter - T1 On purpose.md",
+            "Novel/Village in Disguise/What Schemes/Chapter - T1 I have returned.md",
+            "Novel/Village in Disguise/Red Tent/Chapter - T1 My territory.md",
+            "Novel/Village in Disguise/Shooting Accurately/Chapter - T1 Swim for me to see.md",
+            "Novel/Regency/Writer Quality/Chapter - T1 Alternative found.md",
+            "Novel/Regency/Gimme Rent/Chapter - T1 I take.md",
+            "Novel/Regency/Tragic Ends/Chapter - T1 Saw it coming.md",
+            "Novel/Regency/Fated One-Sided Love/Chapter - T2 Decisiveness on one side.md",
+            "Novel/Regency/Poison Assassin/Chapter - T1 Incredulous me.md",
+            "Novel/Regency/Complicated Bonds/Chapter - T2 Heartless thing.md",
+            "Novel/Regency/Murderous/Chapter - T2 Think differently.md",
+            "Novel/Regency/Sibling Barren/Chapter - T1 Choked.md",
+            "Novel/Regency/Sibling Barren/Chapter - T2 The Politically Blind.md",
+            "Novel/Regency/Infuriated/Chapter - T1 Hidden triggers.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-11T08:52:54.013Z",
+          "endedAt": "2026-10-11T08:53:50.483Z",
+          "durationMinutes": 0.94,
+          "fileCount": 2,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 140,
+          "files": [
+            "World Building/Char - Tang Shusheng.md",
+            "World Building/Char - Tang Dongju.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-11T11:26:00.844Z",
+          "endedAt": "2026-10-11T11:26:00.844Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 82,
+          "files": [
+            "World Building/Char - Si Zhanlei.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-11T11:56:56.978Z",
+          "endedAt": "2026-10-11T11:58:48.105Z",
+          "durationMinutes": 1.85,
+          "fileCount": 2,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 10790,
+          "files": [
+            "Novel/Same Starter Village/What to trade/Chapter - T2 New village warehouse.md",
+            "Novel/Stone Age Widowed/Drought/My own means/About - My own means.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-11T13:06:55.590Z",
+          "endedAt": "2026-10-11T13:06:55.590Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 2735,
+          "files": [
+            "Novel/Stone Age Widowed/Drought/My own means/Chapter - T1 Intellect.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-11T21:11:20.942Z",
+          "endedAt": "2026-10-11T21:33:26.169Z",
+          "durationMinutes": 22.09,
+          "fileCount": 2,
+          "chapterFiles": 2,
+          "estimatedWordsTouched": 17187,
+          "files": [
+            "Novel/Cheated Marriage/Real Person/Owe a favour/Chapter - T1 Dinner.md",
+            "Novel/Cheated Marriage/Real Person/Owe a favour/Chapter - T2 Laurel the constantly pursued.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-12T05:25:38.445Z",
+          "endedAt": "2026-10-12T06:01:48.312Z",
+          "durationMinutes": 36.16,
+          "fileCount": 10,
+          "chapterFiles": 10,
+          "estimatedWordsTouched": 35855,
+          "files": [
+            "Novel/Regency/Outright scary murder/Chapter - T1 I kill.md",
+            "Novel/Regency/Bound Together/Chapter - T1 We are complicated and connected.md",
+            "Novel/Regency/Mindset/Chapter - T1 Gone away.md",
+            "Novel/Regency/Mindset/Chapter - T2 Doubts and abilities.md",
+            "Novel/Regency/Sensibility/Chapter - T1 why we do what we do.md",
+            "Novel/Magic Char/Satisfying Hit/Chapter - T1 Hello darling.md",
+            "Novel/Magic Char/Raging from a dream/Chapter - T1 Smashing away.md",
+            "Novel/Magic Char/Openly cruel/Chapter - T1 What I shouldn’t do.md",
+            "Novel/Magic Char/Openly cruel/Chapter - T2 Deterrence.md",
+            "Novel/Modern Swap Reject/Cadillac Life/Chapter - T2 Living together.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-12T07:25:30.233Z",
+          "endedAt": "2026-10-12T07:25:30.233Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 124,
+          "files": [
+            "Novel/Same Starter Village/Creative means/About - Creative means.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-12T10:01:12.818Z",
+          "endedAt": "2026-10-12T10:01:12.818Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 70,
+          "files": [
+            "World Building/Char - Widow Liang.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-12T11:01:49.790Z",
+          "endedAt": "2026-10-12T11:55:59.796Z",
+          "durationMinutes": 54.17,
+          "fileCount": 7,
+          "chapterFiles": 6,
+          "estimatedWordsTouched": 25737,
+          "files": [
+            "World Building/Char - Magistrate Wang.md",
+            "Novel/Same Starter Village/Creative means/Chapter - T1 Not for sale.md",
+            "Novel/Ancient China/As Huanxin/A Person of Myth/Chapter - T1 That is mine.md",
+            "Novel/Ancient China/As Huanxin/A Person of Myth/Chapter - T2 All your wishes I can grant.md",
+            "Novel/Naruto/Clans/Vicious Revenge/Aggravated main wife/Chapter - T1 Means.md",
+            "Novel/Naruto/Clans/Vicious Revenge/Aggravated main wife/Chapter - T2 Triggered.md",
+            "Novel/Naruto/Clans/Vicious Revenge/Aggravated main wife/Chapter - T3 Floundering.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-12T20:11:36.036Z",
+          "endedAt": "2026-10-12T20:11:36.036Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 3512,
+          "files": [
+            "Novel/Military in 80s/Selective raising/Chapter - T1 Not theft.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-13T05:01:21.395Z",
+          "endedAt": "2026-10-13T05:01:21.395Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 65,
+          "files": [
+            "World Building/Char - Auntie Yuan.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-13T11:03:42.393Z",
+          "endedAt": "2026-10-13T11:24:49.075Z",
+          "durationMinutes": 21.11,
+          "fileCount": 2,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 145,
+          "files": [
+            "World Building/Char - Yu Qiong.md",
+            "World Building/Char - Mo Xiangshi.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-13T11:58:02.597Z",
+          "endedAt": "2026-10-13T11:58:36.992Z",
+          "durationMinutes": 0.57,
+          "fileCount": 2,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 150,
+          "files": [
+            "World Building/Char - Tang Huizhao.md",
+            "World Building/Char - Luo Xuanbin.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-13T13:26:42.705Z",
+          "endedAt": "2026-10-13T13:26:42.705Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 6396,
+          "files": [
+            "Novel/Same Starter Village/A different dream/Chapter - T3 Wealth is in reach.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-13T14:55:39.124Z",
+          "endedAt": "2026-10-13T15:01:30.025Z",
+          "durationMinutes": 5.85,
+          "fileCount": 2,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 136,
+          "files": [
+            "World Building/Char - Zhang-shi (Luxuan mom).md",
+            "World Building/Char - Zhong Xuanxing.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-13T15:47:14.320Z",
+          "endedAt": "2026-10-13T15:47:14.320Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 4797,
+          "files": [
+            "Novel/Same Starter Village/A different dream/Chapter - T4 Decided to stay.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-13T16:44:51.890Z",
+          "endedAt": "2026-10-13T17:59:00.998Z",
+          "durationMinutes": 74.15,
+          "fileCount": 8,
+          "chapterFiles": 7,
+          "estimatedWordsTouched": 39605,
+          "files": [
+            "Novel/Cheated Marriage/Real Person/Panicked n Child/Chapter - T1 Running to hide.md",
+            "Novel/Cheated Marriage/Real Person/Panicked n Child/Chapter - T2 Our understanding of what is about to go down.md",
+            "World Building/Char - Xiao Duluo.md",
+            "Novel/Cheated Marriage/Real Person/Panicked n Child/Chapter - T3 People think I am mad.md",
+            "Novel/Cheated Marriage/Real Person/Panicked n Child/Chapter - T4 We are still friends.md",
+            "Novel/Cheated Marriage/Real Person/A splash of tea/Chapter - T1 Warrior of justice.md",
+            "Novel/Transmigator/my ideal dad/Chapter - T1 ideals.md",
+            "Novel/Transmigator/The meaning of affection/Chapter - T1 Following the world rules.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-13T20:43:18.317Z",
+          "endedAt": "2026-10-13T20:43:18.317Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 7788,
+          "files": [
+            "Novel/Military in 80s/Selective raising/Chapter - T2 Who am I.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-14T04:36:48.981Z",
+          "endedAt": "2026-10-14T04:36:48.981Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 8083,
+          "files": [
+            "Novel/Same Starter Village/Lover of another life/Chapter - T1 all around are ghost.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-14T07:54:31.637Z",
+          "endedAt": "2026-10-14T08:04:49.109Z",
+          "durationMinutes": 10.29,
+          "fileCount": 2,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 131,
+          "files": [
+            "World Building/Char - Si Xiaoyong.md",
+            "World Building/Char - Si Chubo.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-14T08:49:33.605Z",
+          "endedAt": "2026-10-14T08:49:33.605Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 6389,
+          "files": [
+            "Novel/Same Starter Village/Lover of another life/Chapter - T2 Satiation.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-14T13:08:15.299Z",
+          "endedAt": "2026-10-14T13:08:15.299Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 10460,
+          "files": [
+            "Novel/Same Starter Village/Lover of another life/Chapter - T3 Going with cheats.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-14T15:48:08.573Z",
+          "endedAt": "2026-10-14T15:48:08.573Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 6728,
+          "files": [
+            "Novel/Same Starter Village/Lover of another life/Chapter - T4 This life I want.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-14T16:38:24.262Z",
+          "endedAt": "2026-10-14T16:38:24.262Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 1525,
+          "files": [
+            "Novel/Same Starter Village/Lover of another life/Chapter - T5 Drought farming.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-14T18:55:34.852Z",
+          "endedAt": "2026-10-14T18:55:34.852Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 2550,
+          "files": [
+            "Novel/Same Starter Village/Lover of another life/Chapter - T6 Sect management work.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-15T08:08:58.344Z",
+          "endedAt": "2026-10-15T08:42:47.952Z",
+          "durationMinutes": 33.83,
+          "fileCount": 3,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 1110,
+          "files": [
+            "World Building/Char - Dong Qi.md",
+            "World Building/World - Imperial Exams of Mou dynasty.md",
+            "World Building/Char - Teacher Tu.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-15T11:57:16.306Z",
+          "endedAt": "2026-10-15T12:20:59.139Z",
+          "durationMinutes": 23.71,
+          "fileCount": 3,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 1159,
+          "files": [
+            "World Building/Char - Luo Baixiu.md",
+            "World Building/Char - Luo Wenjing.md",
+            "World Building/World Group - White Rock village.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-15T14:26:18.485Z",
+          "endedAt": "2026-10-15T14:26:18.485Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 2262,
+          "files": [
+            "Novel/School Xianxia/Su Fam/Favour for cousin/Chapter - T1 Big boss jie.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-15T22:29:56.210Z",
+          "endedAt": "2026-10-15T22:29:56.210Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 4855,
+          "files": [
+            "Novel/Same Starter Village/Still quite good/Chapter - T1 Patiently.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-16T04:10:17.072Z",
+          "endedAt": "2026-10-16T04:29:30.011Z",
+          "durationMinutes": 19.22,
+          "fileCount": 3,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 193,
+          "files": [
+            "World Building/Char - Si Kaoyue.md",
+            "World Building/Char - Si Shengbao.md",
+            "World Building/World Place - Si Family Village.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-16T06:49:38.774Z",
+          "endedAt": "2026-10-16T07:08:16.637Z",
+          "durationMinutes": 18.63,
+          "fileCount": 2,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 195,
+          "files": [
+            "Novel/Same Starter Village/Amped up difficulty/About - Amped up difficulty.md",
+            "World Building/Char - Si Kaixiao.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-16T14:54:22.855Z",
+          "endedAt": "2026-10-16T15:24:57.295Z",
+          "durationMinutes": 30.57,
+          "fileCount": 3,
+          "chapterFiles": 3,
+          "estimatedWordsTouched": 17009,
+          "files": [
+            "Novel/Same Starter Village/Adventurer Group/Speed of Death/Chapter - T1 Some noise.md",
+            "Novel/Same Starter Village/Adventurer Group/Speed of Death/Chapter - T2 What we need for strength.md",
+            "Novel/Same Starter Village/Adventurer Group/Speed of Death/Chapter - T3 The strength of a team.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-17T09:42:57.453Z",
+          "endedAt": "2026-10-17T09:45:34.209Z",
+          "durationMinutes": 2.61,
+          "fileCount": 2,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 6909,
+          "files": [
+            "Novel/Same Starter Village/Amped up difficulty/Chapter - T4 A different presence.md",
+            "World Building/Char - Su Meiwan.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-17T14:14:24.783Z",
+          "endedAt": "2026-10-17T14:14:24.783Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 7372,
+          "files": [
+            "Novel/Same Starter Village/Amped up difficulty/Chapter - T5 This friend who does not know me.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-17T17:46:08.047Z",
+          "endedAt": "2026-10-17T17:46:08.047Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 75,
+          "files": [
+            "World Building/Char - Si Majing.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-17T19:20:51.022Z",
+          "endedAt": "2026-10-17T19:22:59.032Z",
+          "durationMinutes": 2.13,
+          "fileCount": 2,
+          "chapterFiles": 2,
+          "estimatedWordsTouched": 3681,
+          "files": [
+            "Novel/Celestial Master/Martial Uncle/Chapter - T3 Magnus Opus.md",
+            "Novel/Celestial Master/Martial Uncle/Chapter - T4 We have this togetherness.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-18T03:13:38.401Z",
+          "endedAt": "2026-10-18T03:13:38.401Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 1324,
+          "files": [
+            "research/obsidian-ios-mobile-crash-plugin-research.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-18T04:06:35.620Z",
+          "endedAt": "2026-10-18T04:06:35.620Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 11151,
+          "files": [
+            "Novel/Same Starter Village/Amped up difficulty/Chapter - T6 heartbreak.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-18T07:25:00.857Z",
+          "endedAt": "2026-10-18T07:25:00.857Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 67,
+          "files": [
+            "World Building/Char - Si Ziyu.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-18T08:05:01.433Z",
+          "endedAt": "2026-10-18T08:05:01.433Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 7081,
+          "files": [
+            "Novel/Same Starter Village/Amped up difficulty/Chapter - T7 The trust to change.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-18T10:32:49.212Z",
+          "endedAt": "2026-10-18T10:35:29.108Z",
+          "durationMinutes": 2.66,
+          "fileCount": 2,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 136,
+          "files": [
+            "World Building/Char - Si Xieling.md",
+            "World Building/Char - Si Qibei.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-18T12:39:45.082Z",
+          "endedAt": "2026-10-18T12:39:45.082Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 8924,
+          "files": [
+            "Novel/Same Starter Village/Amped up difficulty/Chapter - T8 Heavenly arrangements.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-18T14:09:21.548Z",
+          "endedAt": "2026-10-18T14:09:21.548Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 6443,
+          "files": [
+            "Novel/Same Starter Village/Amped up difficulty/Chapter - T2 I have upgraded.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-18T16:04:01.366Z",
+          "endedAt": "2026-10-18T16:04:01.366Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 62,
+          "files": [
+            "World Building/Char - Si Yanhong.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-19T05:27:50.394Z",
+          "endedAt": "2026-10-19T05:27:50.394Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 61,
+          "files": [
+            "World Building/Char - Si Suyun.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-19T05:58:39.186Z",
+          "endedAt": "2026-10-19T05:58:39.186Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 9568,
+          "files": [
+            "Novel/Same Starter Village/Amped up difficulty/Chapter - T9 The power of education.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-19T07:27:43.019Z",
+          "endedAt": "2026-10-19T07:27:43.019Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 9270,
+          "files": [
+            "Novel/Same Starter Village/Amped up difficulty/Chapter - T11 Dreams to resolve rage.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-19T09:04:12.882Z",
+          "endedAt": "2026-10-19T09:04:12.882Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 70,
+          "files": [
+            "World Building/Char - Si Fanyong.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-19T14:23:49.620Z",
+          "endedAt": "2026-10-19T15:21:55.313Z",
+          "durationMinutes": 58.09,
+          "fileCount": 5,
+          "chapterFiles": 5,
+          "estimatedWordsTouched": 30677,
+          "files": [
+            "Novel/Still a village girl/On otherside of things/Chapter - T1 Call it home.md",
+            "Novel/Still a village girl/On otherside of things/Chapter - T2 Not your daughter.md",
+            "Novel/Still a village girl/On otherside of things/Chapter - T3 Stimulated.md",
+            "Novel/Still a village girl/On otherside of things/Chapter - T4 Who is my dad.md",
+            "Novel/Still a village girl/On otherside of things/Chapter - T5 Not you or you.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-19T16:33:06.111Z",
+          "endedAt": "2026-10-19T16:33:06.111Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 10026,
+          "files": [
+            "Novel/Same Starter Village/Amped up difficulty/Chapter - T12 What am I farming.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-20T05:43:43.770Z",
+          "endedAt": "2026-10-20T05:48:09.875Z",
+          "durationMinutes": 4.44,
+          "fileCount": 2,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 656,
+          "files": [
+            "World Building/Char - Aunty Shi.md",
+            "World Building/World Group - Li Lin (Li Forest) village.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-20T11:24:56.087Z",
+          "endedAt": "2026-10-20T11:24:56.087Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 81,
+          "files": [
+            "World Building/Char - Biased Granny Liu.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-20T14:12:45.529Z",
+          "endedAt": "2026-10-20T14:12:45.529Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 69,
+          "files": [
+            "World Building/Char - Si Zhenyu.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-20T15:54:10.227Z",
+          "endedAt": "2026-10-20T15:54:10.227Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 84,
+          "files": [
+            "World Building/World Place - Ox Tree Village.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-20T16:32:26.311Z",
+          "endedAt": "2026-10-20T16:32:26.311Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 76,
+          "files": [
+            "World Building/Char - Er Ya.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-20T18:03:45.269Z",
+          "endedAt": "2026-10-20T18:15:00.190Z",
+          "durationMinutes": 11.25,
+          "fileCount": 2,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 1832,
+          "files": [
+            "Novel/Same Starter Village/Cultivator Herbs Darling/About - Cultivator Herbs Darling.md",
+            "Novel/Celestial Master/Formations are Supreme/Chapter - T1 Step into my dream.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-21T04:19:44.800Z",
+          "endedAt": "2026-10-21T04:43:32.889Z",
+          "durationMinutes": 23.8,
+          "fileCount": 2,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 7905,
+          "files": [
+            "Novel/Same Starter Village/Medical Bets/Chapter - T4 To thrive you must be shamelessly bossy.md",
+            "World Building/Char - Kong Shali.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-21T06:22:17.124Z",
+          "endedAt": "2026-10-21T06:22:17.124Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 3110,
+          "files": [
+            "Novel/Same Starter Village/Medical Bets/Chapter - T5 School system.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-21T11:22:04.186Z",
+          "endedAt": "2026-10-21T11:22:06.564Z",
+          "durationMinutes": 0.04,
+          "fileCount": 10,
+          "chapterFiles": 9,
+          "estimatedWordsTouched": 72423,
+          "files": [
+            "Novel/Same Starter Village/A different dream/Chapter - T1 Eat bah.md",
+            "Novel/Same Starter Village/A different dream/Chapter - T2 Whose side.md",
+            "Novel/Same Starter Village/Amped up difficulty/Chapter - T1 Challenges make you.md",
+            "Novel/Same Starter Village/Amped up difficulty/Chapter - T10 Simplify for I dumb.md",
+            "Novel/Same Starter Village/From the moment I could crawl/Chapter - T1 crawl to you.md",
+            "Novel/Same Starter Village/Medical Bets/Chapter - T1 Eat to death.md",
+            "Novel/Same Starter Village/Medical Bets/Chapter - T2 Fierce fillial child.md",
+            "Novel/Same Starter Village/Medical Bets/Chapter - T3 Trying to live.md",
+            "Novel/Same Starter Village/What to trade/Chapter - T1 Refuse to sell info.md",
+            "World Building/Char - Cheng Xue.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-21T12:04:33.683Z",
+          "endedAt": "2026-10-21T12:04:33.683Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 64,
+          "files": [
+            "World Building/Char - Si Leidui.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-21T13:43:07.413Z",
+          "endedAt": "2026-10-21T13:43:07.413Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 6930,
+          "files": [
+            "Novel/Same Starter Village/Amped up difficulty/Chapter - T3 Living at a different level.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-21T16:10:16.806Z",
+          "endedAt": "2026-10-21T16:48:48.301Z",
+          "durationMinutes": 38.52,
+          "fileCount": 5,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 343,
+          "files": [
+            "World Building/Char - Zhu Gang.md",
+            "World Building/Char - Wu Zhixin.md",
+            "World Building/Char - Xi Jing.md",
+            "World Building/Char - Xi Yao.md",
+            "World Building/Char - Wu Baiyun.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-21T17:27:29.390Z",
+          "endedAt": "2026-10-21T17:28:46.632Z",
+          "durationMinutes": 1.29,
+          "fileCount": 2,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 134,
+          "files": [
+            "World Building/Char - Uncle Zhan.md",
+            "World Building/Char - Aunty Xu.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-21T18:08:04.321Z",
+          "endedAt": "2026-10-21T18:22:59.813Z",
+          "durationMinutes": 14.92,
+          "fileCount": 2,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 9640,
+          "files": [
+            "Novel/Same Starter Village/Cultivator Herbs Darling/Chapter - T2 Bye byes.md",
+            "World Building/Char - Bai Chenglong.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-21T19:15:14.257Z",
+          "endedAt": "2026-10-21T19:15:14.257Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 8066,
+          "files": [
+            "Novel/Same Starter Village/Cultivator Herbs Darling/Chapter - T1 Creative.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-22T03:21:20.176Z",
+          "endedAt": "2026-10-22T03:21:20.176Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 69,
+          "files": [
+            "World Building/Char - Granny Wu.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-22T07:15:49.949Z",
+          "endedAt": "2026-10-22T07:15:49.949Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 50,
+          "files": [
+            "World Building/General Ancient China Knowledge.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-22T07:55:23.958Z",
+          "endedAt": "2026-10-22T07:55:23.958Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 7010,
+          "files": [
+            "Novel/Same Starter Village/Cultivator Herbs Darling/Chapter - T4 Family drama never ends.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-22T08:54:17.712Z",
+          "endedAt": "2026-10-22T08:54:17.712Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 67,
+          "files": [
+            "World Building/Char - Si Pengen.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-22T11:53:55.389Z",
+          "endedAt": "2026-10-22T11:53:55.389Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 2254,
+          "files": [
+            "Novel/Dodging Martial Bros/Striking at a familiar ghost/Chapter - T1 Who to strike.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-22T13:35:35.735Z",
+          "endedAt": "2026-10-22T14:02:55.425Z",
+          "durationMinutes": 27.33,
+          "fileCount": 5,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 18366,
+          "files": [
+            "World Building/Char - Aunty Xialing.md",
+            "Novel/Same Starter Village/Cultivator Herbs Darling/Chapter - T3 A natural disaster with my surname.md",
+            "World Building/Char - Qing Aixiu.md",
+            "World Building/Char - Old Madam Zhen.md",
+            "Writing Archive/Pwp/From iPad/demon hunter.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-22T15:54:08.765Z",
+          "endedAt": "2026-10-22T15:54:08.765Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 10577,
+          "files": [
+            "Novel/Same Starter Village/Cultivator Herbs Darling/Chapter - T5 To be a celestial.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-22T17:08:21.241Z",
+          "endedAt": "2026-10-22T17:08:21.241Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 74,
+          "files": [
+            "World Building/Char - Yu Liang.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-22T18:08:31.815Z",
+          "endedAt": "2026-10-22T19:34:03.451Z",
+          "durationMinutes": 85.53,
+          "fileCount": 6,
+          "chapterFiles": 4,
+          "estimatedWordsTouched": 19927,
+          "files": [
+            "World Building/Char - Yi Han.md",
+            "World Building/Char - Si Zhengxu.md",
+            "Novel/Same Starter Village/Cultivator Herbs Darling/Chapter - T6 Crafts are a skill.md",
+            "Novel/Same Starter Village/Dangerous awakening/Chapter - T1 Without hesitation.md",
+            "Novel/Same Starter Village/Dangerous awakening/Chapter - T2 We doin this.md",
+            "Novel/Naruto/Clans/Alr Married (Shikaku x Yoshino)/A little break/Chapter - T1 What you doin.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-22T20:14:35.917Z",
+          "endedAt": "2026-10-22T20:26:19.180Z",
+          "durationMinutes": 11.72,
+          "fileCount": 2,
+          "chapterFiles": 2,
+          "estimatedWordsTouched": 10816,
+          "files": [
+            "Novel/Cheated Marriage/Real Person/Accidental Meets V2/Chapter - T1 Gao Fu Shuai.md",
+            "Novel/Cheated Marriage/Real Person/Accidental Meets V2/Chapter - T2 life must go on.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-22T20:58:46.802Z",
+          "endedAt": "2026-10-22T22:35:04.834Z",
+          "durationMinutes": 96.3,
+          "fileCount": 10,
+          "chapterFiles": 10,
+          "estimatedWordsTouched": 61924,
+          "files": [
+            "Novel/Cheated Marriage/Real Person/Accidental Meets V2/Chapter - T4 Setting up dominoes.md",
+            "Novel/Cheated Marriage/Real Person/Accidental Meets V2/Chapter - T5 Marriage talks.md",
+            "Novel/Cheated Marriage/Real Person/Accidental Meets V2/Chapter - T6 We are both so bad at talking.md",
+            "Novel/Cheated Marriage/Real Person/Accidental Meets V2/Chapter - T7 An affair.md",
+            "Novel/Cheated Marriage/Real Person/Accidental Meets V2/Chapter - T8 Employee loyalty.md",
+            "Novel/Cheated Marriage/Real Person/Teasing you/Chapter - T2 Ruining marriages.md",
+            "Novel/Cheated Marriage/Real Person/Teasing you/Chapter - T3 My company shift.md",
+            "Novel/Cheated Marriage/Real Person/Teasing you/Chapter - T4 My company is solid.md",
+            "Novel/Cheated Marriage/Real Person/Triggers all around/Chapter - T1 Tests.md",
+            "Novel/Cheated Marriage/Real Person/Peaceful Spot/Chapter - T1 Cannot live life kneeling.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-23T08:12:22.125Z",
+          "endedAt": "2026-10-23T08:12:22.125Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 1884,
+          "files": [
+            "Novel/Dodging Martial Bros/Strike/Chapter - T1 Snow cracks.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-23T09:54:17.763Z",
+          "endedAt": "2026-10-23T09:54:17.763Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 7367,
+          "files": [
+            "Novel/Same Starter Village/Cultivator Herbs Darling/Chapter - T7 Mist.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-23T11:09:06.987Z",
+          "endedAt": "2026-10-23T11:09:06.987Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 61,
+          "files": [
+            "World Building/Char - Bai Yong.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-23T12:51:42.133Z",
+          "endedAt": "2026-10-23T12:53:15.104Z",
+          "durationMinutes": 1.55,
+          "fileCount": 2,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 186,
+          "files": [
+            "World Building/World Place - Gingko Tree Village.md",
+            "World Building/Char - Da ya.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-23T13:57:11.950Z",
+          "endedAt": "2026-10-23T13:57:11.950Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 6688,
+          "files": [
+            "Novel/Same Starter Village/Ennui/Chapter - T1 Life I already explored.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-23T14:51:45.688Z",
+          "endedAt": "2026-10-23T15:05:27.997Z",
+          "durationMinutes": 13.71,
+          "fileCount": 3,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 198,
+          "files": [
+            "World Building/Char - Si Minping.md",
+            "World Building/Char - Aunty Ju.md",
+            "World Building/Char - Lu Zhenfang.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-23T16:35:14.008Z",
+          "endedAt": "2026-10-23T16:35:14.008Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 5186,
+          "files": [
+            "Novel/Same Starter Village/Ennui/Chapter - T2 I am a son of our clan.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-23T19:48:35.364Z",
+          "endedAt": "2026-10-23T20:03:11.672Z",
+          "durationMinutes": 14.61,
+          "fileCount": 5,
+          "chapterFiles": 4,
+          "estimatedWordsTouched": 8799,
+          "files": [
+            "Novel/Same Starter Village/What is gone/Chapter - T2 My lost love.md",
+            "Novel/Same Starter Village/What is gone/Chapter - T1 Like water.md",
+            "10 Templates/11 File Template/Chapter Template.md",
+            "10 Templates/11 File Template/Current Folder Chapter Template.md",
+            "10 Templates/11 File Template/Chapter Template (Auto Trigger).md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-24T03:24:15.745Z",
+          "endedAt": "2026-10-24T03:24:15.745Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 356,
+          "files": [
+            "Novel/Same Starter Village/Ennui/Chapter - T3 Raising my people.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-24T06:18:47.265Z",
+          "endedAt": "2026-10-24T06:18:47.265Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 4748,
+          "files": [
+            "Novel/Same Starter Village/Disoriented desires/Chapter - T2 Family doing well.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-24T08:33:12.144Z",
+          "endedAt": "2026-10-24T08:33:12.144Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 2650,
+          "files": [
+            "Novel/Same Starter Village/Disoriented desires/Chapter - T3 Winter Dreams.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-24T09:04:16.051Z",
+          "endedAt": "2026-10-24T09:04:16.051Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 8764,
+          "files": [
+            "Novel/Same Starter Village/Disoriented desires/Chapter - T1 we be strange things.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-24T15:04:19.357Z",
+          "endedAt": "2026-10-24T15:04:19.357Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 84,
+          "files": [
+            "World Building/Char - Kang Yulu.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-24T18:02:11.389Z",
+          "endedAt": "2026-10-24T18:02:11.389Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 7859,
+          "files": [
+            "Novel/Same Starter Village/Disoriented desires/Chapter - T5 My self-upgrading arrays.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-24T20:14:05.489Z",
+          "endedAt": "2026-10-24T20:14:05.489Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 3145,
+          "files": [
+            "Novel/Same Starter Village/Disoriented desires/Chapter - T6 My people I must raise.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-25T03:21:06.866Z",
+          "endedAt": "2026-10-25T03:21:06.866Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 124,
+          "files": [
+            "Novel/Same Starter Village/Avoidance Tactics/About - Avoidance Tactics.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-25T10:18:41.653Z",
+          "endedAt": "2026-10-25T10:44:54.587Z",
+          "durationMinutes": 26.22,
+          "fileCount": 3,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 12662,
+          "files": [
+            "Novel/Ideas/Misc Random Ideas.md",
+            "World Building/Char - Shi Ying.md",
+            "World Building/Char - Aunty Dui.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-25T13:02:54.038Z",
+          "endedAt": "2026-10-25T13:25:45.432Z",
+          "durationMinutes": 22.86,
+          "fileCount": 2,
+          "chapterFiles": 2,
+          "estimatedWordsTouched": 13261,
+          "files": [
+            "Novel/Same Starter Village/Avoidance Tactics/Chapter - T1 Rather be disowned.md",
+            "Novel/Same Starter Village/Avoidance Tactics/Chapter - T2 Chosen families.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-25T14:09:59.743Z",
+          "endedAt": "2026-10-25T15:17:12.290Z",
+          "durationMinutes": 67.21,
+          "fileCount": 5,
+          "chapterFiles": 5,
+          "estimatedWordsTouched": 30553,
+          "files": [
+            "Novel/Same Starter Village/Disoriented desires/Chapter - T4 Finding a companion.md",
+            "Novel/Same Starter Village/Crawl away/Chapter - T1 no means to retaliate.md",
+            "Novel/Same Starter Village/Crawl away/Chapter - T2 blessed life responsibility.md",
+            "Novel/Same Starter Village/Crawl away/Chapter - T3 Live life first.md",
+            "Novel/Same Starter Village/Crawl away/Chapter - T4 Heart on a sleeve.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-25T18:00:16.602Z",
+          "endedAt": "2026-10-25T18:00:16.602Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 5298,
+          "files": [
+            "Novel/Same Starter Village/Operating on Other Level/Chapter - T1 Holder of fate.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-25T20:11:36.854Z",
+          "endedAt": "2026-10-25T20:34:21.372Z",
+          "durationMinutes": 22.74,
+          "fileCount": 3,
+          "chapterFiles": 3,
+          "estimatedWordsTouched": 23519,
+          "files": [
+            "Novel/Cheated Marriage/Transmigator/Speed Out/Chapter - T3 Infighting.md",
+            "Novel/Cheated Marriage/Transmigator/Alright End/Chapter - T3 Social circle.md",
+            "Novel/Cheated Marriage/Transmigator/Alright End/Chapter - T4 Reinvestigation.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-26T11:22:10.981Z",
+          "endedAt": "2026-10-26T11:22:10.981Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 7338,
+          "files": [
+            "Novel/Same Starter Village/Operating on Other Level/Chapter - T3 My sect talents.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-26T12:04:20.614Z",
+          "endedAt": "2026-10-26T12:08:37.572Z",
+          "durationMinutes": 4.28,
+          "fileCount": 2,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 292,
+          "files": [
+            "World Building/Char - Kang Haoyi.md",
+            "Novel/Same Starter Village/Operating on Other Level/About -  Operating on Other Level.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-26T12:48:08.494Z",
+          "endedAt": "2026-10-26T12:48:08.494Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 11625,
+          "files": [
+            "Novel/Same Starter Village/Operating on Other Level/Chapter - T2 The trends.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-26T13:19:26.922Z",
+          "endedAt": "2026-10-26T13:19:26.922Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 2112,
+          "files": [
+            "Novel/Same Starter Village/Operating on Other Level/Chapter - T4 I am a cultivator.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-26T16:35:45.053Z",
+          "endedAt": "2026-10-26T16:35:45.053Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 3125,
+          "files": [
+            "Novel/Same Starter Village/Flee n Hide/Chapter - T1 Decisive goodbye.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-26T19:58:32.668Z",
+          "endedAt": "2026-10-26T20:47:14.322Z",
+          "durationMinutes": 48.69,
+          "fileCount": 4,
+          "chapterFiles": 4,
+          "estimatedWordsTouched": 39607,
+          "files": [
+            "Novel/Cheated Marriage/Transmigator/Alright End/Chapter - T5 We are together.md",
+            "Novel/Cheated Marriage/Transmigator/Alright End/Chapter - T6 Next stage of life.md",
+            "Novel/Cheated Marriage/Transmigator/Alright End/Chapter - T7 The way I deal with stress.md",
+            "Novel/Cheated Marriage/Transmigator/Alright End/Chapter - T1 at least a house.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-27T05:34:05.509Z",
+          "endedAt": "2026-10-27T05:34:17.255Z",
+          "durationMinutes": 0.2,
+          "fileCount": 2,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 1604,
+          "files": [
+            "World Building/Char - Granny Zhu.md",
+            "World Building/World - Same Starter Village.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-27T07:06:44.479Z",
+          "endedAt": "2026-10-27T07:06:44.479Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 8093,
+          "files": [
+            "Novel/Same Starter Village/Marry me/Chapter - T1 Bold proposal.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-27T08:55:20.606Z",
+          "endedAt": "2026-10-27T08:55:20.606Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 2609,
+          "files": [
+            "Novel/Same Starter Village/Marry me/Chapter - T2 Wat Chu Doin.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-27T11:15:02.602Z",
+          "endedAt": "2026-10-27T11:31:38.718Z",
+          "durationMinutes": 16.6,
+          "fileCount": 2,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 3897,
+          "files": [
+            "Novel/Same Starter Village/Marry me/Chapter - T3 My complex web.md",
+            "Novel/About - TODO.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-27T14:31:59.216Z",
+          "endedAt": "2026-10-27T14:31:59.216Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 3712,
+          "files": [
+            "Novel/Same Starter Village/Simply Celeste/Chapter - T1 Distant as the stars above.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-27T19:35:20.247Z",
+          "endedAt": "2026-10-27T19:35:20.247Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 6813,
+          "files": [
+            "Novel/Cheated Marriage/Transmigator/Alright End/Chapter - T2 Capita.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-28T03:22:29.529Z",
+          "endedAt": "2026-10-28T03:22:29.529Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 6360,
+          "files": [
+            "Novel/Same Starter Village/Simply Celeste/Chapter - T2 My youth is eternal.md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-28T04:43:15.378Z",
+          "endedAt": "2026-10-28T04:43:15.378Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 0,
+          "estimatedWordsTouched": 531,
+          "files": [
+            "10 Templates/11 File Template/New Novel Template (Folder n About n First Chapter).md"
+          ],
+          "filesTruncated": false
+        },
+        {
+          "startedAt": "2026-10-28T08:10:51.497Z",
+          "endedAt": "2026-10-28T08:10:51.497Z",
+          "durationMinutes": 0,
+          "fileCount": 1,
+          "chapterFiles": 1,
+          "estimatedWordsTouched": 4639,
+          "files": [
+            "Novel/Same Starter Village/Simply Celeste/Chapter - T3 A removed celestial.md"
+          ],
+          "filesTruncated": false
+        }
+      ]
+    },
+    "longestSessions": [
+      {
+        "startedAt": "2026-10-10T15:12:43.914Z",
+        "durationMinutes": 333.47,
+        "fileCount": 35,
+        "estimatedWordsTouched": 159871
+      },
+      {
+        "startedAt": "2026-10-09T17:42:56.589Z",
+        "durationMinutes": 276.08,
+        "fileCount": 20,
+        "estimatedWordsTouched": 101610
+      },
+      {
+        "startedAt": "2026-09-30T09:15:58.571Z",
+        "durationMinutes": 151.8,
+        "fileCount": 16,
+        "estimatedWordsTouched": 59461
+      },
+      {
+        "startedAt": "2026-10-07T07:23:16.010Z",
+        "durationMinutes": 145.18,
+        "fileCount": 17,
+        "estimatedWordsTouched": 76961
+      },
+      {
+        "startedAt": "2026-10-05T18:57:14.185Z",
+        "durationMinutes": 141.54,
+        "fileCount": 13,
+        "estimatedWordsTouched": 66314
+      }
+    ]
+  },
+  "chapters": {
+    "definition": "basename matches /^chap(ter)?[\\s\\-–—_·:]|^chap(ter)?$/i (e.g. \"Chapter - T2 ...\")",
+    "all": {
+      "files": 5588,
+      "words": {
+        "count": 5588,
+        "min": 0,
+        "median": 3416.5,
+        "p90": 9500,
+        "max": 42975,
+        "mean": 4495.62,
+        "total": 25121517
+      },
+      "links": {
+        "count": 5588,
+        "min": 0,
+        "median": 68,
+        "p90": 232,
+        "max": 1028,
+        "mean": 97.69,
+        "total": 545872
+      },
+      "uniqueLinks": {
+        "count": 5588,
+        "min": 0,
+        "median": 11,
+        "p90": 29,
+        "max": 105,
+        "mean": 14.11,
+        "total": 78840
+      }
+    },
+    "activeInWindow": {
+      "files": 425,
+      "words": {
+        "count": 425,
+        "min": 2,
+        "median": 4469,
+        "p90": 9740,
+        "max": 38461,
+        "mean": 5190.25,
+        "total": 2205858
+      },
+      "links": {
+        "count": 425,
+        "min": 0,
+        "median": 110,
+        "p90": 260,
+        "max": 499,
+        "mean": 128.48,
+        "total": 54603
+      },
+      "uniqueLinks": {
+        "count": 425,
+        "min": 0,
+        "median": 14,
+        "p90": 26,
+        "max": 54,
+        "mean": 14.97,
+        "total": 6362
+      }
+    }
+  },
+  "linkTargetPrefixes": {
+    "note": "link-side counts are occurrences/distinct targets across all links; note-side counts are vault notes whose basename starts with the prefix",
+    "caseInsensitive": true,
+    "prefixes": [
+      {
+        "prefix": "c",
+        "linkOccurrences": 543038,
+        "distinctLinkTargets": 9983,
+        "shareOfLinkOccurrences": 0.9149,
+        "noteBasenamesStartingWith": 10628,
+        "noteBasenamesWithPrefixSeparator": 0
+      },
+      {
+        "prefix": "ch",
+        "linkOccurrences": 542954,
+        "distinctLinkTargets": 9907,
+        "shareOfLinkOccurrences": 0.9147,
+        "noteBasenamesStartingWith": 10504,
+        "noteBasenamesWithPrefixSeparator": 0
+      },
+      {
+        "prefix": "cha",
+        "linkOccurrences": 542951,
+        "distinctLinkTargets": 9904,
+        "shareOfLinkOccurrences": 0.9147,
+        "noteBasenamesStartingWith": 10499,
+        "noteBasenamesWithPrefixSeparator": 1
+      },
+      {
+        "prefix": "char",
+        "linkOccurrences": 535421,
+        "distinctLinkTargets": 5160,
+        "shareOfLinkOccurrences": 0.902,
+        "noteBasenamesStartingWith": 4897,
+        "noteBasenamesWithPrefixSeparator": 4892
+      },
+      {
+        "prefix": "chap",
+        "linkOccurrences": 7528,
+        "distinctLinkTargets": 4742,
+        "shareOfLinkOccurrences": 0.0127,
+        "noteBasenamesStartingWith": 5600,
+        "noteBasenamesWithPrefixSeparator": 16
+      },
+      {
+        "prefix": "chapter",
+        "linkOccurrences": 7500,
+        "distinctLinkTargets": 4717,
+        "shareOfLinkOccurrences": 0.0126,
+        "noteBasenamesStartingWith": 5583,
+        "noteBasenamesWithPrefixSeparator": 5572
+      },
+      {
+        "prefix": "world",
+        "linkOccurrences": 36222,
+        "distinctLinkTargets": 1077,
+        "shareOfLinkOccurrences": 0.061,
+        "noteBasenamesStartingWith": 1067,
+        "noteBasenamesWithPrefixSeparator": 1065
+      }
+    ],
+    "noteBasenamesTotal": 14055
+  },
+  "topLinkTargets": [
+    {
+      "target": "Char - Ashwann Glaxin",
+      "count": 20385,
+      "shareOfAllLinkOccurrences": 0.03434
+    },
+    {
+      "target": "Char - Li Huanxin",
+      "count": 13256,
+      "shareOfAllLinkOccurrences": 0.02233
+    },
+    {
+      "target": "Char - Sirin Orion Black",
+      "count": 9953,
+      "shareOfAllLinkOccurrences": 0.01677
+    },
+    {
+      "target": "Char - James Potter",
+      "count": 9763,
+      "shareOfAllLinkOccurrences": 0.01645
+    },
+    {
+      "target": "Char - Yang Huaixian",
+      "count": 8159,
+      "shareOfAllLinkOccurrences": 0.01375
+    },
+    {
+      "target": "Char - Daemon Targaryen",
+      "count": 8131,
+      "shareOfAllLinkOccurrences": 0.0137
+    },
+    {
+      "target": "Char - Harles",
+      "count": 7987,
+      "shareOfAllLinkOccurrences": 0.01346
+    },
+    {
+      "target": "Char - Li Xianglang",
+      "count": 6839,
+      "shareOfAllLinkOccurrences": 0.01152
+    },
+    {
+      "target": "Char - Xi An",
+      "count": 6583,
+      "shareOfAllLinkOccurrences": 0.01109
+    },
+    {
+      "target": "Char - Yang Guangzhi",
+      "count": 6459,
+      "shareOfAllLinkOccurrences": 0.01088
+    },
+    {
+      "target": "Char - Si Lian",
+      "count": 5362,
+      "shareOfAllLinkOccurrences": 0.00903
+    },
+    {
+      "target": "World Series - Groups",
+      "count": 5207,
+      "shareOfAllLinkOccurrences": 0.00877
+    },
+    {
+      "target": "Char - Regulus Black",
+      "count": 5129,
+      "shareOfAllLinkOccurrences": 0.00864
+    },
+    {
+      "target": "Char - Tu En",
+      "count": 5060,
+      "shareOfAllLinkOccurrences": 0.00852
+    },
+    {
+      "target": "Char - Annabella Wisteria",
+      "count": 4864,
+      "shareOfAllLinkOccurrences": 0.00819
+    },
+    {
+      "target": "Char - Inoue Yuki",
+      "count": 4711,
+      "shareOfAllLinkOccurrences": 0.00794
+    },
+    {
+      "target": "Char - Tao Shiyun",
+      "count": 4293,
+      "shareOfAllLinkOccurrences": 0.00723
+    },
+    {
+      "target": "Char - Namikaze Minato",
+      "count": 4134,
+      "shareOfAllLinkOccurrences": 0.00696
+    },
+    {
+      "target": "Char - Hatake Kakashi",
+      "count": 3981,
+      "shareOfAllLinkOccurrences": 0.00671
+    },
+    {
+      "target": "Char - Yang Huaijun",
+      "count": 3682,
+      "shareOfAllLinkOccurrences": 0.0062
+    }
+  ],
+  "candidateSetModel": {
+    "note": "Approximation of IndexedWords.internalLink bucket sizes for the internal-link provider (basenames + frontmatter aliases, synonym forms excluded). Real bucket also depends on path/tag/frontmatter exclusion settings and on alias-vs-basename mode.",
+    "distinctIndexedValues": 25442,
+    "steps": [
+      {
+        "query": "c",
+        "firstLetterBucket": 11177,
+        "valuesMatchingPrefix": 11177,
+        "judgedPerKeystroke": 11177,
+        "judgedToMatchedRatio": 1
+      },
+      {
+        "query": "ch",
+        "firstLetterBucket": 11177,
+        "valuesMatchingPrefix": 10721,
+        "judgedPerKeystroke": 11177,
+        "judgedToMatchedRatio": 1.04
+      },
+      {
+        "query": "cha",
+        "firstLetterBucket": 11177,
+        "valuesMatchingPrefix": 10520,
+        "judgedPerKeystroke": 11177,
+        "judgedToMatchedRatio": 1.06
+      },
+      {
+        "query": "char",
+        "firstLetterBucket": 11177,
+        "valuesMatchingPrefix": 4936,
+        "judgedPerKeystroke": 11177,
+        "judgedToMatchedRatio": 2.26
+      },
+      {
+        "query": "chap",
+        "firstLetterBucket": 11177,
+        "valuesMatchingPrefix": 5530,
+        "judgedPerKeystroke": 11177,
+        "judgedToMatchedRatio": 2.02
+      },
+      {
+        "query": "chapter",
+        "firstLetterBucket": 11177,
+        "valuesMatchingPrefix": 5514,
+        "judgedPerKeystroke": 11177,
+        "judgedToMatchedRatio": 2.03
+      },
+      {
+        "query": "world",
+        "firstLetterBucket": 1288,
+        "valuesMatchingPrefix": 1022,
+        "judgedPerKeystroke": 1288,
+        "judgedToMatchedRatio": 1.26
+      }
+    ]
+  },
+  "aliases": {
+    "filesWithFrontmatter": 12169,
+    "filesWithAliases": 7470,
+    "percentFilesWithAliases": 51.76,
+    "totalAliasEntries": 11640,
+    "uniqueAliases": 11379,
+    "medianAliasesPerFileWithAliases": 1,
+    "p90AliasesPerFileWithAliases": 2,
+    "maxAliasesInOneFile": 25,
+    "maxAliasesFilePath": "World Building/Char - Charlie Tate.md",
+    "histogram": {
+      "0": 6963,
+      "1": 3981,
+      "2": 2974,
+      "3-5": 506,
+      "6-10": 8,
+      "11+": 1
+    },
+    "aliasEqualsAnotherNoteBasename": 7,
+    "aliasCollisionSamples": [
+      {
+        "alias": "Ai",
+        "inFile": "World Building/Char - Ai.md"
+      },
+      {
+        "alias": "Jiang YanLi",
+        "inFile": "World Building/Char - Jiang YanLi.md"
+      },
+      {
+        "alias": "Yoshino",
+        "inFile": "World Building/Char - Kinokawa Yoshino.md"
+      },
+      {
+        "alias": "Naruto",
+        "inFile": "World Building/Char - Uzumaki Naruto.md"
+      },
+      {
+        "alias": "Game of Thrones",
+        "inFile": "World Building/World - Game of Thrones.md"
+      },
+      {
+        "alias": "Jupiter Ascending",
+        "inFile": "World Building/World - Jupiter Ascending.md"
+      },
+      {
+        "alias": "Other Realm",
+        "inFile": "World Building/World - Other Realm (Sectors).md"
+      }
+    ]
+  },
+  "plugins": {
+    "configPath": "/Users/caffae/Notes/Novel-Writing/.obsidian/community-plugins.json",
+    "found": true,
+    "enabledCount": 24,
+    "enabled": [
+      "metadata-extractor",
+      "hot-reload",
+      "theme-picker",
+      "obsidian-scroll-to-top-plugin",
+      "workspaces-plus",
+      "mysnippets-plugin",
+      "lazy-plugins",
+      "obsidian42-brat",
+      "templater-obsidian",
+      "obsidian-copy-block-link",
+      "obsidian-excalidraw-plugin",
+      "hotkey-helper",
+      "obsidian-better-command-palette",
+      "file-tree-alternative",
+      "obsidian-footnotes",
+      "obsidian-hider",
+      "modalforms",
+      "obsidian-relation-pane",
+      "sticky-headings-no-flicker",
+      "quick-plugin-switcher",
+      "quickadd",
+      "typewriter-mode",
+      "darlal-switcher-plus",
+      "obsidian-icon-folder"
+    ],
+    "typingRisk": [
+      {
+        "id": "metadata-extractor",
+        "level": "medium",
+        "label": "Vault-wide metadata index",
+        "note": "Maintains its own vault-wide index; duplicate O(vault) work alongside Obsidian's metadataCache, mainly at startup/save."
+      },
+      {
+        "id": "hot-reload",
+        "level": "low",
+        "label": "Dev reload",
+        "note": "Dev-only."
+      },
+      {
+        "id": "theme-picker",
+        "level": "low",
+        "label": "Theme switching",
+        "note": "Theme swap only."
+      },
+      {
+        "id": "obsidian-scroll-to-top-plugin",
+        "level": "low",
+        "label": "Scroll button",
+        "note": "Scroll events only."
+      },
+      {
+        "id": "workspaces-plus",
+        "level": "low",
+        "label": "Workspace layout switching",
+        "note": "Active on layout changes only."
+      },
+      {
+        "id": "mysnippets-plugin",
+        "level": "low",
+        "label": "CSS snippet reload",
+        "note": "Style recomputation on snippet change, not per keystroke."
+      },
+      {
+        "id": "lazy-plugins",
+        "level": "low",
+        "label": "Defers plugin load",
+        "note": "Can *help* startup: delays loading heavy plugins until first use."
+      },
+      {
+        "id": "obsidian42-brat",
+        "level": "low",
+        "label": "Beta plugin loader",
+        "note": "Startup/version-check only."
+      },
+      {
+        "id": "templater-obsidian",
+        "level": "medium",
+        "label": "File-open / create hooks",
+        "note": "Template parsing on file creation and hotkey-triggered; usually off the keystroke path, but heavy templates slow note open."
+      },
+      {
+        "id": "obsidian-copy-block-link",
+        "level": "low",
+        "label": "Command handler",
+        "note": "Command-only."
+      },
+      {
+        "id": "obsidian-excalidraw-plugin",
+        "level": "low",
+        "label": "Canvas/embed rendering",
+        "note": "Heavy when an Excalidraw canvas is open; idle in a prose note."
+      },
+      {
+        "id": "hotkey-helper",
+        "level": "low",
+        "label": "Hotkey conflict UI",
+        "note": "Settings modal only."
+      },
+      {
+        "id": "obsidian-better-command-palette",
+        "level": "low",
+        "label": "Command palette overlay",
+        "note": "Invoked explicitly."
+      },
+      {
+        "id": "file-tree-alternative",
+        "level": "medium",
+        "label": "Full file-tree re-render on vault events",
+        "note": "Re-renders a large tree on create/rename/delete; matters on 10k+ note vaults, not per keystroke."
+      },
+      {
+        "id": "obsidian-footnotes",
+        "level": "low",
+        "label": "Footnote autocomplete",
+        "note": "Registered suggestion provider; competes with other EditorSuggests but cheap."
+      },
+      {
+        "id": "obsidian-hider",
+        "level": "low",
+        "label": "CSS-only UI hiding",
+        "note": "Style-level; negligible."
+      },
+      {
+        "id": "modalforms",
+        "level": "low",
+        "label": "Form modal rendering",
+        "note": "Modal-only."
+      },
+      {
+        "id": "obsidian-relation-pane",
+        "level": "low",
+        "label": "Related-notes pane",
+        "note": "Queries link graph when the pane is open; can be O(vault) if it re-scans."
+      },
+      {
+        "id": "sticky-headings-no-flicker",
+        "level": "high",
+        "label": "Per-keystroke CM6 decorations",
+        "note": "Heading stickiness recomputes viewport decorations on scroll/typing; can multiply editor layout work in long chapters."
+      },
+      {
+        "id": "quick-plugin-switcher",
+        "level": "low",
+        "label": "Plugin toggle shortcuts",
+        "note": "Command-only."
+      },
+      {
+        "id": "quickadd",
+        "level": "medium",
+        "label": "Command palette + capture overlays",
+        "note": "Suggestion overlays and macro execution; mostly idle while typing prose, but macro captures can run on save."
+      },
+      {
+        "id": "typewriter-mode",
+        "level": "high",
+        "label": "Per-keystroke editor decoration",
+        "note": "Typewriter Mode runs cursor-centering and dimming on every keystroke/selection change; it competes for the same frame budget as EditorSuggest."
+      },
+      {
+        "id": "darlal-switcher-plus",
+        "level": "low",
+        "label": "Quick switcher fork",
+        "note": "Indexes on demand when invoked; can re-scan on open."
+      },
+      {
+        "id": "obsidian-icon-folder",
+        "level": "low",
+        "label": "Per-node icon lookups",
+        "note": "Cheap per-node, but multiplies file-explorer render cost on big trees."
+      }
+    ],
+    "riskLegend": {
+      "subject": "the plugin being audited",
+      "high": "plausible per-keystroke or per-frame competitor",
+      "medium": "vault-wide or event-driven work that can stall saves/file-open",
+      "low": "unlikely to affect typing latency",
+      "unclassified": "no label recorded; inspect manually"
+    }
+  },
+  "limitations": [
+    "No live keystroke instrumentation: this script never runs inside Obsidian and cannot measure in-app suggest latency.",
+    "mtime is the last *save* time (Obsidian autosave ~2s), not the time words were typed. Per-day counts and session bursts describe save activity, not actual typing duration.",
+    "A burst's estimatedWordsTouched is the sum of the whole files' word counts at scan time — editing one line of a 3,000-word chapter counts as 3,000 words touched.",
+    "A file saved twice in the window appears once (only the final mtime survives), so bursts may undercount re-edits.",
+    "Word counts are whitespace-delimited tokens over the body (frontmatter stripped). CJK text without spaces undercounts; totalCjkChars is reported separately.",
+    "Link resolution is not performed: without Obsidian's metadataCache we cannot tell resolved targets from unresolved (phantom) links. Both are counted.",
+    "Aliases are parsed with a YAML subset parser (inline lists, comma lists, block lists). Exotic YAML (anchors, multiline scalars) is not supported.",
+    "Files are read from disk, not from Obsidian's index, so ignore-filters (excluded folders, .trash, .smart-env) are NOT applied beyond .obsidian/.git/node_modules.",
+    "Scan results reflect disk state at scan time; Obsidian may hold unsaved buffer changes."
+  ]
+}

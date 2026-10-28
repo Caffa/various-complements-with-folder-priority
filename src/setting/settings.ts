@@ -1712,16 +1712,14 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
     );
 
     // Folder priority settings
-    const folderPrioritySubheaderEl = containerEl.createEl("h4", {
-      text: "Folder-based prioritization",
-      cls: "various-complements__settings__subheader",
-    });
-    const folderPriorityDescEl = containerEl.createEl("div", {
-      text: "Prioritize internal links based on folder proximity. Links from files in the same story folder rank higher than links from other folders.",
-      cls: "various-complements__settings__description",
-    });
-    addConditionalElement(folderPrioritySubheaderEl, isEnabled);
-    addConditionalElement(folderPriorityDescEl, isEnabled);
+    addFilterableSetting(
+      "Folder-based prioritization",
+      "Prioritize internal links based on folder proximity. Links from files in the same story folder rank higher than links from other folders.",
+      (setting) => {
+        setting.setHeading();
+      },
+      { visible: isEnabled },
+    );
 
     addFilterableSetting(
       "Enable folder priority",

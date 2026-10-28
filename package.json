@@ -10,8 +10,12 @@
     "format": "prettier -l \"**/*.ts\"",
     "test": "jest --coverage",
     "test:watch": "jest --watch",
+    "benchmark": "node bench/run.mjs",
+    "benchmark:bundle": "node bench/run.mjs --bundle-only",
+    "benchmark:quick": "node bench/run.mjs --quick",
+    "benchmark:release": "node bench/run.mjs && node scripts/benchmark-release.mjs",
     "mobile:check": "node esbuild.config.mjs production --bundle --platform=browser",
-    "pre:push": "pnpm typecheck && pnpm format && pnpm test",
+    "pre:push": "pnpm typecheck && pnpm format && pnpm test && pnpm benchmark",
     "verify": "pnpm ci && pnpm build && pnpm pre:push && pnpm mobile:check"
   },
   "keywords": [],

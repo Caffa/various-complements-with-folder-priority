@@ -1020,21 +1020,17 @@ export class AutoCompleteSuggest
     });
 
     if (this.settings.folderPriority?.enabled) {
-      try {
-        const activePath = this.appHelper.getActiveFile()?.path ?? null;
-        const rankData = this.linkRankIndex.getRankData(
-          activePath,
-          this.settings.folderPriority.limitingFolder ?? "",
-        );
-        this.internalLinkWordProvider.annotateRankData(
-          activePath,
-          this.settings.folderPriority.limitingFolder ?? "",
-          rankData,
-          this.folderRankCache,
-        );
-      } catch {
-        // best-effort; run-time fallback still works
-      }
+      const activePath = this.appHelper.getActiveFile()?.path ?? null;
+      const rankData = this.linkRankIndex.getRankData(
+        activePath,
+        this.settings.folderPriority.limitingFolder ?? "",
+      );
+      this.internalLinkWordProvider.annotateRankData(
+        activePath,
+        this.settings.folderPriority.limitingFolder ?? "",
+        rankData,
+        this.folderRankCache,
+      );
     }
 
     this.statusBar.setInternalLinkIndexed(

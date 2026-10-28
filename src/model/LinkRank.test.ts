@@ -122,7 +122,7 @@ describe("computeLinkRank", () => {
     expect(result.fileTier).toBe(true);
   });
 
-  it("computes phantom folderProximity under the same gate as resolved words", () => {
+  it("omits phantom folderProximity when there is no cached entry", () => {
     const word = buildWord({
       value: "PhantomName",
       createdPath: "Novel/Ancient China/Chapter 1.md",
@@ -139,11 +139,7 @@ describe("computeLinkRank", () => {
       rankData,
     });
 
-    expect(result.folderProximity).toStrictEqual({
-      level: 0,
-      frequency: 3,
-      score: 3,
-    });
+    expect(result.folderProximity).toBeUndefined();
   });
 
   it("omits phantom folderProximity when limitingFolder is empty", () => {
@@ -188,11 +184,7 @@ describe("computeLinkRank", () => {
       rankData,
     });
 
-    expect(result.folderProximity).toStrictEqual({
-      level: 999,
-      frequency: 0,
-      score: 0,
-    });
+    expect(result.folderProximity).toBeUndefined();
   });
 
   it("omits folderProximity when limitingFolder is empty", () => {
@@ -229,7 +221,7 @@ describe("computeLinkRank", () => {
     expect(result.folderProximity).toBeUndefined();
   });
 
-  it("delegates to calculateFolderProximity with out-of-limit folders filtered", () => {
+  it("omits folderProximity when target has no cached entry", () => {
     const word = buildWord();
     const rankData = buildRankData({
       targetToSourceFolders: new Map([
@@ -248,11 +240,7 @@ describe("computeLinkRank", () => {
       rankData,
     });
 
-    expect(result.folderProximity).toStrictEqual({
-      level: 0,
-      frequency: 3,
-      score: 3,
-    });
+    expect(result.folderProximity).toBeUndefined();
   });
 
   it("does not call calculateFolderProximity when disabled", () => {
@@ -390,7 +378,7 @@ describe("computeLinkRank with folderRankCache", () => {
     });
   });
 
-  it("falls back to live scoring when cache misses the target", () => {
+  it("omits folderProximity when cache misses the target", () => {
     const word = buildWord({ createdPath: "Characters/John.md" });
     const cache: FolderRankCacheLike = {
       getList: jest
@@ -410,7 +398,7 @@ describe("computeLinkRank with folderRankCache", () => {
 
     expect(result).toStrictEqual({
       fileTier: false,
-      folderProximity: { level: 0, frequency: 3, score: 3 },
+      folderProximity: undefined,
       rank: undefined,
     });
   });
