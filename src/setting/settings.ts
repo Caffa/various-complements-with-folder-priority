@@ -1433,8 +1433,8 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
       },
     );
     addFilterableSetting(
-      "Ignore file names starting with (comma-separated, with divider)",
-      "Example: Char, Chapter",
+      "Ignore autocomplete for file names starting with these prefixes (comma-separated)",
+      "Only the file-name based completion is dropped; the note still links perfectly and any of its aliases still surface if matched. A prefix only counts when followed by a divider (space, dash, colon, …) — e.g. \"Char\" drops \"Char - Lin Fan\" but not \"Charm\". Example: Char, Chapter",
       (setting) => {
         setting.addText((cb) => {
           cb.setValue(
@@ -1447,6 +1447,7 @@ export class VariousComplementsSettingTab extends PluginSettingTab {
       },
       { visible: isEnabled },
     );
+
     addFilterableSetting(
       "Preserve first-letter case",
       "If the first letter case differs between the query and the displayed text, insert with an alias using the query's first-letter case.",
