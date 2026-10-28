@@ -635,6 +635,36 @@ describe("F3 structure epoch", () => {
     expect(scans).toBe(scansBefore);
   });
 
+  it("does not rescan ensureSummary when the rank index version bumps without a structure change", () => {
+    const files = leafFiles("Novel/A", 25);
+    const app = createApp(
+      files,
+      {
+        "Novel/A/Note 0.md": { "Novel/A/Johnny.md": 1 },
+        "Novel/A/Note 1.md": { "Novel/A/Johnny.md": 2 },
+      },
+      {},
+    );
+    let scans = 0;
+    const realGet = app.vault.getMarkdownFiles;
+    app.vault.getMarkdownFiles = () => {
+      scans++;
+      return realGet();
+    };
+    const index = new LinkRankIndex(app);
+    const cache = new FolderRankCache(app, index);
+    const first = index.getRankData("Novel/A/Chapter 1.md", "Novel");
+    cache.getList("Novel/A/Chapter 1.md", "Novel", first);
+    const scansBefore = scans;
+    // Link change in a *different* source file bumps the rank version, but
+    // folder qualification depends only on paths/structure.
+    index.markSourceStale("Novel/A/Note 1.md");
+    const second = index.getRankData("Novel/A/Chapter 1.md", "Novel");
+    cache.getList("Novel/A/Chapter 1.md", "Novel", second);
+    expect(second).not.toBe(first);
+    expect(scans).toBe(scansBefore);
+  });
+
   it("rescans ensureSummary when bumpStructure is called", () => {
     const files = leafFiles("Novel/A", 25);
     const app = createApp(files, {}, {});

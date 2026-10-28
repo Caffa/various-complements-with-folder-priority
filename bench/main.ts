@@ -5,6 +5,7 @@ import * as folderrankMod from "./scenarios/folderrank";
 import * as linkrankMod from "./scenarios/linkrank";
 import * as memoryMod from "./scenarios/memory";
 import * as refreshAfterChangeMod from "./scenarios/refresh-after-change";
+import * as refreshGateMod from "./scenarios/refresh-gate";
 import * as refreshMod from "./scenarios/refresh-internal-links";
 import * as sessionMod from "./scenarios/session-sim";
 import * as suggestMod from "./scenarios/suggest-keystroke";
@@ -73,6 +74,7 @@ async function main() {
   const allScenarios: Scenario[] = [];
   allScenarios.push(...refreshMod.scenarios(fixture));
   allScenarios.push(...refreshAfterChangeMod.scenarios(fixture));
+  allScenarios.push(...refreshGateMod.scenarios(fixture));
   allScenarios.push(...linkrankMod.scenarios(fixture));
   allScenarios.push(...folderrankMod.scenarios(fixture));
   allScenarios.push(...suggestMod.scenarios(fixture));

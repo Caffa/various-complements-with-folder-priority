@@ -37,11 +37,9 @@ type CachedList = FolderRankList & {
 
 type FolderQualification = {
   qualified: boolean;
-  version: number;
 };
 
 type VaultSummary = {
-  version: number;
   structureEpoch: number;
   direct: Map<string, number>;
   nonLeaf: Set<string>;
@@ -150,12 +148,8 @@ export class FolderRankCache implements FolderRankCacheLike {
   }
 
   private ensureSummary(): void {
-    const currentVersion = this.rankIndex.currentVersion;
     const structureEpoch = this.structureEpoch;
-    if (
-      this.summary?.version === currentVersion &&
-      this.summary?.structureEpoch === structureEpoch
-    ) {
+    if (this.summary?.structureEpoch === structureEpoch) {
       return;
     }
 
@@ -175,7 +169,6 @@ export class FolderRankCache implements FolderRankCacheLike {
     }
 
     this.summary = {
-      version: currentVersion,
       structureEpoch,
       direct,
       nonLeaf,
@@ -189,7 +182,7 @@ export class FolderRankCache implements FolderRankCacheLike {
       // The root folder ("") can be qualified here, but getList short-circuits
       // both an empty limitingFolder and folders outside the limitingFolder, so
       // mis-qualifying root as a leaf is harmless.
-      this.qualifications.set(folder, { qualified, version: currentVersion });
+      this.qualifications.set(folder, { qualified });
     }
   }
 

@@ -23,6 +23,13 @@ import { CurrentFileWordProvider } from "../provider/CurrentFileWordProvider";
 import { CurrentVaultWordProvider } from "../provider/CurrentVaultWordProvider";
 import { CustomDictionaryWordProvider } from "../provider/CustomDictionaryWordProvider";
 import { FrontMatterWordProvider } from "../provider/FrontMatterWordProvider";
+import { InternalLinkIndexGate } from "../provider/internal-link-index-gate";
+import {
+  collectFileWordsParts,
+  type CollectFileWordsPartsOption,
+  computeFileWordsSignature,
+  computeInternalLinkSettingsSignature,
+} from "../provider/internal-link-word-signature";
 import { InternalLinkWordProvider } from "../provider/InternalLinkWordProvider";
 import { MatchStrategy } from "../provider/MatchStrategy";
 import { SpecificMatchStrategy } from "../provider/SpecificMatchStrategy";
@@ -56,6 +63,10 @@ type SuggestionMemory = { word: string; words: Word[] };
 
 function buildLogMessage(message: string, msec: number) {
   return `${message}: ${Math.round(msec)}[ms]`;
+}
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 export type IndexedWords = {
@@ -105,7 +116,7 @@ export class AutoCompleteSuggest
   debounceClose: Debouncer<[], void>;
 
   private debouncedRefreshCurrentFileTokens: Debouncer<[], Promise<void>>;
-  private debouncedRefreshInternalLinkTokens: Debouncer<[], Promise<void>>;
+  internalLinkGate?: InternalLinkIndexGate;
 
   runManually: boolean;
   completionMode: "prefix" | "partial" | "new";
@@ -125,6 +136,7 @@ export class AutoCompleteSuggest
   modifyEventRef: EventRef;
   activeLeafChangeRef: EventRef;
   metadataCacheChangeRef: EventRef;
+  metadataCacheResolveRef: EventRef;
   renameEventRef: EventRef;
   deleteEventRef: EventRef;
   createEventRef: EventRef;
@@ -219,6 +231,10 @@ export class AutoCompleteSuggest
   ): Promise<AutoCompleteSuggest> {
     const ins = new AutoCompleteSuggest(app, statusBar);
 
+    // Assign settings before constructing the gate, whose constructor and
+    // closures dereference ins.settings (computeSettingsSignature et al.).
+    ins.settings = settings;
+
     ins.currentFileWordProvider = new CurrentFileWordProvider(
       ins.app,
       ins.appHelper,
@@ -242,6 +258,50 @@ export class AutoCompleteSuggest
 
     ins.linkRankIndex = new LinkRankIndex(app);
     ins.folderRankCache = new FolderRankCache(app, ins.linkRankIndex);
+    ins.settings = settings;
+    ins.internalLinkGate = new InternalLinkIndexGate(
+      {
+        computeFileSignature: (path) => {
+          const file =
+            ins.appHelper.getMarkdownFileByPath(path) ??
+            ({ path, basename: path.split("/").pop() ?? "" } as TFile);
+          return computeFileWordsSignature(
+            file,
+            collectFileWordsParts(
+              ins.app,
+              ins.appHelper,
+              file,
+              ins.internalLinkSignatureOption,
+            ),
+          );
+        },
+        computeSettingsSignature: () =>
+          computeInternalLinkSettingsSignature(ins.settings),
+        isIndexEnabled: () => ins.settings.enableInternalLinkComplement,
+        refreshFull: () => ins.refreshInternalLinkTokens(),
+        patchFiles: (paths) => {
+          ins.internalLinkWordProvider.patchFiles(paths);
+          // Default mode only: targeted fileTier restamp for the active file's
+          // resolved links (words-based, O(active file links)). Limited-folder
+          // mode relies on annotate pass scheduled elsewhere.
+          const limitingFolder =
+            ins.settings.folderPriority?.limitingFolder ?? "";
+          const folderPriorityEnabled =
+            ins.settings.folderPriority?.enabled ?? false;
+          if (!(folderPriorityEnabled && limitingFolder !== "")) {
+            ins.internalLinkWordProvider.restampFileTier(
+              ins.appHelper.getActiveFile()?.path ?? null,
+            );
+          }
+        },
+        isIgnoredBasename: (path) => {
+          const basename = path.split("/").pop() ?? "";
+          return ins.isIgnoredInternalLinkBasename(basename);
+        },
+        requestAnnotationRefresh: () => ins.requestAnnotationRefresh(),
+      },
+      { idleThresholdMs: 2000, maxWaitMs: 10000, pollIntervalMs: 2000 },
+    );
 
     await ins.updateSettings(settings);
     await ins.refreshIntelligentSuggestionPrioritization();
@@ -256,28 +316,32 @@ export class AutoCompleteSuggest
       }
     }, 300);
 
-    ins.debouncedRefreshInternalLinkTokens = debounce(async () => {
+    ins.modifyEventRef = app.vault.on("modify", (f) => {
       if (ins.unloaded) return;
-      ins.refreshInternalLinkTokens();
-    }, 2500);
-
-    ins.modifyEventRef = app.vault.on("modify", (_) => {
-      if (ins.unloaded) return;
-      ins.debouncedRefreshCurrentFileTokens();
+      if (f instanceof TFile && ins.appHelper.isActiveFile(f)) {
+        ins.debouncedRefreshCurrentFileTokens();
+      }
     });
     ins.renameEventRef = app.vault.on("rename", (file, oldPath) => {
       if (ins.unloaded) return;
       ins.linkRankIndex.onRename(oldPath, file.path);
       ins.folderRankCache.bumpStructure();
       ins.primeFolderSummaryIdle();
-      ins.debouncedRefreshInternalLinkTokens();
+      ins.internalLinkGate?.requestStructureRefresh({
+        kind: "rename",
+        path: file.path,
+        oldPath,
+      });
     });
     ins.deleteEventRef = app.vault.on("delete", (file) => {
       if (ins.unloaded) return;
       ins.linkRankIndex.onDelete(file.path);
       ins.folderRankCache.bumpStructure();
       ins.primeFolderSummaryIdle();
-      ins.debouncedRefreshInternalLinkTokens();
+      ins.internalLinkGate?.requestStructureRefresh({
+        kind: "delete",
+        path: file.path,
+      });
     });
     ins.createEventRef = app.vault.on("create", (f) => {
       if (ins.unloaded) return;
@@ -285,7 +349,10 @@ export class AutoCompleteSuggest
         ins.linkRankIndex.markSourceStale(f.path);
         ins.folderRankCache.bumpStructure();
         ins.primeFolderSummaryIdle();
-        ins.debouncedRefreshInternalLinkTokens();
+        ins.internalLinkGate?.requestStructureRefresh({
+          kind: "create",
+          path: f.path,
+        });
       }
     });
     ins.activeLeafChangeRef = app.workspace.on(
@@ -295,7 +362,15 @@ export class AutoCompleteSuggest
         ins.predictableCycleState = null;
         await ins.refreshCurrentFileTokens();
         if (ins.unloaded) return;
-        ins.refreshInternalLinkTokens();
+        const limitingFolder =
+          ins.settings.folderPriority?.limitingFolder ?? "";
+        if (limitingFolder === "") {
+          ins.internalLinkWordProvider.restampFileTier(
+            ins.appHelper.getActiveFile()?.path ?? null,
+          );
+        } else {
+          ins.internalLinkGate?.requestAnnotationRefresh();
+        }
         ins.updateFrontMatterToken();
       },
     );
@@ -307,7 +382,7 @@ export class AutoCompleteSuggest
       if (!ins.appHelper.isActiveFile(f)) {
         ins.updateFrontMatterToken();
       }
-      ins.debouncedRefreshInternalLinkTokens();
+      ins.internalLinkGate?.requestSignatureCheck(f.path);
     });
 
     // Avoid referring to incorrect cache
@@ -315,6 +390,9 @@ export class AutoCompleteSuggest
       if (ins.unloaded) return;
       ins.linkRankIndex.invalidate();
       ins.refreshInternalLinkTokens();
+      ins.internalLinkGate?.populateSignatures(
+        app.vault.getMarkdownFiles().map((f) => f.path),
+      );
       ins.refreshFrontMatterTokens();
       // noinspection ES6MissingAwait
       ins.refreshCustomDictionaryTokens();
@@ -322,6 +400,13 @@ export class AutoCompleteSuggest
       ins.refreshCurrentVaultTokens();
 
       ins.app.metadataCache.offref(cacheResolvedRef);
+    });
+
+    // Resolution can land after "changed" for the same file; re-check the
+    // signature once resolution is complete so phantoms are not left stale.
+    ins.metadataCacheResolveRef = app.metadataCache.on("resolve", (f) => {
+      if (ins.unloaded) return;
+      ins.internalLinkGate?.requestSignatureCheck(f.path);
     });
 
     ins.completionMode = ins.matchStrategy.name;
@@ -443,9 +528,12 @@ export class AutoCompleteSuggest
 
   unregister() {
     this.unloaded = true;
+    this.internalLinkGate?.stop();
+    this.internalLinkGate?.clearSignatures();
     this.app.vault.offref(this.modifyEventRef);
     this.app.workspace.offref(this.activeLeafChangeRef);
     this.app.metadataCache.offref(this.metadataCacheChangeRef);
+    this.app.metadataCache.offref(this.metadataCacheResolveRef);
     this.app.vault.offref(this.renameEventRef);
     this.app.vault.offref(this.deleteEventRef);
     this.app.vault.offref(this.createEventRef);
@@ -523,12 +611,140 @@ export class AutoCompleteSuggest
     };
   }
 
+  private get internalLinkSignatureOption(): CollectFileWordsPartsOption {
+    return {
+      excludePathPrefixPatterns: this.excludeInternalLinkPrefixPathPatterns,
+      excludePathGlobPatterns:
+        this.settings.excludeInternalLinkPathGlobPatterns,
+      frontMatterKeyForExclusion:
+        this.settings.frontMatterKeyForExclusionInternalLink,
+      tagsForExclusion: this.settings.tagsForExclusionInternalLink,
+    };
+  }
+
+  private isIgnoredInternalLinkBasename(basename: string): boolean {
+    const patterns = this.internalLinkIgnoreTriggerPrefixPatterns;
+    const lower = basename.toLowerCase();
+    return patterns.some((pattern) => pattern.test(lower));
+  }
+
+  private get internalLinkIgnoreTriggerPrefixPatterns(): RegExp[] {
+    return Array.from(
+      new Set(
+        this.settings.internalLinkIgnoreTriggerPrefixes
+          .split(",")
+          .map((prefix) => prefix.trim().toLowerCase())
+          .filter((prefix) => prefix.length > 0),
+      ),
+    ).map(
+      (prefix) =>
+        new RegExp(`^${escapeRegExp(prefix)}[\\s\\-\\u2014\\u2013:_·]+`),
+    );
+  }
+
+  requestAnnotationRefresh(): void {
+    if (
+      !this.settings.folderPriority?.enabled ||
+      (this.settings.folderPriority.limitingFolder ?? "") === ""
+    ) {
+      return;
+    }
+    const capturedActivePath = this.appHelper.getActiveFile()?.path ?? null;
+    const capturedLimitingFolder =
+      this.settings.folderPriority.limitingFolder ?? "";
+    this.scheduleFolderRankAnnotation(
+      capturedActivePath,
+      capturedLimitingFolder,
+    );
+  }
+
+  private scheduleFolderRankAnnotation(
+    capturedActivePath: string | null,
+    capturedLimitingFolder: string,
+  ): void {
+    const generation = ++this.folderAnnotationGeneration;
+
+    // Decouple folder prioritization from typing: defer heavy rank
+    // computation (LinkRankIndex scan + FolderRankCache build) to idle.
+    // Wave B: consume the annotate iterator in slices budgeted by the rIC
+    // deadline (or a 2000-word fallback when rIC is unavailable).
+    let iterator: Generator<void> | null = null;
+    let rankDataTried = false;
+
+    const runSlice = (deadline: any) => {
+      if (this.unloaded) return;
+      if (generation !== this.folderAnnotationGeneration) return;
+      if (!this.settings?.folderPriority?.enabled) return;
+      if ((this.settings.folderPriority?.limitingFolder ?? "") === "") return;
+
+      if (!iterator && !rankDataTried) {
+        rankDataTried = true;
+        try {
+          const rankData = this.linkRankIndex.getRankData(
+            capturedActivePath,
+            capturedLimitingFolder,
+          );
+          iterator = this.internalLinkWordProvider.createAnnotateIterator(
+            capturedActivePath,
+            capturedLimitingFolder,
+            rankData,
+            this.folderRankCache,
+          );
+        } catch {
+          iterator = null;
+          return;
+        }
+      }
+      if (!iterator) return;
+
+      const MAX_WORDS_PER_SLICE = 2000;
+      let processed = 0;
+      while (true) {
+        const res = iterator.next();
+        processed++;
+        if (res.done) {
+          iterator = null;
+          break;
+        }
+        const hasTime =
+          deadline && typeof deadline.timeRemaining === "function"
+            ? deadline.timeRemaining() > 2
+            : true;
+        const underBudget = processed < MAX_WORDS_PER_SLICE;
+        if (!hasTime || !underBudget) break;
+      }
+
+      if (
+        iterator &&
+        generation === this.folderAnnotationGeneration &&
+        !this.unloaded
+      ) {
+        const ric = (globalThis as { requestIdleCallback?: Function })
+          .requestIdleCallback;
+        if (typeof ric === "function") {
+          ric((d: any) => runSlice(d), { timeout: 4000 });
+        } else {
+          setTimeout(() => runSlice(undefined), 0);
+        }
+      }
+    };
+
+    const ric = (globalThis as { requestIdleCallback?: Function })
+      .requestIdleCallback;
+    if (typeof ric === "function") {
+      ric((d: any) => runSlice(d), { timeout: 4000 });
+    } else {
+      setTimeout(() => runSlice(undefined), 0);
+    }
+  }
+
   async updateSettings(settings: Settings) {
     this.settings = settings;
     this.recentSuggestionMemory = undefined;
     this.settingsEpoch++;
     this.linkRankIndex.invalidate();
     this.folderRankCache.invalidate();
+    this.internalLinkGate?.noteSettingsChanged();
 
     // Pre-compile regex patterns on settings change to avoid creating RegExp on every keystroke
     this.compiledSuppressPatterns = settings.patternsToSuppressTrigger
@@ -1067,47 +1283,20 @@ export class AutoCompleteSuggest
             .filter((prefix) => prefix.length > 0),
         ),
       ),
-      currentFilePath: this.appHelper.getActiveFile()?.path ?? undefined,
     });
 
+    // Annotate scheduling is delegated to the gate (patch/restructure paths
+    // only). The Tier-1 full rebuild keeps a cheap default-mode fileTier
+    // restamp for transient words without triggering an O(vault) annotate pass.
     if (
-      this.settings.folderPriority?.enabled &&
-      (this.settings.folderPriority.limitingFolder ?? "") !== ""
+      !(
+        this.settings.folderPriority?.enabled &&
+        (this.settings.folderPriority.limitingFolder ?? "") !== ""
+      )
     ) {
-      const capturedActivePath = this.appHelper.getActiveFile()?.path ?? null;
-      const capturedLimitingFolder =
-        this.settings.folderPriority.limitingFolder ?? "";
-      const generation = ++this.folderAnnotationGeneration;
-
-      // Decouple folder prioritization from typing: defer heavy rank
-      // computation (LinkRankIndex scan + FolderRankCache build) to idle.
-      const annotate = () => {
-        if (this.unloaded) return;
-        if (generation !== this.folderAnnotationGeneration) return;
-        if (!this.settings?.folderPriority?.enabled) return;
-        if ((this.settings.folderPriority?.limitingFolder ?? "") === "") return;
-        try {
-          const rankData = this.linkRankIndex.getRankData(
-            capturedActivePath,
-            capturedLimitingFolder,
-          );
-          this.internalLinkWordProvider.annotateRankData(
-            capturedActivePath,
-            capturedLimitingFolder,
-            rankData,
-            this.folderRankCache,
-          );
-        } catch {
-          // best-effort; stale ranks fall back to no-op sort contribution
-        }
-      };
-      const ric = (globalThis as { requestIdleCallback?: Function })
-        .requestIdleCallback;
-      if (typeof ric === "function") {
-        ric(annotate, { timeout: 4000 });
-      } else {
-        setTimeout(annotate, 0);
-      }
+      this.internalLinkWordProvider.restampFileTier(
+        this.appHelper.getActiveFile()?.path ?? null,
+      );
     }
 
     this.statusBar.setInternalLinkIndexed(
@@ -1210,6 +1399,8 @@ export class AutoCompleteSuggest
     cursor: EditorPosition,
     editor: Editor,
   ): EditorSuggestTriggerInfo | null {
+    this.internalLinkGate?.noteKeystroke();
+
     const start = performance.now();
 
     const showDebugLog = (message: string) => {
