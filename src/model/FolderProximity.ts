@@ -15,19 +15,18 @@ export interface FolderProximityScore {
 }
 
 /**
- * Calculate the folder level distance between current file and a link's source folders.
+ * Calculate the folder level distance between current folder and a link's source folders.
  *
  * @param linkSourceFolders - Folders where this link appears (folder -> count)
- * @param currentFilePath - Path of the file being edited
+ * @param currentFolder - Folder the current file lives in
  * @param limitingFolder - Root folder to stop at (e.g., "Novel")
  * @returns The best (lowest) proximity score across all source folders
  */
-export function calculateFolderProximity(
+export function calculateFolderProximityFromFolder(
   linkSourceFolders: Map<string, number>,
-  currentFilePath: string,
+  currentFolder: string,
   limitingFolder: string,
 ): FolderProximityScore {
-  const currentFolder = getParentFolder(currentFilePath);
   const normalizedLimitingFolder = normalizeFolderPath(limitingFolder);
 
   // If current file is outside limiting folder, return default
@@ -36,6 +35,7 @@ export function calculateFolderProximity(
   }
 
   let bestScore: FolderProximityScore = { level: 999, frequency: 0, score: 0 };
+  let bestFolder = "";
 
   for (const [folder, frequency] of linkSourceFolders) {
     // Skip if folder is outside limiting folder
@@ -50,12 +50,35 @@ export function calculateFolderProximity(
     );
     const score = frequency / (level + 1);
 
-    if (score > bestScore.score) {
+    if (
+      score > bestScore.score ||
+      (score === bestScore.score &&
+        score > 0 &&
+        (level < bestScore.level ||
+          (level === bestScore.level && folder < bestFolder)))
+    ) {
       bestScore = { level, frequency, score };
+      bestFolder = folder;
     }
   }
 
   return bestScore;
+}
+
+/**
+ * Convenience wrapper: derives the current folder from a file path and then
+ * delegates to {@link calculateFolderProximityFromFolder}.
+ */
+export function calculateFolderProximity(
+  linkSourceFolders: Map<string, number>,
+  currentFilePath: string,
+  limitingFolder: string,
+): FolderProximityScore {
+  return calculateFolderProximityFromFolder(
+    linkSourceFolders,
+    getParentFolder(currentFilePath),
+    limitingFolder,
+  );
 }
 
 /**
@@ -68,7 +91,7 @@ export function calculateFolderProximity(
  *
  * For siblings/cousins, level = sum of distances from common ancestor
  */
-function calculateFolderLevel(
+export function calculateFolderLevel(
   currentFolder: string,
   targetFolder: string,
   limitingFolder: string,
@@ -105,17 +128,17 @@ function calculateFolderLevel(
   return currentDepthFromCommon + targetDepthFromCommon;
 }
 
-function getParentFolder(filePath: string): string {
+export function getParentFolder(filePath: string): string {
   const parts = filePath.split("/");
   parts.pop();
   return parts.join("/");
 }
 
-function normalizeFolderPath(folder: string): string {
+export function normalizeFolderPath(folder: string): string {
   return folder.replace(/^[\/]+|[\/]+$/g, "");
 }
 
-function isWithinFolder(path: string, parentFolder: string): boolean {
+export function isWithinFolder(path: string, parentFolder: string): boolean {
   const normalizedPath = normalizeFolderPath(path);
   const normalizedParent = normalizeFolderPath(parentFolder);
   return (

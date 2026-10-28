@@ -44,11 +44,7 @@ describe("validateRegexPatterns", () => {
   });
 
   test("handles all valid patterns with special characters", () => {
-    const result = validateRegexPatterns([
-      "^\\d+$",
-      "\\s*\\w+",
-      "(?:abc|def)",
-    ]);
+    const result = validateRegexPatterns(["^\\d+$", "\\s*\\w+", "(?:abc|def)"]);
     expect(result.valid).toEqual(["^\\d+$", "\\s*\\w+", "(?:abc|def)"]);
     expect(result.errors).toEqual([]);
   });

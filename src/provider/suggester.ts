@@ -59,6 +59,34 @@ export function pushWord(
   wordsByFirstLetter[key].push(word);
 }
 
+function compareFolderRankStage(
+  aWord: Word,
+  bWord: Word,
+  linkRankOption: FolderPriorityOption,
+  linkRanks: Map<Word, LinkRank>,
+): number {
+  if (!linkRankOption.enabled) {
+    return 0;
+  }
+  if (aWord.type !== "internalLink" || bWord.type !== "internalLink") {
+    return 0;
+  }
+
+  const rank = (w: Word): number =>
+    getOrComputeLinkRank(w, linkRankOption, linkRanks)?.rank ??
+    Number.POSITIVE_INFINITY;
+  const aRank = rank(aWord);
+  const bRank = rank(bWord);
+  if (
+    aRank === Number.POSITIVE_INFINITY &&
+    bRank === Number.POSITIVE_INFINITY
+  ) {
+    return 0;
+  }
+  const d = aRank - bRank;
+  return d === 0 ? 0 : d > 0 ? 1 : -1;
+}
+
 // Public for tests
 export function judge(
   word: Word,
@@ -278,8 +306,24 @@ export function suggestWords(
     currentFilePath: folderPriority?.currentFilePath ?? null,
     limitingFolder: folderPriority?.limitingFolder ?? "",
     rankData: folderPriority?.rankData,
+    folderRankCache: folderPriority?.folderRankCache,
   };
   const linkRanks = new Map<Word, LinkRank>();
+  // F4: resolve the folder-rank list once per pass and store it on the option so
+  // computeLinkRank reads it directly instead of calling getList once per word.
+  if (
+    linkRankOption.enabled &&
+    linkRankOption.limitingFolder !== "" &&
+    linkRankOption.currentFilePath !== null &&
+    linkRankOption.folderRankCache &&
+    linkRankOption.rankData
+  ) {
+    linkRankOption.cachedList = linkRankOption.folderRankCache.getList(
+      linkRankOption.currentFilePath,
+      linkRankOption.limitingFolder,
+      linkRankOption.rankData,
+    );
+  }
   const compareLinkTier = (aWord: Word, bWord: Word): number => {
     if (!linkRankOption.enabled) {
       return 0;
@@ -369,6 +413,17 @@ export function suggestWords(
         if (ret !== 0) {
           return ret;
         }
+      }
+
+      // keep in sync with the other chain (folder-rank stage)
+      const folderRankResult = compareFolderRankStage(
+        aWord,
+        bWord,
+        linkRankOption,
+        linkRanks,
+      );
+      if (folderRankResult !== 0) {
+        return folderRankResult;
       }
 
       if ((a.value ?? "").length !== (b.value ?? "").length) {
@@ -623,8 +678,24 @@ export function suggestWordsByPartialMatch(
     currentFilePath: folderPriority?.currentFilePath ?? null,
     limitingFolder: folderPriority?.limitingFolder ?? "",
     rankData: folderPriority?.rankData,
+    folderRankCache: folderPriority?.folderRankCache,
   };
   const linkRanks = new Map<Word, LinkRank>();
+  // F4: resolve the folder-rank list once per pass and store it on the option so
+  // computeLinkRank reads it directly instead of calling getList once per word.
+  if (
+    linkRankOption.enabled &&
+    linkRankOption.limitingFolder !== "" &&
+    linkRankOption.currentFilePath !== null &&
+    linkRankOption.folderRankCache &&
+    linkRankOption.rankData
+  ) {
+    linkRankOption.cachedList = linkRankOption.folderRankCache.getList(
+      linkRankOption.currentFilePath,
+      linkRankOption.limitingFolder,
+      linkRankOption.rankData,
+    );
+  }
   const compareLinkTier = (aWord: Word, bWord: Word): number => {
     if (!linkRankOption.enabled) {
       return 0;
@@ -720,6 +791,17 @@ export function suggestWordsByPartialMatch(
       const bs = lowerStartsWith(b.value ?? "", query);
       if (as !== bs) {
         return bs ? 1 : -1;
+      }
+
+      // keep in sync with the other chain (folder-rank stage)
+      const folderRankResult = compareFolderRankStage(
+        aWord,
+        bWord,
+        linkRankOption,
+        linkRanks,
+      );
+      if (folderRankResult !== 0) {
+        return folderRankResult;
       }
 
       if ((a.value ?? "").length !== (b.value ?? "").length) {

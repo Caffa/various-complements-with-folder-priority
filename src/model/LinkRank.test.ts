@@ -1,5 +1,10 @@
-import { describe, expect, it } from "@jest/globals";
-import { computeLinkRank, type LinkRankData } from "./LinkRank";
+import { describe, expect, it, jest } from "@jest/globals";
+import {
+  computeLinkRank,
+  type FolderRankCacheLike,
+  type FolderRankList,
+  type LinkRankData,
+} from "./LinkRank";
 import type { InternalLinkWord } from "./Word";
 
 function buildRankData(overrides: Partial<LinkRankData> = {}): LinkRankData {
@@ -266,5 +271,183 @@ describe("computeLinkRank", () => {
     });
 
     expect(result.folderProximity).toBeUndefined();
+  });
+});
+
+describe("computeLinkRank with folderRankCache", () => {
+  function buildRankData(overrides: Partial<LinkRankData> = {}): LinkRankData {
+    return {
+      builtForFilePath: "Novel/Ancient China/Chapter 1.md",
+      builtForLimitingFolder: "Novel",
+      currentFileTargets: new Map(),
+      currentFileUnresolvedNames: new Map(),
+      targetToSourceFolders: new Map(),
+      unresolvedNameToSourceFolders: new Map(),
+      ...overrides,
+    };
+  }
+
+  function buildWord(
+    overrides: Partial<InternalLinkWord> = {},
+  ): InternalLinkWord {
+    return {
+      value: "John",
+      type: "internalLink",
+      createdPath: "Characters/John.md",
+      ...overrides,
+    };
+  }
+
+  const defaultOption = {
+    enabled: true,
+    currentFilePath: "Novel/Ancient China/Chapter 1.md",
+    limitingFolder: "Novel",
+  } as const;
+
+  function createStubList(
+    resolved: Map<
+      string,
+      { level: number; frequency: number; score: number; rank?: number }
+    >,
+    unresolved: Map<
+      string,
+      { level: number; frequency: number; score: number; rank?: number }
+    >,
+  ): FolderRankList {
+    return {
+      folder: "Novel/Ancient China",
+      builtForLimitingFolder: "Novel",
+      globalVersion: 1,
+      resolvedScores: new Map(
+        Array.from(resolved).map(([k, v]) => [k, { ...v }]),
+      ),
+      unresolvedScores: new Map(
+        Array.from(unresolved).map(([k, v]) => [k, { ...v }]),
+      ),
+    };
+  }
+
+  it("uses resolved cache entry and strips rank from folderProximity", () => {
+    const word = buildWord({ createdPath: "Characters/John.md" });
+    const cache: FolderRankCacheLike = {
+      getList: jest
+        .fn<FolderRankCacheLike["getList"]>()
+        .mockReturnValue(
+          createStubList(
+            new Map([
+              [
+                "Characters/John.md",
+                { level: 0, frequency: 3, score: 3, rank: 1 },
+              ],
+            ]),
+            new Map(),
+          ),
+        ),
+    };
+
+    const result = computeLinkRank(word, {
+      ...defaultOption,
+      rankData: buildRankData(),
+      folderRankCache: cache,
+    });
+
+    expect(result).toStrictEqual({
+      fileTier: false,
+      folderProximity: { level: 0, frequency: 3, score: 3 },
+      rank: 1,
+    });
+  });
+
+  it("uses phantom cache entry and strips rank from folderProximity", () => {
+    const word = buildWord({
+      value: "PhantomName",
+      createdPath: "Novel/Ancient China/Chapter 1.md",
+      phantom: true,
+    });
+    const cache: FolderRankCacheLike = {
+      getList: jest
+        .fn<FolderRankCacheLike["getList"]>()
+        .mockReturnValue(
+          createStubList(
+            new Map(),
+            new Map([
+              ["phantomname", { level: 0, frequency: 5, score: 5, rank: 2 }],
+            ]),
+          ),
+        ),
+    };
+
+    const result = computeLinkRank(word, {
+      ...defaultOption,
+      rankData: buildRankData(),
+      folderRankCache: cache,
+    });
+
+    expect(result).toStrictEqual({
+      fileTier: false,
+      folderProximity: { level: 0, frequency: 5, score: 5 },
+      rank: 2,
+    });
+  });
+
+  it("falls back to live scoring when cache misses the target", () => {
+    const word = buildWord({ createdPath: "Characters/John.md" });
+    const cache: FolderRankCacheLike = {
+      getList: jest
+        .fn<FolderRankCacheLike["getList"]>()
+        .mockReturnValue(createStubList(new Map(), new Map())),
+    };
+
+    const result = computeLinkRank(word, {
+      ...defaultOption,
+      rankData: buildRankData({
+        targetToSourceFolders: new Map([
+          ["Characters/John.md", new Map([["Novel/Ancient China", 3]])],
+        ]),
+      }),
+      folderRankCache: cache,
+    });
+
+    expect(result).toStrictEqual({
+      fileTier: false,
+      folderProximity: { level: 0, frequency: 3, score: 3 },
+      rank: undefined,
+    });
+  });
+
+  it("does not consult the cache when disabled", () => {
+    const word = buildWord();
+    const getList = jest.fn<FolderRankCacheLike["getList"]>();
+    const cache: FolderRankCacheLike = { getList };
+
+    const result = computeLinkRank(word, {
+      enabled: false,
+      currentFilePath: "Novel/Ancient China/Chapter 1.md",
+      limitingFolder: "Novel",
+      rankData: buildRankData({
+        targetToSourceFolders: new Map([
+          ["Characters/John.md", new Map([["Novel/Ancient China", 3]])],
+        ]),
+      }),
+      folderRankCache: cache,
+    });
+
+    expect(getList).not.toHaveBeenCalled();
+    expect(result.folderProximity).toBeUndefined();
+  });
+
+  it("does not consult the cache when rankData is missing", () => {
+    const word = buildWord();
+    const getList = jest.fn<FolderRankCacheLike["getList"]>();
+    const cache: FolderRankCacheLike = { getList };
+
+    const result = computeLinkRank(word, {
+      ...defaultOption,
+      rankData: undefined,
+      folderRankCache: cache,
+    });
+
+    expect(getList).not.toHaveBeenCalled();
+    expect(result).toStrictEqual({ fileTier: false });
   });
 });

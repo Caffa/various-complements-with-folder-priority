@@ -18,8 +18,17 @@ export class LinkRankIndex {
     currentFileUnresolvedNames: Map<string, number>;
     version: number;
   };
+  private versionEpoch = 0;
   private filePartDirty = false;
   private staleSources: Set<string> = new Set();
+  private staleSourceSnapshots = new Map<
+    string,
+    | {
+        resolved: ReadonlyMap<string, number>;
+        unresolved: ReadonlyMap<string, number>;
+      }
+    | undefined
+  >();
   private lastReturned?: {
     data: LinkRankData;
     globalVersion: number;
@@ -28,6 +37,10 @@ export class LinkRankIndex {
   };
   buildCalls = 0;
   lastBuildMs?: number;
+
+  get currentVersion(): number {
+    return this.global?.version ?? -1;
+  }
 
   constructor(private app: App) {}
 
@@ -85,6 +98,7 @@ export class LinkRankIndex {
     this.filePart = undefined;
     this.filePartDirty = false;
     this.staleSources.clear();
+    this.staleSourceSnapshots.clear();
     this.lastReturned = undefined;
   }
 
@@ -92,6 +106,7 @@ export class LinkRankIndex {
     if (!this.global) {
       return;
     }
+    this.snapshotSourceContributions(path);
     this.removeSourceContributions(path);
     this.staleSources.add(path);
     if (this.filePart?.builtForFilePath === path) {
@@ -103,8 +118,10 @@ export class LinkRankIndex {
     if (!this.global) {
       return;
     }
+    this.snapshotSourceContributions(oldPath);
     this.removeSourceContributions(oldPath);
     this.staleSources.add(newPath);
+    this.snapshotSourceContributions(newPath);
     if (this.filePart?.builtForFilePath === oldPath) {
       this.filePartDirty = true;
     }
@@ -114,10 +131,36 @@ export class LinkRankIndex {
     if (!this.global) {
       return;
     }
+    const hadContribution = this.global.sourceContributions.has(path);
     this.removeSourceContributions(path);
     if (this.filePart?.builtForFilePath === path) {
       this.filePartDirty = true;
     }
+    // A deleted file's contributions are removed once (no re-apply). Bump the
+    // global version only if it actually contributed, so caches stay valid when
+    // deleting a linkless note.
+    if (hadContribution) {
+      this.global.version = ++this.versionEpoch;
+      this.staleSources.clear();
+      this.staleSourceSnapshots.clear();
+      this.lastReturned = undefined;
+    }
+  }
+
+  private snapshotSourceContributions(path: string): void {
+    if (!this.global || this.staleSourceSnapshots.has(path)) {
+      return;
+    }
+    const current = this.global.sourceContributions.get(path);
+    this.staleSourceSnapshots.set(
+      path,
+      current
+        ? {
+            resolved: current.resolved,
+            unresolved: current.unresolved,
+          }
+        : undefined,
+    );
   }
 
   private rebuild(limitingFolder: string): void {
@@ -191,11 +234,12 @@ export class LinkRankIndex {
       targetToSourceFolders,
       unresolvedNameToSourceFolders,
       sourceContributions,
-      version: (this.global?.version ?? 0) + 1,
+      version: ++this.versionEpoch,
     };
     this.buildCalls++;
     this.lastBuildMs = performance.now() - start;
     this.staleSources.clear();
+    this.staleSourceSnapshots.clear();
     this.filePartDirty = true;
   }
 
@@ -205,6 +249,7 @@ export class LinkRankIndex {
     }
     if (limitingFolder === "") {
       this.staleSources.clear();
+      this.staleSourceSnapshots.clear();
       this.filePartDirty = true;
       return;
     }
@@ -290,7 +335,67 @@ export class LinkRankIndex {
 
     this.staleSources.clear();
     this.filePartDirty = true;
-    this.global.version++;
+
+    // Only bump the global version if at least one stale source actually
+    // changed the link data it contributes. If the live metadataCache matches
+    // the pre-removal snapshot for every stale source, folder caches keyed on
+    // this version can stay valid — this is the common case during prose typing
+    // (content changes, links do not).
+    // Renames that move a source in/out of the limiting folder, or create/delete
+    // a source, naturally count as changes because the stored contribution goes
+    // from present/non-empty to absent (or vice versa).
+    let changed = false;
+    for (const [path, snapshot] of this.staleSourceSnapshots) {
+      const current = this.global.sourceContributions.get(path);
+      if (!this.contributionsEqual(snapshot, current)) {
+        changed = true;
+        break;
+      }
+    }
+    this.staleSourceSnapshots.clear();
+
+    if (changed) {
+      this.global.version = ++this.versionEpoch;
+    }
+  }
+
+  private contributionsEqual(
+    a:
+      | {
+          resolved: ReadonlyMap<string, number>;
+          unresolved: ReadonlyMap<string, number>;
+        }
+      | undefined,
+    b:
+      | {
+          resolved: ReadonlyMap<string, number>;
+          unresolved: ReadonlyMap<string, number>;
+        }
+      | undefined,
+  ): boolean {
+    if (a === b) {
+      return true;
+    }
+    if (a === undefined || b === undefined) {
+      return false;
+    }
+    if (
+      a.resolved.size !== b.resolved.size ||
+      a.unresolved.size !== b.unresolved.size
+    ) {
+      return false;
+    }
+    for (const [key, count] of a.resolved) {
+      if (b.resolved.get(key) !== count) {
+        return false;
+      }
+    }
+    for (const [key, count] of a.unresolved) {
+      if (b.unresolved.get(key) !== count) {
+        return false;
+      }
+    }
+    return true;
   }
 
   private removeSourceContributions(path: string): void {

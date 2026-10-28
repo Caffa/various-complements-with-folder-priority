@@ -77,7 +77,8 @@ src/
 │   └── LinkRank.ts            # Per-suggestion rank computation
 ├── storage/
 │   ├── SelectionHistoryStorage.ts  # User selection history
-│   └── LinkRankIndex.ts            # Inverted link index + memo
+│   ├── LinkRankIndex.ts            # Inverted link index + memo
+│   └── FolderRankCache.ts          # Lazy per-leaf-folder rank cache
 ├── setting/
 │   └── settings.ts            # Plugin settings
 └── tokenizer/
@@ -229,15 +230,15 @@ The folder-priority implementation has been refactored from the original `LinkFr
 | **F stage 1** | landing now (parallel builder) | `LinkRankIndex` incremental updates, including unresolved (phantom) links; differential `markSourceStale` / `onRename` / `onDelete` with a 5000-target full-rebuild fallback. |
 | **C** | this pass | `folderPriority.enabled` default flipped to `true`. Existing vaults need a `data.json` patch; the deploy patch for the **Novel-Writing** vault sets `enabled: true` and `limitingFolder: "Novel"`. |
 
-### Per-folder precompute (stage 2) — NOT implemented
+### Per-folder precompute (stage 2) — implemented
 
-| Dimension | Estimate |
-|-----------|----------|
-| **What** | Precomputed ranked lists per *bottom-level* folder: leaf folders only, ≥20 files, ≤2000 files, ≤512 lists LRU, top-1000 entries each. |
-| **Estimated build cost** | Lazy: ~0.3–1 ms per folder on first visit. Eager all: ~50–300 ms one-time for a 12k-note vault. |
-| **Estimated runtime gain** | Sub-microsecond per candidate — the live pairwise scoring is already µs-cheap. |
-| **Memory** | ~20–30 MB worst case. |
-| **Recommendation** | Deferred. Stage-1 incremental updates already remove the O(E)-per-change rebuild cost, so the live path is fast enough. Awaiting explicit user greenlight before adding the extra memory/complexity. |
+| Dimension | Status |
+|-----------|--------|
+| **What** | Lazy per-leaf-folder ranked lists: leaf folders only, ≥20 files, ≤2000 files, ≤512 lists LRU, top-1000 ranks over top-2000 stored entries. |
+| **Build cost** | Lazy: first visit to a qualified leaf folder builds the list once (~0.3–1 ms typical). |
+| **Runtime gain** | Sub-microsecond per candidate; deterministic positional `rank` tie-break gives stable K ordering. |
+| **Memory** | Hard LRU ceiling ≈ 130 MB (512 lists × 500 resolved entries × ~510 B/entry measured end-to-end; ~166 MB at 512 lists × 500 unresolved also filled); realistic working set ≈ few MB per visited folder set. MAX_LIST_SIZE reduced from 2000 to 500 (F9). |
+| **Invalidation** | `LinkRankIndex` monotonic `versionEpoch` + limiting-folder switch + `updateSettings` invalidation keep cached lists fresh. `LinkRankIndex` version only bumps when a changed file's link data actually changes (delta-aware; unchanged links do not invalidate `FolderRankCache`). Folder structure changes (create/rename/delete) bump `FolderRankCache.structureEpoch`, re-scanning qualification only. |
 
 ---
 

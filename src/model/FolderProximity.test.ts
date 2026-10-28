@@ -1,6 +1,10 @@
 import { describe, expect, it } from "@jest/globals";
 import { calculateFolderProximity } from "./FolderProximity";
 
+function mapFrom(entries: [string, number][]): Map<string, number> {
+  return new Map(entries);
+}
+
 describe("calculateFolderProximity", () => {
   describe("same folder priority", () => {
     it("returns level 0 for same folder", () => {
@@ -25,9 +29,7 @@ describe("calculateFolderProximity", () => {
 
   describe("parent folder priority", () => {
     it("returns level 1 for parent folder", () => {
-      const linkFolders = new Map([
-        ["Novel/Ancient China/As Huanxin", 2],
-      ]);
+      const linkFolders = new Map([["Novel/Ancient China/As Huanxin", 2]]);
       const currentFile =
         "Novel/Ancient China/As Huanxin/AC Vs Twins/Chapter 1.md";
       const limitingFolder = "Novel";
@@ -84,9 +86,7 @@ describe("calculateFolderProximity", () => {
     });
 
     it("returns level 4 for cousin folder (same grandparent)", () => {
-      const linkFolders = new Map([
-        ["Novel/Ancient China/Born Royal", 3],
-      ]);
+      const linkFolders = new Map([["Novel/Ancient China/Born Royal", 3]]);
       const currentFile =
         "Novel/Ancient China/As Huanxin/AC Vs Twins/Chapter 1.md";
       const limitingFolder = "Novel";
@@ -219,6 +219,77 @@ describe("calculateFolderProximity", () => {
 
       // Empty limiting folder means everything is outside
       expect(result.level).toBe(999);
+    });
+  });
+
+  describe("canonical tie-break", () => {
+    const currentFile = "Novel/A/B/Chapter 1.md";
+    const limitingFolder = "Novel";
+
+    it("chooses smaller path when score and level are equal", () => {
+      const linkFolders = mapFrom([
+        ["Novel/A/Z", 2],
+        ["Novel/A/M", 2],
+      ]);
+
+      const result = calculateFolderProximity(
+        linkFolders,
+        currentFile,
+        limitingFolder,
+      );
+      expect(result.level).toBe(2);
+      expect(result.frequency).toBe(2);
+      expect(result.score).toBeCloseTo(2 / 3);
+      expect(result).toStrictEqual(
+        calculateFolderProximity(
+          mapFrom([
+            ["Novel/A/M", 2],
+            ["Novel/A/Z", 2],
+          ]),
+          currentFile,
+          limitingFolder,
+        ),
+      );
+    });
+
+    it("chooses lower level when scores are equal", () => {
+      const result = calculateFolderProximity(
+        mapFrom([
+          ["Novel/A/B", 4], // level 0, score 4
+          ["Novel/A/C", 8], // level 2, score 8/3 ≈ 2.67 — not tied
+          ["Novel/A/Z/D", 4], // level 3, score 1
+        ]),
+        currentFile,
+        limitingFolder,
+      );
+      expect(result.level).toBe(0);
+      expect(result.frequency).toBe(4);
+      expect(result.score).toBe(4);
+    });
+
+    it("chooses lower level when scores are equal and paths differ", () => {
+      const result = calculateFolderProximity(
+        mapFrom([
+          ["Novel/A/Z/D", 4], // level 3, score 1
+          ["Novel/A/B/C", 4], // level 1, score 2
+        ]),
+        currentFile,
+        limitingFolder,
+      );
+      expect(result.level).toBe(1);
+      expect(result.frequency).toBe(4);
+      expect(result.score).toBe(2);
+    });
+
+    it("never replaces the default with a zero-frequency candidate", () => {
+      const result = calculateFolderProximity(
+        mapFrom([["Novel/A/B", 0]]),
+        currentFile,
+        limitingFolder,
+      );
+      expect(result.level).toBe(999);
+      expect(result.frequency).toBe(0);
+      expect(result.score).toBe(0);
     });
   });
 });

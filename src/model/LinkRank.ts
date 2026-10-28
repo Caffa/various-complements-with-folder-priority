@@ -17,13 +17,34 @@ export type LinkRankData = {
 export type LinkRank = {
   fileTier: boolean;
   folderProximity?: FolderProximityScore;
+  rank?: number;
 };
+
+export type FolderRankScoreEntry = FolderProximityScore & { rank?: number };
+
+export type FolderRankList = {
+  folder: string;
+  builtForLimitingFolder: string;
+  globalVersion: number;
+  resolvedScores: Map<string, FolderRankScoreEntry>;
+  unresolvedScores: Map<string, FolderRankScoreEntry>;
+};
+
+export interface FolderRankCacheLike {
+  getList(
+    currentFilePath: string,
+    limitingFolder: string,
+    rankData: LinkRankData,
+  ): FolderRankList | undefined;
+}
 
 export type FolderPriorityOption = {
   enabled: boolean;
   currentFilePath: string | null;
   limitingFolder: string;
   rankData?: LinkRankData;
+  folderRankCache?: FolderRankCacheLike;
+  cachedList?: FolderRankList;
 };
 
 function resolveTarget(word: InternalLinkWord): string | undefined {
@@ -45,24 +66,43 @@ export function computeLinkRank(
     );
 
     let folderProximity: FolderProximityScore | undefined;
+    let rank: number | undefined;
     if (
       option.enabled &&
       option.limitingFolder !== "" &&
       option.currentFilePath !== null
     ) {
-      const sourceFolders = rankData.unresolvedNameToSourceFolders.get(
-        word.value.toLowerCase(),
-      );
-      if (sourceFolders) {
-        folderProximity = calculateFolderProximity(
-          sourceFolders,
+      // Same memoized-list lookup as the resolved path; list keys are a subset
+      // of unresolvedNameToSourceFolders keys.
+      const list =
+        option.cachedList ??
+        option.folderRankCache?.getList(
           option.currentFilePath,
           option.limitingFolder,
+          rankData,
         );
+      const key = word.value.toLowerCase();
+      const entry = list?.unresolvedScores.get(key);
+      if (entry) {
+        folderProximity = {
+          level: entry.level,
+          frequency: entry.frequency,
+          score: entry.score,
+        };
+        rank = entry.rank;
+      } else {
+        const sourceFolders = rankData.unresolvedNameToSourceFolders.get(key);
+        if (sourceFolders) {
+          folderProximity = calculateFolderProximity(
+            sourceFolders,
+            option.currentFilePath,
+            option.limitingFolder,
+          );
+        }
       }
     }
 
-    return { fileTier, folderProximity };
+    return { fileTier, folderProximity, rank };
   }
 
   const target = resolveTarget(word);
@@ -73,22 +113,44 @@ export function computeLinkRank(
   const fileTier = rankData.currentFileTargets.has(target);
 
   let folderProximity: FolderProximityScore | undefined;
+  let rank: number | undefined;
   if (
     option.enabled &&
     option.limitingFolder !== "" &&
     option.currentFilePath !== null
   ) {
-    const sourceFolders = rankData.targetToSourceFolders.get(target);
-    if (sourceFolders) {
-      folderProximity = calculateFolderProximity(
-        sourceFolders,
+    // The per-folder list is consulted first. Its keys are a subset of the
+    // inversion-map keys (only top-2000 scored targets with score > 0), so a
+    // missing cache entry simply means the target was not stored. Builds are
+    // memoized per (folder, LinkRankIndex version) inside getList.
+    const list =
+      option.cachedList ??
+      option.folderRankCache?.getList(
         option.currentFilePath,
         option.limitingFolder,
+        rankData,
       );
+    const entry = list?.resolvedScores.get(target);
+    if (entry) {
+      folderProximity = {
+        level: entry.level,
+        frequency: entry.frequency,
+        score: entry.score,
+      };
+      rank = entry.rank;
+    } else {
+      const sourceFolders = rankData.targetToSourceFolders.get(target);
+      if (sourceFolders) {
+        folderProximity = calculateFolderProximity(
+          sourceFolders,
+          option.currentFilePath,
+          option.limitingFolder,
+        );
+      }
     }
   }
 
-  return { fileTier, folderProximity };
+  return { fileTier, folderProximity, rank };
 }
 
 export function getOrComputeLinkRank(

@@ -195,10 +195,12 @@ export default class VariousComponents extends Plugin {
           this.app.metadataCache.unresolvedLinks,
         ).length;
 
+        const cacheStats = this.suggester.folderRankCache.stats;
         const lines = [
           `Internal link words: ${provider.wordCount} (resolved ${lastRefresh?.resolvedWordCount ?? "-"} / phantom ${lastRefresh?.phantomWordCount ?? "-"})`,
           `Last refresh: ${ageSeconds !== null ? `${ageSeconds}s` : "never"} ago in ${lastRefresh?.ms ?? "-"}ms`,
           `Rank index builds: ${rankIndex.buildCalls} (last rebuild ${lastBuildMs !== null ? `${lastBuildMs}ms` : "-"})`,
+          `Folder rank cache: ${cacheStats.hits} hits / ${cacheStats.misses} misses / ${cacheStats.evictions} evictions / ${cacheStats.builds} builds (${cacheStats.cachedLists} lists)`,
           `Resolved links: ${resolvedFiles} files, ${resolvedEdges} edges`,
           `Unresolved: ${unresolvedSources} sources`,
         ];

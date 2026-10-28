@@ -43,7 +43,7 @@ Pointer system for jumping to the right file fast. Every entry = path + role + k
 
 | File | Role |
 |---|---|
-| `src/provider/suggester.ts` (697) | `WordsByFirstLetter` `:19`; `suggestionUniqPredicate()` `:29-47` (same value + same group + same `createdPath` for resolved internal links = duplicate); `pushWord()` `:49-60`; `judge()` `:63-153` (match + alias fallback); `suggestWords()` `:155-372` (prefix/first-letter); `judgeByPartialMatch()` `:376-512`; `suggestWordsByPartialMatch()` `:514-697`. Both suggest functions contain **duplicated** `compareLinkTier` closures (`:281-312` and `:599-630`) and duplicated comparator chains (`:323-368`, `:641-691`). |
+| `src/provider/suggester.ts` (803) | `WordsByFirstLetter` `:19`; `suggestionUniqPredicate()` `:29-47` (same value + same group + same `createdPath` for resolved internal links = duplicate); `pushWord()` `:49-60`; `judge()` `:63-153` (match + alias fallback); `suggestWords()` `:155-439` (prefix/first-letter); `judgeByPartialMatch()` `:443-512`; `suggestWordsByPartialMatch()` `:514-802`. Both suggest functions contain **duplicated** `compareLinkTier` closures (`:312-343` and `:669-700`) and duplicated comparator chains (`:354-433`, `:711-797`). |
 | `src/model/Word.ts` (106) | Discriminated union `Word` `:48-53`; `InternalLinkWord` `:35-42` (`phantom?`, `aliasMeta?: {origin}`); `DefaultWord` `:8-20` (`value`, `type`, `createdPath`, `aliases`, plus post-judge `hit/fuzzy/query/offset/valueForHistory`); `WordTypeMeta` `:55-106` with `INTERNAL_LINK` priority **90** `:64-68` (frontMatter 100, customDictionary 80, currentFile 70, currentVault 60). |
 
 ### 1.4 Word / link rank caching (fork-added)
@@ -120,8 +120,8 @@ Registered once at `src/main.ts:86` (`registerEditorSuggest`), so Obsidian's `Ed
 | 6 | **Strategy dispatch**: per query token, `MatchStrategy.handler` (or `frontMatterComplementStrategy.handler`) → `suggestWords` (prefix) / `suggestWordsByPartialMatch` (partial). | `:620-630`, `provider/MatchStrategy.ts:34-38` |
 | 7 | **Candidate collection** (before matching): `this.indexedWords` merges all providers' `wordsByFirstLetter`. Prefix mode indexes by first letter **and** case-variant of `query[0]`. Partial mode flattens every bucket. | `:478-486`; `suggester.ts:210-268` / `:559-587` |
 | 8 | **Match**: `judge()` — `matcher = fuzzy ? lowerFuzzy : wrapFuzzy(lowerStartsWith)`; tries `value` first, then each `alias` (alias hit ⇒ `alias: true`, `word.hit = <alias text>`). Partial mode adds startsWith → includes passes for both value and aliases. `excludeInternalLink` / `providerMinChars` gate providers at collection. | `suggester.ts:63-153`, `:376-512`, `:187-198` |
-| 9 | **Ranking** (comparator, in order): ① fuzzy-vs-concrete ② front-matter pin ③ **`compareLinkTier` (fork hook)** ④ selection-history recency ⑤ shorter value first ⑥ `WordTypeMeta.priority` ⑦ non-alias before alias. | `suggester.ts:323-368` (prefix), `:641-691` (partial); tier at `:337-340` / `:655-658` |
-| 10 | **Cap + dedupe**: `.slice(0, maxNum)` then `uniqWith(candidate, suggestionUniqPredicate)` — note dedupe runs **after** slicing, so the result can be shorter than `maxNumberOfSuggestions`. | `suggester.ts:368-371`, `:693-696` |
+| 9 | **Ranking** (comparator, in order): ① fuzzy-vs-concrete ② front-matter pin ③ **`compareLinkTier` (fork hook)** ④ selection-history recency ⑤ shorter value first ⑥ `WordTypeMeta.priority` ⑦ non-alias before alias. | `suggester.ts:354-433` (prefix), `:711-797` (partial); tier at `:330-339` / `:693-696` |
+| 10 | **Cap + dedupe**: `.slice(0, maxNum)` then `uniqWith(candidate, suggestionUniqPredicate)` — note dedupe runs **after** slicing, so the result can be shorter than `maxNumberOfSuggestions`. | `suggester.ts:434-438`, `:798-802` |
 | 11 | **Post-filters in caller**: `excludeSelfInternalLink` `:685-691`; `excludeExistingInActiveFileInternalLinks` (uses `metadataCache.resolvedLinks[activeFile]`) `:693-700`; final `uniqWith` + slice `:702-707`. | — |
 | 12 | **Render**: `renderSuggestion()` builds `div`s; alias rows get `various-complements__suggestion-item__content__alias`; phantom rows get `__phantom`. | `:1275-1326` |
 | 13 | **Insert**: `selectSuggestion()` → `constructInternalLinkText()` → `insertWithIsolatedUndoStep()` → `selectionHistoryStorage.increment()`. | `:1412-1502`, `:1328-1410`, `ui/editor-insertion.ts:21-37`, `:1494` |
@@ -172,7 +172,8 @@ File: **`src/provider/InternalLinkWordProvider.ts`** (145 lines). Constructed at
 | | `resolveTarget(word)` `:25-27` | `word.createdPath ?? word.aliasMeta?.origin`. |
 | | `getOrComputeLinkRank(word, option, cache)` `:71-84` | Memoizes per suggestion pass in a `Map<Word, LinkRank>`; returns `undefined` for non-internal-link words. |
 | `src/storage/LinkRankIndex.ts` | `getRankData(currentFilePath, limitingFolder)` `:10-75` | Builds / returns `LinkRankData` (§4.3). |
-| `src/provider/suggester.ts` | `compareLinkTier()` `:281-312` (prefix) and `:599-630` (partial) | The comparator stage that applies the rank. |
+| `src/storage/FolderRankCache.ts` | `getList(...)` (lazy build) | Per-leaf-folder precomputed rank lists; qualified by file count and leaf-ness, LRU 512. *(updated 2026-10-27)* |
+| `src/provider/suggester.ts` | `compareLinkTier()` `:312-343` (prefix) and `:669-700` (partial) | The comparator stage that applies the rank. |
 
 ### 4.2 Scoring rule (exact)
 
@@ -184,9 +185,9 @@ level = 0 same folder | depthDiff if ancestor | sum(depths) if sibling/cousin
 `frequency` = number of link occurrences from files in that source folder, aggregated by `LinkRankIndex` `:38-41`.
 
 **Rank order applied to a pair of internal-link words** (`compareLinkTier`):
-1. `fileTier` mismatch → the word whose target is already linked from the current file wins (`suggester.ts:295-297`).
-2. Higher `folderProximity.score` wins (`:299-303`); missing proximity is treated as `-1`.
-3. Lower `folderProximity.level` wins as tiebreak (`:305-309`).
+1. `fileTier` mismatch → the word whose target is already linked from the current file wins (`suggester.ts:326-327` / `:683-684`).
+2. Higher `folderProximity.score` wins (`:330-333` / `:687-690`); missing proximity is treated as `-1`.
+3. Lower `folderProximity.level` wins as tiebreak (`:336-339` / `:693-696`).
 4. Otherwise `0` → falls through to selection history, length, word-type priority, alias flag.
 
 `fileTier` semantics (`LinkRank.ts:38-54`): non-phantom → `currentFileTargets.has(target)`; phantom → `currentFileUnresolvedNames.has(word.value.toLowerCase())`.
@@ -206,17 +207,18 @@ type LinkRankData = {
 
 `targetToSourceFolders` is the **inverted index**: built by walking `metadataCache.resolvedLinks` (`LinkRankIndex.ts:22-44`), skipping source folders outside `limitingFolder`, summing counts per `(target, sourceFolder)`.
 
-Caches (there are exactly two logical caches, both in memory, both non-persistent):
+Caches (there are **three** logical caches, all in memory, all non-persistent):
 - `LinkRankIndex` — **two-part cache**: a global vault inversion keyed on `limitingFolder` (`:4-14`) plus a per-current-file `fileTier` part keyed on `currentFilePath` (`:15-20`). Stale sources are applied differentially at `getRankData` time (`:40-42`, `:202-293`) with a 5000-target fallback to full rebuild (`:212-216`); `invalidate()` only clears the cache on `"resolved"` and settings updates. `buildCalls` counter `:29`/`:196` exists for tests.
-- `linkRanks: Map<Word, LinkRank>` — per suggestion pass, discarded each call `suggester.ts:280`, `:598`.
+- `linkRanks: Map<Word, LinkRank>` — per suggestion pass, discarded each call `suggester.ts:311`, `:668`.
+- `FolderRankCache` — per-leaf-folder precomputed rank lists (LRU 512; MAX_LIST_SIZE 500, TOP_K 1000 ranks), built lazily by `getList()` from `LinkRankData` and the vault summary. No persistence. `LinkRankIndex` version bumps only when link data changes (delta-aware); folder qualification rescans only when its `structureEpoch` changes (create/rename/delete) or first run.
 
-There is **no per-folder cache, no persistence, no plugin data file** for folder scores. `Word` no longer carries folder data (the old `folderPriority`-era `folderFrequency?: Map<string,number>` was removed from `src/model/Word.ts`; see `git diff HEAD -- src/model/Word.ts`).
+There is **no per-folder persistent cache, no plugin data file** for folder scores. `Word` no longer carries folder data (the old `folderPriority`-era `folderFrequency?: Map<string,number>` was removed from `src/model/Word.ts`; see `git diff HEAD -- src/model/Word.ts`).
 
 ### 4.4 Where it is wired in
 
 - Option built per suggestion call: `AutoCompleteSuggest.ts:653-665` — only when `settings.folderPriority?.enabled`; `currentFilePath` = `appHelper.getActiveFile()?.path`, `limitingFolder` = `settings.folderPriority.limitingFolder`, `rankData` = `linkRankIndex.getRankData(...)`.
 - Threaded through `MatchStrategy` / `SpecificMatchStrategy` handler option bags → `suggestWords` / `suggestWordsByPartialMatch` → `compareLinkTier`.
-- Fully inert when `enabled = false` (`compareLinkTier` returns 0 immediately, `suggester.ts:282-284`) or when `limitingFolder === ""` (no `folderProximity`, only `fileTier` still applies — `LinkRank.ts:52-66`).
+- Fully inert when `enabled = false` (`compareLinkTier` returns 0 immediately, `suggester.ts:313-314`) or when `limitingFolder === ""` (no `folderProximity`, only `fileTier` still applies — `LinkRank.ts:52-66`).
 
 ---
 
@@ -230,6 +232,7 @@ There is **no per-folder cache, no persistence, no plugin data file** for folder
 | **Custom-dictionary index** | `refreshCustomDictionaryTokens()` `:903-941` | `"resolved"` `:283`; command `main.ts:88-95`; settings `main.ts:203-205`. | `:903` |
 | **Front-matter index** | `refreshFrontMatterTokens()` `:981-1005`; incremental `updateFrontMatterTokenIndex(file)` `:1022-1042` + `updateFrontMatterToken()` `:1044-1064` | `"changed"` → per-file index, then global re-flatten when the changed file is not the active one `:258-264`; `"resolved"` `:281`; `active-leaf-change` `:254`; settings `main.ts:209-211`. | `:258-264` |
 | **`LinkRankIndex` (folder/link rank)** | lazy `getRankData()` on first suggestion after a miss `LinkRankIndex.ts:34-81` | Differential apply of `onRename` / `onDelete` / `markSourceStale` at lookup time (`LinkRankIndex.ts:102-121`, `:202-293`), with `MAX_DIFF_TARGETS = 5000` fallback to full rebuild (`:212-216`). `invalidate()` is only called on `metadataCache "resolved"` (`AutoCompleteSuggest.ts:285`) and `updateSettings` (`:497`). `active-leaf-change` no longer invalidates the rank cache. | `LinkRankIndex.ts:34-81` |
+| **`FolderRankCache` (per-folder rank lists)** | lazy `getList()` on first visit to a qualified leaf folder `FolderRankCache.ts` | Built from `app.vault.getMarkdownFiles()` leaf qualification (≥20, ≤2000 files), 512-list LRU, top-1000 ranks of top-2000 entries. Invalidated by limiting-folder switch, `LinkRankIndex` version bump, and `updateSettings`. *(updated 2026-10-27)* | `FolderRankCache.ts` |
 | **Selection history** | `refreshIntelligentSuggestionPrioritization()` `:1007-1020` (loads `histories.json`, `purge()`) | In-memory `increment()` per selection `:1494`; persisted by `main.ts:67-78` (5000 ms debounce, `shouldPersist` gate); rebuilt on settings save `main.ts:212-214`. | `:1007`, `main.ts:67-78` |
 | **Compiled regexes** | `updateSettings()` `:492-529` (`patternsToSuppressTrigger`, `firstCharactersDisableSuggestions`, `phrasePatternsToSuppressTrigger` + `^...$`) | Every `updateSettings` (i.e. every settings save) and `Main`-level `saveSettings`. | `:490-529` |
 | **Tokenizer instance** | `createTokenizer()` in `updateSettings()` `:537-544` | Same. Also pushed into providers at `:545-561`. | `:537-561` |
@@ -266,7 +269,7 @@ All keys live in `src/setting/settings.ts`; consumption points are in `src/ui/Au
 | **`folderPriority.enabled`** | `true` | `AutoCompleteSuggest.ts` | Turns §4 ranking on/off. |
 | **`folderPriority.limitingFolder`** | `""` | `AutoCompleteSuggest.ts` | Root folder bounding the proximity calculation; empty ⇒ only `fileTier` applies. |
 | `matchStrategy` | `"prefix"` | `:421-423`, `:156` | Chooses `suggestWords` vs `suggestWordsByPartialMatch` (both implement §4). |
-| `maxNumberOfSuggestions` | `5` | `:630`, `:705` | Slice size (applied before dedupe). |
+| `maxNumberOfSuggestions` | `5` | `:435`, `:799` | Slice size (applied before dedupe). |
 | `delayMilliSeconds` | `0` | `:713-714`, `:717-719` | Debounce for `getSuggestions` and close. |
 | `fuzzyMatch` / `minFuzzyMatchScore` | `true` / `0.5` | `:634-638` | Fuzzy matcher + threshold in `judge()`. |
 | `minNumberOfWordsTriggeredPhrase` | `1` | `:615` | How many phrase tokens must clear the minimum length. |
@@ -304,7 +307,7 @@ Runner: `pnpm test` → `jest --coverage` (`package.json`), transform `esbuild-j
 | # | File | Why it's first |
 |---|---|---|
 | 1 | **`src/provider/InternalLinkWordProvider.ts`** | Everything about *what* an internal-link suggestion is. Alias word construction `:60-108` (two mutually exclusive modes), phantom words `:111-126` (note `createdPath` = source file), first-letter + alias indexing `:129-134`, exclusion filters `:32-56`. A missing alias almost always starts (and often ends) here. |
-| 2 | **`src/provider/suggester.ts`** | Matching and ordering. Alias matching in `judge()` `:123-147`; the tier comparator `compareLinkTier` `:281-312` / `:599-630`; full comparator chain `:323-368` / `:641-691`; dedupe-after-slice `:368-371`. |
+| 2 | **`src/provider/suggester.ts`** | Matching and ordering. Alias matching in `judge()` `:123-147`; the tier comparator `compareLinkTier` `:312-343` / `:669-700`; full comparator chain `:354-433` / `:711-797`; dedupe-after-slice `:434-438`. |
 | 3 | **`src/model/LinkRank.ts`** | Per-word rank semantics: `resolveTarget()` `:25-27` (`createdPath ?? aliasMeta?.origin` — the alias-origin fallback), phantom tier `:38-43`, proximity gating on `enabled`/`limitingFolder`/`currentFilePath` `:52-66`. |
 | 4 | **`src/ui/AutoCompleteSuggest.ts`** | Wiring: `folderPriority` built at `:653-665`, `refreshInternalLinkTokens()` `:943-979`, event/refresh graph `:233-288`, post-filters `:685-700`. |
 | 5 | **`src/setting/settings.ts`** | The switches themselves: keys `:98-116`, defaults `:232-249`, folder-priority defaults `:270-274`, UI `:1350-1701`. |
@@ -334,4 +337,4 @@ Runner: `pnpm test` → `jest --coverage` (`package.json`), transform `esbuild-j
 - The old `sleep(50)` wait before internal-link refreshes was removed; refreshes are now driven by a 1000 ms debounce on `metadataCache "changed"`.
 - `previousLinksCacheInActiveFile` (`:112`) is actually populated from the **changed** file's unresolved links (`:268`), not the active file — name vs. behaviour mismatch, relevant when debugging missed internal-link refreshes.
 - `LinkRankIndex.getRankData` keeps a separate global vault inversion and per-current-file `fileTier` cache. Switching the current file only rebuilds the small `fileTier` part; the global inversion is updated differentially for stale sources and only rebuilt when the `limitingFolder` changes, `invalidate()` is called, or a diff exceeds `MAX_DIFF_TARGETS`.
-- Folder priority only affects ordering **within** internal-link pairs (`suggester.ts:285-287` returns 0 if either word is not `internalLink`), so it can never lift a link above a `currentFile`/`customDictionary` word of the same match quality except through the `fileTier` stage, which is also internal-link-only.
+- Folder priority only affects ordering **within** internal-link pairs (`suggester.ts:316-317` returns 0 if either word is not `internalLink`), so it can never lift a link above a `currentFile`/`customDictionary` word of the same match quality except through the `fileTier` stage, which is also internal-link-only.

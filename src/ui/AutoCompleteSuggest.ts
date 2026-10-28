@@ -29,6 +29,7 @@ import { SpecificMatchStrategy } from "../provider/SpecificMatchStrategy";
 import type { WordsByFirstLetter } from "../provider/suggester";
 import { suggestionUniqPredicate } from "../provider/suggester";
 import type { Settings } from "../setting/settings";
+import { FolderRankCache } from "../storage/FolderRankCache";
 import { LinkRankIndex } from "../storage/LinkRankIndex";
 import {
   type HitWord,
@@ -90,6 +91,7 @@ export class AutoCompleteSuggest
   frontMatterWordProvider: FrontMatterWordProvider;
   selectionHistoryStorage: SelectionHistoryStorage | undefined;
   linkRankIndex: LinkRankIndex;
+  folderRankCache: FolderRankCache;
 
   tokenizer: Tokenizer;
   debounceGetSuggestions: Debouncer<
@@ -217,6 +219,7 @@ export class AutoCompleteSuggest
     );
 
     ins.linkRankIndex = new LinkRankIndex(app);
+    ins.folderRankCache = new FolderRankCache(app, ins.linkRankIndex);
 
     await ins.updateSettings(settings);
     await ins.refreshIntelligentSuggestionPrioritization();
@@ -243,17 +246,20 @@ export class AutoCompleteSuggest
     ins.renameEventRef = app.vault.on("rename", (file, oldPath) => {
       if (ins.unloaded) return;
       ins.linkRankIndex.onRename(oldPath, file.path);
+      ins.folderRankCache.bumpStructure();
       ins.debouncedRefreshInternalLinkTokens();
     });
     ins.deleteEventRef = app.vault.on("delete", (file) => {
       if (ins.unloaded) return;
       ins.linkRankIndex.onDelete(file.path);
+      ins.folderRankCache.bumpStructure();
       ins.debouncedRefreshInternalLinkTokens();
     });
     ins.createEventRef = app.vault.on("create", (f) => {
       if (ins.unloaded) return;
       if (f instanceof TFile && f.extension === "md") {
         ins.linkRankIndex.markSourceStale(f.path);
+        ins.folderRankCache.bumpStructure();
         ins.debouncedRefreshInternalLinkTokens();
       }
     });
@@ -495,6 +501,8 @@ export class AutoCompleteSuggest
   async updateSettings(settings: Settings) {
     this.settings = settings;
     this.linkRankIndex.invalidate();
+    this.folderRankCache.invalidate();
+    this.folderRankCache.bumpStructure();
 
     // Pre-compile regex patterns on settings change to avoid creating RegExp on every keystroke
     this.compiledSuppressPatterns = settings.patternsToSuppressTrigger
@@ -668,6 +676,7 @@ export class AutoCompleteSuggest
                         this.appHelper.getActiveFile()?.path ?? null,
                         this.settings.folderPriority.limitingFolder ?? "",
                       ),
+                      folderRankCache: this.folderRankCache,
                     }
                   : undefined,
                 prioritizeAliases: this.settings.prioritizeAliases,

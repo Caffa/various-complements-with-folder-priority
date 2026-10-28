@@ -445,3 +445,53 @@ describe("LinkRankIndex", () => {
     expect(data.targetToSourceFolders.has("Characters/John.md")).toBe(false);
   });
 });
+
+describe("F1 delta-aware version", () => {
+  it("does not bump version when link sets are identical", () => {
+    const app = createApp({
+      "Novel/A/Chapter 1.md": { "Characters/John.md": 1 },
+    });
+    const index = new LinkRankIndex(app);
+    index.getRankData("Novel/A/Chapter 1.md", "Novel");
+    const before = index.currentVersion;
+    (app as any).metadataCache.resolvedLinks = {
+      "Novel/A/Chapter 1.md": { "Characters/John.md": 1 },
+    };
+    index.markSourceStale("Novel/A/Chapter 1.md");
+    index.getRankData("Novel/A/Chapter 1.md", "Novel");
+    expect(index.currentVersion).toBe(before);
+  });
+
+  it("bumps version when a file gains a link", () => {
+    const app = createApp({
+      "Novel/A/Chapter 1.md": { "Characters/John.md": 1 },
+    });
+    const index = new LinkRankIndex(app);
+    index.getRankData("Novel/A/Chapter 1.md", "Novel");
+    const before = index.currentVersion;
+    (app as any).metadataCache.resolvedLinks = {
+      "Novel/A/Chapter 1.md": {
+        "Characters/John.md": 1,
+        "Characters/Jane.md": 1,
+      },
+    };
+    index.markSourceStale("Novel/A/Chapter 1.md");
+    index.getRankData("Novel/A/Chapter 1.md", "Novel");
+    expect(index.currentVersion).toBeGreaterThan(before);
+  });
+
+  it("bumps version on rename in-limit -> out-of-limit", () => {
+    const app = createApp({
+      "Novel/A/Old.md": { "Characters/John.md": 3 },
+    });
+    const index = new LinkRankIndex(app);
+    index.getRankData("Novel/A/Old.md", "Novel");
+    const before = index.currentVersion;
+    (app as any).metadataCache.resolvedLinks = {
+      "Resources/X/New.md": { "Characters/John.md": 5 },
+    };
+    index.onRename("Novel/A/Old.md", "Resources/X/New.md");
+    index.getRankData("Resources/X/New.md", "Novel");
+    expect(index.currentVersion).toBeGreaterThan(before);
+  });
+});
