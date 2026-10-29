@@ -42,7 +42,7 @@ export default {
       "@semantic-release/exec",
       {
         prepareCmd:
-          "pnpm verify && node version-bump.mjs ${nextRelease.version}",
+          "pnpm build && node version-bump.mjs ${nextRelease.version}",
       },
     ],
     [
