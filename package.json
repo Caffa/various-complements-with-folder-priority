@@ -1,6 +1,6 @@
 {
   "name": "various-complements-with-folder-priority",
-  "version": "11.4.1",
+  "version": "11.5.0",
   "description": "A fork of Various Complements with folder-aware priority for auto-completion",
   "main": "main.js",
   "scripts": {
