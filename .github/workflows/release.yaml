@@ -9,16 +9,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: "24"
       - run: npm i -g pnpm@11.0.8
       - run: |
           pnpm dlx \
-             --package semantic-release@24 \
-             --package conventional-changelog-conventionalcommits \
-             --package @semantic-release/git \
-             --package @semantic-release/exec \
+             --package semantic-release@24.2.9 \
+             --package conventional-changelog-conventionalcommits@9.3.1 \
+             --package conventional-changelog-writer@9.3.0 \
+             --package @semantic-release/git@7 \
+             --package @semantic-release/exec@7 \
               semantic-release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
